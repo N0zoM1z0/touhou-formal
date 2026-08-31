@@ -1,5 +1,6 @@
 import TouhouFormal.ECL.Scalar
 import TouhouFormal.ECL.Profile
+import TouhouFormal.Core.Cursor
 
 namespace TouhouFormal.ECL
 
@@ -22,6 +23,10 @@ def RawInstrPrefix.nextCursor (rawPrefix : RawInstrPrefix) : Int :=
 
 def RawInstrPrefix.isNonProgressing (rawPrefix : RawInstrPrefix) : Bool :=
   rawPrefix.nextCursor = Int.ofNat rawPrefix.fileOffset
+
+def RawInstrPrefix.cursorClass (rawPrefix : RawInstrPrefix) (bufferSize : Nat) :
+    TouhouFormal.CursorClass :=
+  TouhouFormal.classifyCursorTransfer rawPrefix.fileOffset rawPrefix.nextCursor bufferSize
 
 private def missingRawInstrShapeFault (shape : HeaderShape) : Fault :=
   { kind := .invalidInstruction
@@ -157,5 +162,14 @@ def decodeRawInstrPrefixAfterRelativeJump
     shape
     bytes
     (Int.ofNat rawPrefix.fileOffset + jump.displacement)
+
+def RawInstrPrefix.relativeJumpClass
+    (rawPrefix : RawInstrPrefix)
+    (jump : RawJumpOperands)
+    (bufferSize : Nat) : TouhouFormal.CursorClass :=
+  TouhouFormal.classifyCursorTransfer
+    rawPrefix.fileOffset
+    (Int.ofNat rawPrefix.fileOffset + jump.displacement)
+    bufferSize
 
 end TouhouFormal.ECL

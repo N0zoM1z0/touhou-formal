@@ -1,6 +1,7 @@
 import TouhouFormal.Core.Evidence
 import TouhouFormal.Core.Bytes
 import TouhouFormal.Core.Scalar
+import TouhouFormal.Core.Cursor
 import TouhouFormal.Core.Fault
 import TouhouFormal.Core.Transition
 import TouhouFormal.ANM

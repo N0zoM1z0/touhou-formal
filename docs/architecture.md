@@ -18,7 +18,7 @@ The intended loop is:
 
 `TouhouFormal/Core` contains title-independent transition-system machinery:
 faults, little-endian byte reads, bounded execution, traces, and evidence
-references.
+references, and cursor-transfer classification.
 
 `TouhouFormal/ECL` contains the shared ECL core: scalar byte reads,
 profile-driven header loading, subTable lookup policy, timeline-prefix decoding,
@@ -38,6 +38,8 @@ script opcodes should be added after the source-backed VM boundary is clear.
 `TouhouFormal/Search` is allowed to duplicate a bounded query in SMT-LIB when
 the duplicated relation is small and source-linked. Larger encodings should be
 generated from Lean-side definitions or a shared intermediate representation.
+Finite Lean-side sweeps live here when they are small enough to keep as
+executable regression guards.
 
 ## Future VMs
 

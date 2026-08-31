@@ -1,5 +1,6 @@
 import TouhouFormal.ECL.Scalar
 import TouhouFormal.ECL.Profile
+import TouhouFormal.Core.Cursor
 
 namespace TouhouFormal.ECL
 
@@ -16,6 +17,10 @@ def TimelinePrefix.nextCursor (timelinePrefix : TimelinePrefix) : Int :=
 
 def TimelinePrefix.isNonProgressing (timelinePrefix : TimelinePrefix) : Bool :=
   timelinePrefix.nextCursor = Int.ofNat timelinePrefix.fileOffset
+
+def TimelinePrefix.cursorClass (timelinePrefix : TimelinePrefix) (bufferSize : Nat) :
+    TouhouFormal.CursorClass :=
+  TouhouFormal.classifyCursorTransfer timelinePrefix.fileOffset timelinePrefix.nextCursor bufferSize
 
 private def missingTimelineShapeFault (shape : HeaderShape) : Fault :=
   { kind := .invalidInstruction

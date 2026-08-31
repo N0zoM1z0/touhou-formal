@@ -17,6 +17,8 @@ bytes already flowing through loader, timeline-prefix decoding, and shared
 subTable lookup. Bounded loader checks also record first missing-byte faults for
 undersized files. Timeline cursor advancement is now shared, with TH06 fixtures
 covering zero-size nonprogress and negative-size before-buffer decode faults.
+The cursor classifier now supports finite searches over relative jump
+displacements.
 
 ## Phase 2: TH07 and TH08 Deltas
 
