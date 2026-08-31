@@ -115,6 +115,15 @@ def IntSelectorSet.contains (set : IntSelectorSet) (value : Int) : Bool :=
   set.ranges.any (fun range => range.contains value) &&
     !set.exclusions.contains value
 
+structure RawBossIntReadShape where
+  opcode : Int
+  outputOperandIndex : Nat
+  valueOperandIndex : Nat
+  bossIndexOperandIndex : Nat
+  bossSlotCount : Nat
+  nullDerefValueSelectors : IntSelectorSet := {}
+deriving Repr, DecidableEq
+
 inductive RawIntOperandMaskPolicy where
   | noMaskAlwaysResolve
   | bitSetMeansResolve
@@ -224,8 +233,14 @@ structure RawInstrShape where
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
   intBinaryOps : List RawIntBinaryOpShape := []
+  bossIntReads : List RawBossIntReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
+
+def RawInstrShape.findBossIntRead?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBossIntReadShape :=
+  rawShape.bossIntReads.find? (fun read => read.opcode == opcode)
 
 def RawInstrShape.findIntBinaryOp?
     (rawShape : RawInstrShape)

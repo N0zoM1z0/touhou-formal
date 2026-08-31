@@ -9,6 +9,7 @@ inductive FaultKind where
   | arithmeticOverflow
   | invalidInstruction
   | invalidHostIndex
+  | nullDereference
   | malformedFile
 deriving Repr, DecidableEq
 
@@ -21,6 +22,7 @@ def FaultKind.name : FaultKind -> String
   | .arithmeticOverflow => "arithmetic-overflow"
   | .invalidInstruction => "invalid-instruction"
   | .invalidHostIndex => "invalid-host-index"
+  | .nullDereference => "null-dereference"
   | .malformedFile => "malformed-file"
 
 structure Fault where

@@ -36,6 +36,13 @@ ADD/SUB/MUL/DIV/MOD. TH06 uses helper-style assign operations with typed output
 classification, TH07 uses assign-to-slot-0 arithmetic, and TH08 has both
 in-place opcodes `10..14` and assign opcodes `20..24`.
 
+Boss-indexed integer reads are modeled as a shared TH07/TH08 layer. TH07
+`ECL_GET_BOSS_INT` and TH08 low opcode `86` write operand slot 0 from either
+raw operand slot 1 or `g_EnemyManager.bosses[index]`, depending on the value
+operand's mask bit. The symbolic paths cover mask-clear bypass, resolved boss
+index underflow/overflow, null boss pointers for a source-backed dereferencing
+selector, and in-bounds host/default value reads.
+
 Plain CALL/RET stack behavior is also modeled as a shared layer. The model
 tracks CALL's save-before-guard order, title-specific stack sizes and increment
 guards, `CallEclSub` lookup policy, RET's decrement-before-restore order, and
@@ -87,6 +94,13 @@ List and solve integer binary arithmetic/lvalue branches:
 ```bash
 lake exe symex list-int-binary-paths
 lake exe symex query-int-binary-values th08 int-binary-divide-overflow-resolved-host 1 0 | z3 -in
+```
+
+List and solve boss-indexed integer-read branches:
+
+```bash
+lake exe symex list-boss-int-paths
+lake exe symex query-boss-int-values th08 boss-int-null-deref 1 0 | z3 -in
 ```
 
 List and solve CALL/RET stack branches:
@@ -154,6 +168,13 @@ Solve/materialize integer binary arithmetic paths:
 ./scripts/symex_int_binary_candidate_queue.py
 ```
 
+Solve/materialize boss-indexed integer-read paths:
+
+```bash
+./scripts/symex_materialize_boss_int_read.py th08 all 1 0
+./scripts/symex_boss_int_candidate_queue.py
+```
+
 Solve/materialize CALL/RET stack paths:
 
 ```bash
@@ -214,6 +235,13 @@ bugs. It is the formal queue that should replace ad-hoc manual hunting: every
 entry has a solver witness, a Lean-materialized byte fixture, and a concrete
 `rawStep` replay result.
 
+The boss integer-read queue follows the same rule. It enumerates the path
+families first, asks Z3 for byte-realizable witnesses, then ranks the
+materialized results. A default run produced 18 satisfiable candidates across
+TH07, TH08 active bit 0, and TH08's override-mask environment; 9 are
+high-priority counterexamples (`bosses[8]` underflow/overflow or null boss
+dereference).
+
 ## Witness materialization
 
 The materialization path is deliberately split by responsibility:
@@ -258,6 +286,8 @@ Representative Z3 witnesses already covered by `scripts/check.sh`:
 - TH08 `skipped-in-bounds` with `activeMask = 1`, `overrideMask = 2`: a
   difficulty-mask skip path where cursor advancement itself is in-bounds.
 - TH08 `advanced-non-progress`: executing ordinary opcode with `nextOffset = 0`.
+- TH07 `boss-int-null-deref`: `ECL_GET_BOSS_INT`, value operand mask bit set,
+  boss index `0`, dereferencing selector `10000`, and `bossPresent=false`.
 
 These are not final retail findings by themselves. They are the baseline path
 coverage that later bounded opcode semantics, full subroutine state, and

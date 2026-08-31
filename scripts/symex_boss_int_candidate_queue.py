@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MATERIALIZER = REPO_ROOT / "scripts" / "symex_materialize_boss_int_read.py"
+
+DEFAULT_ENVS = [
+    ("th07", 1, 0, "formal-active-bit0"),
+    ("th08", 1, 0, "formal-active-bit0"),
+    ("th08", 1, 2, "override-mask-delta"),
+]
+
+
+class QueueError(RuntimeError):
+    pass
+
+
+def run_materializer(title: str, path: str, active_mask: int, override_mask: int) -> Any:
+    command = [
+        sys.executable,
+        str(MATERIALIZER),
+        title,
+        path,
+        str(active_mask),
+        str(override_mask),
+    ]
+    completed = subprocess.run(
+        command,
+        cwd=REPO_ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise QueueError(f"boss integer-read materializer failed for {title}/{path}: {detail}")
+    return json.loads(completed.stdout)
+
+
+def classify_path(path: str, fixture: dict[str, Any]) -> dict[str, Any]:
+    if path in {"boss-int-index-before-array", "boss-int-index-at-or-past-array"}:
+        return {
+            "class": "boss-index-oob-read",
+            "priority": "high",
+            "priorityRank": 0,
+            "reason": "the source reads g_EnemyManager.bosses[index] without bounding the resolved boss index",
+        }
+    if path == "boss-int-null-deref":
+        return {
+            "class": "boss-null-deref",
+            "priority": "high",
+            "priorityRank": 0,
+            "reason": "the integer boss read can resolve a host value through a null boss pointer; TH08's adjacent float opcode has a guard but opcode 86 does not",
+        }
+    if path == "boss-int-value-raw-no-boss-read":
+        return {
+            "class": "operand-flag-bypass",
+            "priority": "medium",
+            "priorityRank": 2,
+            "reason": "a clear value operand flag bypasses the boss table read completely and writes the raw slot-1 value",
+        }
+    if fixture.get("valueKind") == "resolved-default-raw":
+        return {
+            "class": "boss-read-default-raw",
+            "priority": "medium",
+            "priorityRank": 2,
+            "reason": "the opcode reads the boss table but an unknown value selector falls back to the raw operand",
+        }
+    return {
+        "class": "boss-read-host-value",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "ordinary in-bounds boss read with a resolved host value",
+    }
+
+
+def next_action_for(risk_class: str, title: str, path: str) -> str:
+    if risk_class in {"boss-index-oob-read", "boss-null-deref"}:
+        return "lower to a minimal reachable ECL mutation and run retail Wine confirmation"
+    if risk_class == "operand-flag-bypass":
+        return "keep as an equivalence/metamorphic seed: toggling slot-1's mask bit changes whether boss state is read"
+    if risk_class == "boss-read-default-raw":
+        return "compose with metamorphic checks over known versus unknown value selectors"
+    return "keep as an in-bounds positive-control witness"
+
+
+def compact_record(record: dict[str, Any], env_name: str) -> dict[str, Any]:
+    path = str(record["path"])
+    fixture = record.get("fixture", {})
+    witness = record.get("witness", {})
+    risk = classify_path(path, fixture)
+    return {
+        "id": f"{record['title']}:{env_name}:{path}",
+        "title": record["title"],
+        "environment": env_name,
+        "activeMask": record["activeMask"],
+        "overrideMask": record["overrideMask"],
+        "path": path,
+        "status": record["status"],
+        "risk": risk,
+        "fixture": {
+            "hex": fixture.get("hex"),
+            "size": int(fixture["size"]) if isinstance(fixture.get("size"), str) and fixture["size"].isdigit() else fixture.get("size"),
+            "opcode": fixture.get("decodedOpcode"),
+            "operandMask": fixture.get("decodedOperandMask"),
+            "outputKind": fixture.get("outputKind"),
+            "bossIndexKind": fixture.get("bossIndexKind"),
+            "bossIndexValue": fixture.get("bossIndexValue"),
+            "bossPresent": fixture.get("bossPresent"),
+            "valueKind": fixture.get("valueKind"),
+            "value": fixture.get("value"),
+            "action": fixture.get("action"),
+            "result": fixture.get("result"),
+            "faultKind": fixture.get("faultKind"),
+            "faultDetail": fixture.get("faultDetail"),
+            "matchesPath": fixture.get("matchesPath"),
+        },
+        "witness": {
+            key: witness.get(key)
+            for key in (
+                "currentTime",
+                "instrTime",
+                "opcode",
+                "nextOffset",
+                "instructionMask",
+                "operandMask",
+                "outputRaw",
+                "outputHostBefore",
+                "valueRaw",
+                "valueHost",
+                "bossIndexRaw",
+                "bossIndexHost",
+                "bossPresent",
+                "bufferSize",
+                "difficultyPass",
+            )
+        },
+        "nextAction": next_action_for(risk["class"], record["title"], path),
+    }
+
+
+def parse_env(text: str) -> tuple[str, int, int, str]:
+    parts = text.split(":")
+    if len(parts) not in (3, 4):
+        raise argparse.ArgumentTypeError("env must be title:activeMask:overrideMask[:name]")
+    title, active, override = parts[:3]
+    if title not in {"th06", "th07", "th08"}:
+        raise argparse.ArgumentTypeError("env title must be th06, th07, or th08")
+    try:
+        active_mask = int(active, 0)
+        override_mask = int(override, 0)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("env masks must be integers") from exc
+    if not 0 <= active_mask <= 255 or not 0 <= override_mask <= 255:
+        raise argparse.ArgumentTypeError("env masks must fit in an unsigned byte")
+    name = parts[3] if len(parts) == 4 else f"active{active_mask}-override{override_mask}"
+    return title, active_mask, override_mask, name
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build a profile-driven symbolic raw ECL boss integer-read candidate queue."
+    )
+    parser.add_argument(
+        "--env",
+        action="append",
+        type=parse_env,
+        help="environment as title:activeMask:overrideMask[:name]; defaults cover TH07/TH08 plus TH08 override delta",
+    )
+    parser.add_argument(
+        "--path",
+        default="all",
+        help="path name from `lake exe symex list-boss-int-paths`, or all",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str]) -> int:
+    args = parse_args(argv)
+    envs = args.env or DEFAULT_ENVS
+    candidates: list[dict[str, Any]] = []
+    for title, active_mask, override_mask, env_name in envs:
+        records = run_materializer(title, args.path, active_mask, override_mask)
+        if isinstance(records, dict):
+            records = [records]
+        if not isinstance(records, list):
+            raise QueueError("boss integer-read materializer returned neither object nor list")
+        for record in records:
+            if not isinstance(record, dict):
+                raise QueueError(f"bad boss integer-read materializer record: {record!r}")
+            if record.get("status") == "sat":
+                candidates.append(compact_record(record, env_name))
+    candidates.sort(
+        key=lambda item: (
+            item["risk"]["priorityRank"],
+            item["title"],
+            item["environment"],
+            item["path"],
+        )
+    )
+    payload = {
+        "schema": "touhou-formal-symex-boss-int-candidate-queue-v1",
+        "generator": "scripts/symex_boss_int_candidate_queue.py",
+        "pathRequest": args.path,
+        "environmentCount": len(envs),
+        "candidateCount": len(candidates),
+        "candidates": candidates,
+    }
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main(sys.argv[1:]))
+    except QueueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        raise SystemExit(1)

@@ -6,9 +6,10 @@ already better than the previous fuzzing lane?
 
 Short answer: it is already better than fuzzing for the modeled VM-core
 dispatch skeleton, the first shared opcode-body slice, the integer resolver,
-the integer binary-op slice, and the CALL/RET/conditional-CALL slices. It is
-not yet better than fuzzing for the full ECL/ANM VM, because most gameplay host
-effects, callbacks, and multi-context scheduling are not modeled yet.
+the integer binary-op slice, the TH07/TH08 boss integer-read slice, and the
+CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the full
+ECL/ANM VM, because most gameplay host effects, callbacks, and multi-context
+scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -28,6 +29,7 @@ The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_body_candidate_queue.py` and
 `scripts/symex_int_resolver_queue.py` and
 `scripts/symex_int_binary_candidate_queue.py` and
+`scripts/symex_boss_int_candidate_queue.py` and
 `scripts/symex_callret_candidate_queue.py` and
 `scripts/symex_condcall_candidate_queue.py`, summarizes path coverage, reads
 the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
@@ -42,7 +44,7 @@ python3 scripts/evaluate_symex_effectiveness.py > /tmp/touhou_symex_effectivenes
 ```
 
 Both completed successfully on the current raw-step, raw-body, resolver,
-integer-binary, CALL/RET, and conditional-CALL model. When a
+integer-binary, boss-int, CALL/RET, and conditional-CALL model. When a
 previous queue result should be reused instead of recomputed, the equivalent
 assessment is:
 
@@ -52,6 +54,7 @@ python3 scripts/evaluate_symex_effectiveness.py \
   --body-queue-json /tmp/body_queue.json \
   --resolver-queue-json /tmp/resolver_queue.json \
   --int-binary-queue-json /tmp/int_binary_queue.json \
+  --boss-int-queue-json /tmp/boss_queue.json \
   --callret-queue-json /tmp/callret_queue.json \
   --condcall-queue-json /tmp/condcall_queue.json
 ```
@@ -318,6 +321,63 @@ instruction where the RHS is not zero in raw bytes but resolves to a host zero,"
 or "a div/mod instruction where the resolved operands are exactly
 `INT_MIN / -1`." Those are semantic path predicates, not mutation recipes.
 
+## Boss-indexed integer-read coverage
+
+The boss integer-read model covers one larger host-boundary opcode family:
+
+- TH07 `ECL_GET_BOSS_INT` (`opcode = 43`);
+- TH08 low opcode `86`.
+
+Both are represented by one `RawBossIntReadShape` profile. The shared semantics
+models:
+
+- output slot 0 lvalue resolution;
+- value operand slot 1's mask bit, including the mask-clear branch that bypasses
+  the boss table read entirely;
+- boss index operand slot 2, resolved through the current enemy's integer
+  resolver;
+- the fixed `bosses[8]` host array bound;
+- null boss pointers for a source-backed dereferencing selector (`10000`);
+- in-bounds host and default-raw value reads.
+
+The symbolic path families are:
+
+```text
+boss-int-value-raw-no-boss-read
+boss-int-index-before-array
+boss-int-index-at-or-past-array
+boss-int-null-deref
+boss-int-value-resolved-host
+boss-int-value-resolved-default-raw
+```
+
+Observed result:
+
+| Metric | Result |
+| --- | --- |
+| environments | 3 |
+| modeled title-specific candidates | 18 |
+| solver status | 18 `sat` |
+| Lean byte materialization/replay | 18 `matchesPath=true` |
+| all modeled title-specific boss-int paths covered | yes |
+
+Risk split:
+
+| Boss-int branch | Count | Interpretation |
+| --- | ---: | --- |
+| `boss-index-oob-read` | 6 | resolved boss index is `< 0` or `>= 8` |
+| `boss-null-deref` | 3 | boss pointer is null while selector `10000` dereferences it |
+| `operand-flag-bypass` | 3 | slot 1 mask bit is clear, so no boss table read occurs |
+| `boss-read-default-raw` | 3 | boss table is read, but an unknown value selector falls through to raw |
+| `boss-read-host-value` | 3 | ordinary in-bounds host-value control |
+
+This is the current best example of the workflow the project wants: the CE
+values are not manually chosen first. The model supplies a title-shared opcode
+shape and generic path predicates; Z3 returns `bossIndexRaw = -1`,
+`bossIndexRaw = 8`, and `bossPresent = false` witnesses where those path
+classes are satisfiable; Lean then encodes those witnesses into 24-byte raw ECL
+instructions and replays them.
+
 ## CALL/RET stack coverage
 
 The shared CALL/RET model covers the plain subroutine control-transfer stack
@@ -399,23 +459,23 @@ controls rather than missing queue entries.
 The current executor still does not cover the full game semantics of each
 instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer rvalue/lvalue resolver branches,
-integer ADD/SUB/MUL/DIV/MOD single-step behavior, plain CALL/RET stack
-behavior, zero divisors, and signed idiv overflow, but not most gameplay host
-effects.
+integer ADD/SUB/MUL/DIV/MOD single-step behavior, TH07/TH08 boss integer
+reads, plain CALL/RET stack behavior, zero divisors, and signed idiv overflow,
+but not most gameplay host effects.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
 | TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD` | 114 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD` | 143 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, integer arithmetic cases `10..14` and `20..24`, integer condition cases `40/42/44/46/48/50`, and CALL/RET cases `52/53` | 70 |
+| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD`, `GET_BOSS_INT` | 142 |
+| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, integer arithmetic cases `10..14` and `20..24`, integer condition cases `40/42/44/46/48/50`, CALL/RET cases `52/53`, and boss integer-read `case 86` | 69 |
 
 The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer resolver branches, integer binary
-arithmetic, plain CALL/RET stack edges, and integer div/mod fault hazards are
-now modeled; "ordinary advance" for the remaining opcodes still does not prove
-their internal branches.
+arithmetic, boss integer reads, plain CALL/RET stack edges, and integer div/mod
+fault hazards are now modeled; "ordinary advance" for the remaining opcodes
+still does not prove their internal branches.
 
 Not covered:
 
@@ -448,6 +508,7 @@ complete for the implemented raw-step abstraction;
 complete for the first implemented raw-body abstraction;
 complete for the implemented integer rvalue resolver abstraction;
 complete for the implemented integer binary-op/lvalue abstraction;
+complete for the implemented TH07/TH08 boss integer-read abstraction;
 complete for the implemented plain CALL/RET stack abstraction;
 complete for the implemented TH06 conditional-CALL abstraction;
 incomplete for full ECL/ANM VM opcode semantics.
@@ -490,6 +551,8 @@ Concrete advantages already demonstrated:
 - every title-specific integer rvalue resolver branch is solved and replayed;
 - every title/environment-specific integer binary arithmetic path is solved and
   replayed, including resolver-driven zero divisors and signed idiv overflow;
+- every TH07/TH08 boss integer-read path is solved and replayed, including
+  `bosses[8]` underflow/overflow and null boss dereference paths;
 - every title/environment-specific plain CALL/RET branch is solved and
   replayed;
 - every TH06 conditional-CALL branch in the current guard abstraction is solved
@@ -500,6 +563,8 @@ Concrete advantages already demonstrated:
   default environments;
 - the integer-binary queue adds 39 non-manual arithmetic/lvalue candidates,
   including 13 `arithmetic-overflow` and 13 `arithmetic-fault` records;
+- the boss integer-read queue adds 18 non-manual host-boundary candidates,
+  including 9 high-priority OOB/null-deref counterexamples;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a
@@ -518,10 +583,11 @@ Fuzz is still better outside the current formal model:
 ## Current verdict
 
 For the implemented VM-core skeleton, first shared body slice, integer resolver
-slice, integer binary-op slice, plain CALL/RET stack slice, and TH06
-conditional-CALL slice, Lean + SMT is already better than fuzzing: it gives
-exhaustive path-class coverage, satisfiable/unsatisfiable controls, concrete
-counterexample bytes, and shared TH06/TH07/TH08 semantics.
+slice, integer binary-op slice, TH07/TH08 boss integer-read slice, plain
+CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT is already
+better than fuzzing: it gives exhaustive path-class coverage,
+satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
+TH06/TH07/TH08 semantics.
 
 For the whole VM, it is not yet better. The model has to move down one layer
 into opcode bodies and bounded multi-step execution before we can honestly say
@@ -535,6 +601,7 @@ The next technically useful targets are:
    `CALL`, callbacks, and stacked jumps;
 3. refine arithmetic to exact machine behavior for signed add/sub/mul overflow
    and float divide/fmod edge cases;
-4. lower the top raw-step queue entries into TH06 retail batches;
-5. add TH07/TH08 archive adapters so the same shared witnesses can be validated
+4. lower the boss integer-read OOB/null witnesses into TH07/TH08 retail batches;
+5. lower the top raw-step queue entries into TH06 retail batches;
+6. add TH07/TH08 archive adapters so the same shared witnesses can be validated
    without TH06-specific mutation code.

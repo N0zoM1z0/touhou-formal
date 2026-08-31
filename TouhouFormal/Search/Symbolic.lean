@@ -1,5 +1,6 @@
 import TouhouFormal.ECL.Body
 import TouhouFormal.ECL.Arithmetic
+import TouhouFormal.ECL.Boss
 import TouhouFormal.ECL.Stack
 import TouhouFormal.ECL.Step
 import TouhouFormal.TH06.Wire
@@ -291,6 +292,40 @@ def allRawIntBinaryPaths : List RawIntBinaryPath :=
     allRawIntResolverPaths.map RawIntBinaryPath.divisorZero ++
     allRawIntResolverPaths.map RawIntBinaryPath.divideOverflow
 
+inductive RawBossIntReadPath where
+  | valueRawNoBossRead
+  | bossIndexBeforeArray
+  | bossIndexAtOrPastArray
+  | bossNullDeref
+  | bossValueResolvedHost
+  | bossValueResolvedDefaultRaw
+deriving Repr, DecidableEq
+
+def RawBossIntReadPath.name : RawBossIntReadPath -> String
+  | .valueRawNoBossRead => "boss-int-value-raw-no-boss-read"
+  | .bossIndexBeforeArray => "boss-int-index-before-array"
+  | .bossIndexAtOrPastArray => "boss-int-index-at-or-past-array"
+  | .bossNullDeref => "boss-int-null-deref"
+  | .bossValueResolvedHost => "boss-int-value-resolved-host"
+  | .bossValueResolvedDefaultRaw => "boss-int-value-resolved-default-raw"
+
+def RawBossIntReadPath.parse? : String -> Option RawBossIntReadPath
+  | "boss-int-value-raw-no-boss-read" => some .valueRawNoBossRead
+  | "boss-int-index-before-array" => some .bossIndexBeforeArray
+  | "boss-int-index-at-or-past-array" => some .bossIndexAtOrPastArray
+  | "boss-int-null-deref" => some .bossNullDeref
+  | "boss-int-value-resolved-host" => some .bossValueResolvedHost
+  | "boss-int-value-resolved-default-raw" => some .bossValueResolvedDefaultRaw
+  | _ => none
+
+def allRawBossIntReadPaths : List RawBossIntReadPath :=
+  [ .valueRawNoBossRead
+  , .bossIndexBeforeArray
+  , .bossIndexAtOrPastArray
+  , .bossNullDeref
+  , .bossValueResolvedHost
+  , .bossValueResolvedDefaultRaw ]
+
 private def joinLines : List String -> String
   | [] => ""
   | line :: rest => line ++ "\n" ++ joinLines rest
@@ -381,6 +416,12 @@ private def maxIntBinaryOpOperandIndex
   Nat.max
     (Nat.max op.outputOperandIndex op.lhsOperandIndex)
     op.rhsOperandIndex
+
+private def maxBossIntReadOperandIndex
+    (read : TouhouFormal.ECL.RawBossIntReadShape) : Nat :=
+  Nat.max
+    (Nat.max read.outputOperandIndex read.valueOperandIndex)
+    read.bossIndexOperandIndex
 
 private def maxNatList (values : List Nat) : Nat :=
   values.foldl (fun acc value => Nat.max acc value) 0
@@ -588,6 +629,18 @@ private def requiredIntBinaryInstructionBytes
   | some baseOffset =>
       let maxOperand := maxNatList (rawShape.intBinaryOps.map maxIntBinaryOpOperandIndex)
       if rawShape.intBinaryOps.isEmpty then
+        rawShape.fixedPrefixBytes
+      else
+        baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
+
+private def requiredBossIntReadInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (_path : RawBossIntReadPath) : Nat :=
+  match rawShape.fixedI32OperandBaseOffset with
+  | none => rawShape.fixedPrefixBytes
+  | some baseOffset =>
+      let maxOperand := maxNatList (rawShape.bossIntReads.map maxBossIntReadOperandIndex)
+      if rawShape.bossIntReads.isEmpty then
         rawShape.fixedPrefixBytes
       else
         baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
@@ -989,6 +1042,84 @@ private def rawIntBinaryPathConstraints
             [ intBinaryOpSetAssertion hazardOps fun op =>
                 intBinaryDivisorPredicate resolver op rhsPath true ]
 
+private def bossIntReadSetAssertion
+    (reads : List TouhouFormal.ECL.RawBossIntReadShape)
+    (extraPredicate : TouhouFormal.ECL.RawBossIntReadShape -> String) : String :=
+  match reads with
+  | [] => "(assert false) ; profile has no source-backed boss integer-read opcode for this path"
+  | [read] =>
+      "(assert (and (= opcode " ++ toString read.opcode ++ ") " ++ extraPredicate read ++ "))"
+  | reads =>
+      "(assert (or " ++
+        joinWith " " (reads.map fun read =>
+          "(and (= opcode " ++ toString read.opcode ++ ") " ++ extraPredicate read ++ ")") ++
+        "))"
+
+private def bossIntValueNeedsBossPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossIntReadShape) : String :=
+  intResolverSwitchPredicate resolver read.valueOperandIndex "operandMask"
+
+private def bossIntIndexValueExpr
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossIntReadShape) : String :=
+  rawIntResolvedValueExpr resolver read.bossIndexOperandIndex "bossIndexRaw" "bossIndexHost"
+
+private def bossIntOutputWritablePredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossIntReadShape) : String :=
+  rawIntLValueWritablePredicate resolver read.outputOperandIndex "outputRaw"
+
+private def bossIntIndexInBoundsPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossIntReadShape) : String :=
+  let indexExpr := bossIntIndexValueExpr resolver read
+  "(and (<= 0 " ++ indexExpr ++ ") (< " ++ indexExpr ++ " " ++
+    toString read.bossSlotCount ++ "))"
+
+private def bossIntReadPathPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossIntReadShape)
+    (path : RawBossIntReadPath) : String :=
+  let valueNeedsBoss := bossIntValueNeedsBossPredicate resolver read
+  let indexExpr := bossIntIndexValueExpr resolver read
+  let outputWritable := bossIntOutputWritablePredicate resolver read
+  let indexInBounds := bossIntIndexInBoundsPredicate resolver read
+  match path with
+  | .valueRawNoBossRead =>
+      "(and " ++ outputWritable ++ " (not " ++ valueNeedsBoss ++ "))"
+  | .bossIndexBeforeArray =>
+      "(and " ++ outputWritable ++ " " ++ valueNeedsBoss ++ " (< " ++ indexExpr ++ " 0))"
+  | .bossIndexAtOrPastArray =>
+      "(and " ++ outputWritable ++ " " ++ valueNeedsBoss ++ " (<= " ++
+        toString read.bossSlotCount ++ " " ++ indexExpr ++ "))"
+  | .bossNullDeref =>
+      "(and " ++ outputWritable ++ " " ++
+        bossIntValueNeedsBossPredicate resolver read ++
+        " " ++ intSelectorSetPredicate "valueRaw" read.nullDerefValueSelectors ++
+        " " ++ indexInBounds ++ " (not bossPresent))"
+  | .bossValueResolvedHost =>
+      "(and " ++ outputWritable ++ " " ++
+        rawIntRValuePathPredicate resolver read.valueOperandIndex "valueRaw" .resolvedHost ++
+        " " ++ indexInBounds ++ " bossPresent)"
+  | .bossValueResolvedDefaultRaw =>
+      "(and " ++ outputWritable ++ " " ++
+        rawIntRValuePathPredicate resolver read.valueOperandIndex "valueRaw" .resolvedDefaultRaw ++
+        " " ++ indexInBounds ++ " bossPresent)"
+
+private def rawBossIntReadPathConstraints
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawBossIntReadPath) : List String :=
+  let dispatchPrefix :=
+    [ "(assert (= currentTime instrTime))"
+    , "(assert difficultyPass)" ]
+  match rawShape.intRValueResolver with
+  | none => dispatchPrefix ++ ["(assert false) ; profile has no integer resolver"]
+  | some resolver =>
+      dispatchPrefix ++
+        [ bossIntReadSetAssertion rawShape.bossIntReads fun read =>
+            bossIntReadPathPredicate resolver read path ]
+
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
 
@@ -1003,6 +1134,9 @@ private def rawConditionalCallValueTerms : String :=
 
 private def rawIntBinaryValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask outputRaw outputHostBefore lhsRaw rhsRaw lhsHost rhsHost bufferSize difficultyPass)"
+
+private def rawBossIntReadValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask outputRaw outputHostBefore valueRaw valueHost bossIndexRaw bossIndexHost bossPresent bufferSize difficultyPass)"
 
 private def rawStepQueryWith
     (includeModel includeValues : Bool)
@@ -1415,6 +1549,82 @@ def rawIntBinaryValuesQuery
 def listRawIntBinaryPathsText : String :=
   joinLines (allRawIntBinaryPaths.map RawIntBinaryPath.name)
 
+private def rawBossIntReadQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawBossIntReadPath)
+    (activeMask overrideMask : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL boss integer-read query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      let difficultyExpr :=
+        match rawShape.difficultyMaskPolicy with
+        | none => "true"
+        | some policy => difficultyPassExpr policy
+      let requiredBytes := requiredBossIntReadInstructionBytes rawShape path
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared boss integer-read semantics."
+         , "; Title: " ++ shape.title
+         , "; Boss integer-read path: " ++ path.name
+         , "(declare-const currentTime Int)"
+         , "(declare-const instrTime Int)"
+         , "(declare-const opcode Int)"
+         , "(declare-const nextOffset Int)"
+         , "(declare-const outputRaw Int)"
+         , "(declare-const outputHostBefore Int)"
+         , "(declare-const valueRaw Int)"
+         , "(declare-const valueHost Int)"
+         , "(declare-const bossIndexRaw Int)"
+         , "(declare-const bossIndexHost Int)"
+         , "(declare-const bossPresent Bool)"
+         , "(declare-const bufferSize Int)"
+         , "(define-fun fileOffset () Int 0)"
+         , "(declare-const instructionMask (_ BitVec 8))"
+         , "(define-fun activeMask () (_ BitVec 8) " ++ bv8 activeMask ++ ")"
+         , "(define-fun overrideMask () (_ BitVec 8) " ++ bv8 overrideMask ++ ")"
+         , "(define-fun requiredDifficultyMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+         , "(define-fun difficultyPass () Bool " ++ difficultyExpr ++ ")"
+         , scalarRange "instrTime" rawShape.timeWidth
+         , scalarRange "opcode" rawShape.opcodeWidth
+         , scalarRange "nextOffset" rawShape.nextOffsetWidth
+         , signedI32Range "outputRaw"
+         , signedI32Range "outputHostBefore"
+         , signedI32Range "valueRaw"
+         , signedI32Range "valueHost"
+         , signedI32Range "bossIndexRaw"
+         , signedI32Range "bossIndexHost"
+         , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
+         , "(assert (= nextOffset " ++ toString requiredBytes ++ "))"
+         , "(assert (= bufferSize " ++ toString requiredBytes ++ "))" ] ++
+         operandMaskSmtLines rawShape ++
+         rawBossIntReadPathConstraints rawShape path ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawBossIntReadValueTerms ++ ")"] else []))
+
+def rawBossIntReadQuery
+    (title : Title)
+    (path : RawBossIntReadPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawBossIntReadQueryWith false false title path activeMask overrideMask
+
+def rawBossIntReadValuesQuery
+    (title : Title)
+    (path : RawBossIntReadPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawBossIntReadQueryWith false true title path activeMask overrideMask
+
+def listRawBossIntReadPathsText : String :=
+  joinLines (allRawBossIntReadPaths.map RawBossIntReadPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -1488,6 +1698,16 @@ structure RawIntBinaryWitness extends RawStepWitness where
   rhsHost : Int
 deriving Repr, DecidableEq
 
+structure RawBossIntReadWitness extends RawStepWitness where
+  outputRaw : Int
+  outputHostBefore : Int
+  valueRaw : Int
+  valueHost : Int
+  bossIndexRaw : Int
+  bossIndexHost : Int
+  bossPresent : Bool
+deriving Repr, DecidableEq
+
 structure RawIntResolverMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
@@ -1515,6 +1735,14 @@ structure RawIntBinaryMaterialization where
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
   prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared
   result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome
+  matchesPath : Bool
+deriving Repr
+
+structure RawBossIntReadMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared
+  result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome
   matchesPath : Bool
 deriving Repr
 
@@ -1924,6 +2152,20 @@ private def findIntBinaryOp
               " is not a source-backed integer binary opcode for " ++ shape.title)
       | some op => .ok op
 
+private def findBossIntRead
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (opcode : Int) :
+    Except String TouhouFormal.ECL.RawBossIntReadShape :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.findBossIntRead? opcode with
+      | none =>
+          .error
+            ("opcode " ++ toString opcode ++
+              " is not a source-backed boss integer-read opcode for " ++ shape.title)
+      | some read => .ok read
+
 private def rawIntBinaryWitnessBaseBytes
     (title : Title)
     (path : RawIntBinaryPath)
@@ -2032,6 +2274,121 @@ private def runRawIntBinaryResult
   let shape := title.headerShape
   .ok
     (TouhouFormal.ECL.rawIntBinaryStep
+      shape
+      witness.currentTime
+      witness.activeMask
+      witness.overrideMask
+        8
+        witness.bufferSize
+        rawPrefix
+        operands)
+
+private def rawBossIntReadWitnessBaseBytes
+    (title : Title)
+    (path : RawBossIntReadPath)
+    (witness : RawBossIntReadWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredBossIntReadInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required boss-integer-read bytes=" ++ toString requiredBytes)
+      else
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := witness.currentTime
+            instrTime := witness.instrTime
+            opcode := witness.opcode
+            nextOffset := witness.nextOffset
+            instructionMask := witness.instructionMask
+            operandMask := witness.operandMask
+            activeMask := witness.activeMask
+            overrideMask := witness.overrideMask
+            jumpTargetTime := witness.jumpTargetTime
+            jumpDisplacement := witness.jumpDisplacement
+            bufferSize := witness.bufferSize }
+
+private def rawBossIntReadWitnessBytes
+    (title : Title)
+    (path : RawBossIntReadPath)
+    (witness : RawBossIntReadWitness) : Except String TouhouFormal.Bytes := do
+  let shape := title.headerShape
+  let read <- findBossIntRead shape witness.opcode
+  let bytes <- rawBossIntReadWitnessBaseBytes title path witness
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      read.outputOperandIndex
+      witness.outputRaw
+      "bossIntReadOutputRaw"
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      read.valueOperandIndex
+      witness.valueRaw
+      "bossIntReadValueRaw"
+  writeFixedI32OperandValue
+    bytes
+    shape
+    read.bossIndexOperandIndex
+    witness.bossIndexRaw
+    "bossIntReadBossIndexRaw"
+
+private def decodeRawBossIntReadOperands
+    (title : Title)
+    (witness : RawBossIntReadWitness)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String
+      (TouhouFormal.ECL.RawBossIntReadShape × TouhouFormal.ECL.RawBossIntReadOperands) := do
+  let shape := title.headerShape
+  let read <- findBossIntRead shape rawPrefix.opcode
+  let outputRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        read.outputOperandIndex)
+  let valueRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        read.valueOperandIndex)
+  let bossIndexRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        read.bossIndexOperandIndex)
+  .ok
+    ( read
+    , { outputRaw := outputRaw
+        outputHostBefore := witness.outputHostBefore
+        valueRaw := valueRaw
+        valueHost := witness.valueHost
+        bossIndexRaw := bossIndexRaw
+        bossIndexHost := witness.bossIndexHost
+        bossPresent := witness.bossPresent } )
+
+private def runRawBossIntReadResult
+    (title : Title)
+    (witness : RawBossIntReadWitness)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix)
+    (operands : TouhouFormal.ECL.RawBossIntReadOperands) :
+    Except String (Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome) :=
+  let shape := title.headerShape
+  .ok
+    (TouhouFormal.ECL.rawBossIntReadStep
       shape
       witness.currentTime
       witness.activeMask
@@ -2361,6 +2718,47 @@ private def RawIntBinaryPath.matchesMaterialization
         preparedRhsPath? prepared == some rhsPath
   | _, _ => false
 
+private def preparedBossValuePath?
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) :
+    Option RawIntResolverPath :=
+  match prepared with
+  | .ok value =>
+      match value.valueResolution with
+      | none => none
+      | some resolution =>
+          match resolution.kind with
+          | .rawImmediate => some .rawImmediate
+          | .resolvedHost => some .resolvedHost
+          | .resolvedDefaultRaw => some .resolvedDefaultRaw
+  | .error _ => none
+
+private def RawBossIntReadPath.matchesMaterialization
+    (path : RawBossIntReadPath)
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared)
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome) : Bool :=
+  match path, result with
+  | .valueRawNoBossRead, .ok outcome =>
+      outcome.action == .valueRawNoBossRead &&
+        preparedBossValuePath? prepared == some .rawImmediate
+  | .bossIndexBeforeArray, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.bossIntRead.bosses" &&
+        faultIndexBeforeZero faultValue
+  | .bossIndexAtOrPastArray, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.bossIntRead.bosses" &&
+        faultIndexAtOrPastBound faultValue
+  | .bossNullDeref, .error faultValue =>
+      faultValue.kind == .nullDereference &&
+        faultValue.component == "EclRun.bossIntRead.bosses"
+  | .bossValueResolvedHost, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedBossValuePath? prepared == some .resolvedHost
+  | .bossValueResolvedDefaultRaw, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedBossValuePath? prepared == some .resolvedDefaultRaw
+  | _, _ => false
+
 def rawStepMaterialize
     (title : Title)
     (path : RawStepPath)
@@ -2569,6 +2967,27 @@ def rawIntBinaryMaterialize
       result := result
       matchesPath := path.matchesMaterialization prepared result }
 
+def rawBossIntReadMaterialize
+    (title : Title)
+    (path : RawBossIntReadPath)
+    (witness : RawBossIntReadWitness) : Except String RawBossIntReadMaterialization := do
+  let bytes <- rawBossIntReadWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix title.headerShape bytes 0)
+  let (read, operands) <- decodeRawBossIntReadOperands title witness bytes rawPrefix
+  let prepared :=
+    TouhouFormal.ECL.rawBossIntReadPrepare
+      title.headerShape
+      rawPrefix
+      read
+      operands
+  let result <- runRawBossIntReadResult title witness rawPrefix operands
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      prepared := prepared
+      result := result
+      matchesPath := path.matchesMaterialization prepared result }
+
 private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .yielded => "yielded"
   | .skipped => "skipped"
@@ -2592,11 +3011,23 @@ private def rawIntBinaryActionName : TouhouFormal.ECL.RawIntBinaryOpAction -> St
   | .nonIntOutput => "non-int-output"
   | .vmError => "vm-error"
 
+private def rawBossIntReadActionName : TouhouFormal.ECL.RawBossIntReadAction -> String
+  | .yielded => "yielded"
+  | .skipped => "skipped"
+  | .advanced => "advanced"
+  | .valueRawNoBossRead => "value-raw-no-boss-read"
+  | .nonIntOutput => "non-int-output"
+  | .vmError => "vm-error"
+
 private def optionIntText : Option Int -> String
   | none => "-"
   | some value => toString value
 
 private def optionNatText : Option Nat -> String
+  | none => "-"
+  | some value => toString value
+
+private def optionBoolText : Option Bool -> String
   | none => "-"
   | some value => toString value
 
@@ -2872,6 +3303,108 @@ def RawIntBinaryMaterialization.report
     , "result=" ++ optionIntText (intBinaryResultValue materialization.result)
     , "faultKind=" ++ intBinaryResultFaultKind materialization.result
     , "faultDetail=" ++ intBinaryResultFaultDetail materialization.result
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+private def bossIntReadResultActionText
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome) : String :=
+  match result with
+  | .ok outcome => rawBossIntReadActionName outcome.action
+  | .error faultValue => "fault:" ++ faultValue.kind.name
+
+private def bossIntReadResultFaultKind
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.kind.name
+
+private def bossIntReadResultFaultDetail
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.detail
+
+private def bossIntReadResultValue
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.result
+  | .error _ => none
+
+private def bossIntReadPreparedOutputKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value => value.output.kind.name
+  | .error _ => "-"
+
+private def bossIntReadPreparedOutputKnownText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value => toString value.output.selectorKnown
+  | .error _ => "-"
+
+private def bossIntReadPreparedOutputFlagText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value => toString value.output.flagEnabled
+  | .error _ => "-"
+
+private def bossIntReadPreparedBossIndexKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value =>
+      match value.bossIndexResolution with
+      | none => "-"
+      | some bossIndex => bossIndex.kind.name
+  | .error _ => "-"
+
+private def bossIntReadPreparedBossIndexValueText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value => optionIntText value.bossIndexValue
+  | .error _ => "-"
+
+private def bossIntReadPreparedValueKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value =>
+      match value.valueResolution with
+      | none => "-"
+      | some readValue => readValue.kind.name
+  | .error _ => "-"
+
+private def bossIntReadPreparedValueText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value => optionIntText value.value
+  | .error _ => "-"
+
+private def bossIntReadPreparedBossPresentText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared) : String :=
+  match prepared with
+  | .ok value => optionBoolText value.bossPresent
+  | .error _ => "-"
+
+def RawBossIntReadMaterialization.report
+    (materialization : RawBossIntReadMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "outputKind=" ++ bossIntReadPreparedOutputKindText materialization.prepared
+    , "outputSelectorKnown=" ++ bossIntReadPreparedOutputKnownText materialization.prepared
+    , "outputFlagEnabled=" ++ bossIntReadPreparedOutputFlagText materialization.prepared
+    , "bossIndexKind=" ++ bossIntReadPreparedBossIndexKindText materialization.prepared
+    , "bossIndexValue=" ++ bossIntReadPreparedBossIndexValueText materialization.prepared
+    , "bossPresent=" ++ bossIntReadPreparedBossPresentText materialization.prepared
+    , "valueKind=" ++ bossIntReadPreparedValueKindText materialization.prepared
+    , "value=" ++ bossIntReadPreparedValueText materialization.prepared
+    , "action=" ++ bossIntReadResultActionText materialization.result
+    , "result=" ++ optionIntText (bossIntReadResultValue materialization.result)
+    , "faultKind=" ++ bossIntReadResultFaultKind materialization.result
+    , "faultDetail=" ++ bossIntReadResultFaultDetail materialization.result
     , "matchesPath=" ++ toString materialization.matchesPath ]
 
 def RawIntResolverMaterialization.report

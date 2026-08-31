@@ -111,6 +111,14 @@ relative to `/home/yann/yann/touhou/formal`.
   `GET_INT_VALUE(enemy, 1)`/`GET_INT_VALUE(enemy, 2)`.
 - `reference/th07/src/th07/EclManager.hpp:114`: the integer binary arithmetic
   opcodes are numbered `ECL_ADD = 12` through `ECL_MOD = 16`.
+- `reference/th07/src/th07/EclManager.hpp:112`: `ECL_GET_BOSS_INT` is opcode
+  43.
+- `reference/th07/src/th07/EclManager.cpp:1001`: `ECL_GET_BOSS_INT` writes
+  slot 0 from `GET_INT_VALUE(g_EnemyManager.bosses[GET_INT_VALUE(enemy, 2)],
+  1)`, so slot 1's operand mask bit controls whether the boss pointer is
+  actually dereferenced.
+- `reference/th07/src/th07/EnemyManager.hpp:378`: TH07 stores eight boss
+  pointers in `bosses[8]`.
 - `reference/th07/src/th07/EclManager.cpp:1092`: `ECL_JUMP_IF_EQUAL`,
   `ECL_JUMP_IF_NOT_EQUAL`, `ECL_JUMP_IF_LOWER_THAN`, `ECL_JUMP_IF_LEQ_THAN`,
   `ECL_JUMP_IF_GREATER_THAN`, and `ECL_JUMP_IF_GEQ_THAN` compare resolved
@@ -182,6 +190,13 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclRunLow.inl:291`: TH08 low opcodes 20 through 24 assign
   to `WriteInt(enemy, instruction, 0)` using `ReadInt(..., 1)` and
   `ReadInt(..., 2)`.
+- `reference/th08/src/EclRunLow.inl:694`: TH08 low opcode 86 writes slot 0
+  from raw slot 1 when `operandFlags & 2U` is clear, otherwise it resolves slot
+  1 against `g_EnemyManager.bosses[ReadInt(..., 2)]`.
+- `reference/th08/src/EclRunLow.inl:703`: the adjacent float boss-read opcode
+  checks the boss pointer before resolving, unlike integer opcode 86.
+- `reference/th08/src/EnemyManager.hpp:447`: TH08 stores eight boss pointers in
+  `bosses[8]`.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
 - `reference/th08/src/EclRunLow.inl:415`: low opcodes 52 and 53 call

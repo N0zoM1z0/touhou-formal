@@ -120,6 +120,17 @@ python3 scripts/symex_int_binary_candidate_queue.py --path int-binary-divide-ove
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 5; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {c["risk"]["class"] for c in data["candidates"]} == {"arithmetic-overflow"}' "$solver_output"
 
+lake exe symex query-boss-int th06 boss-int-index-before-array 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+python3 scripts/symex_materialize_boss_int_read.py th07 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 6; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert {r["path"] for r in xs} == {"boss-int-value-raw-no-boss-read", "boss-int-index-before-array", "boss-int-index-at-or-past-array", "boss-int-null-deref", "boss-int-value-resolved-host", "boss-int-value-resolved-default-raw"}; assert any(r["path"] == "boss-int-null-deref" and r["witness"]["valueRaw"] == 10000 and r["fixture"]["faultKind"] == "null-dereference" for r in xs)' "$solver_output"
+
+python3 scripts/symex_boss_int_candidate_queue.py > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 18; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert sum(1 for c in data["candidates"] if c["risk"]["priority"] == "high") == 9; assert {c["risk"]["class"] for c in data["candidates"] if c["risk"]["priority"] == "high"} == {"boss-index-oob-read", "boss-null-deref"}' "$solver_output"
+
 lake exe symex query-callret th06 call-no-op 1 0 | z3 -in | tee "$solver_output"
 grep -q '^unsat$' "$solver_output"
 
