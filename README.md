@@ -8,27 +8,34 @@ original behavior closely enough that formal search can produce counterexamples
 for properties the retail VM does not satisfy, then validate the interesting
 ones against the original games.
 
-## First slice
+## Current slice
 
-The initial executable slice targets a retail-confirmed TH06 failure path:
+The executable model currently covers these source-backed boundaries:
 
-1. A stage timeline instruction uses `arg0` as an ECL subroutine id.
-2. `EnemyManager::SpawnEnemy` passes that id to `EclManager::CallEclSub`.
-3. `CallEclSub` reads `subTable[subId]` without a range check.
+- TH06 raw bytes flow through the shared ECL loader, timeline-prefix decoder,
+  and `CallEclSub` lookup to reproduce the `arg0 = 256` subTable fault.
+- TH07 and TH08 reuse the same lookup semantics while preserving their
+  negative-sub-id policy difference.
+- Loader and cursor checks expose first missing-byte, zero-size, and
+  before-buffer boundaries as executable theorems.
+- Raw ECL instruction prefixes and ANM entry headers are decoded through shared
+  profile-driven code across TH06/TH07/TH08.
 
 The Lean model treats the first invalid operation as a `Fault`. It does not try
 to predict arbitrary C++ undefined behavior after that point.
 
 ## Repository layout
 
-- `TouhouFormal/Core/`: generic fault, evidence, and bounded transition-system
-  definitions.
-- `TouhouFormal/TH06/`: TH06 ECL wire facts and executable semantics.
-- `TouhouFormal/TH07/`, `TouhouFormal/TH08/`: version-specific model homes.
-- `TouhouFormal/Search/`: SMT and symbolic-search bridges.
+- `TouhouFormal/Core/`: byte/scalar reads, faults, evidence, and bounded
+  transition-system definitions.
+- `TouhouFormal/ECL/`: shared ECL profile, loader, lookup, timeline, and raw
+  instruction-prefix semantics.
+- `TouhouFormal/ANM/`: shared ANM entry profile and entry-header decoding.
+- `TouhouFormal/TH06/`, `TouhouFormal/TH07/`, `TouhouFormal/TH08/`:
+  title-specific profile facts, fixtures, and deltas.
+- `TouhouFormal/Search/`: bounded checks and SMT bridges.
 - `docs/`: modeling policy, source evidence, and roadmap notes.
 - `scripts/`: reproducible local checks.
-- `tests/`: future regression fixtures.
 
 ## Commands
 
@@ -36,8 +43,11 @@ to predict arbitrary C++ undefined behavior after that point.
 lake build
 lake exe check
 lake exe th06_smt th06-sub-oob | z3 -in
+lake exe th06_smt th08-negative-noop-unsat | z3 -in
 ./scripts/check.sh
+./scripts/retail_inventory.sh
 ```
 
 `scripts/check.sh` runs the Lean build, executable counterexample check, and
-the initial Z3 query together.
+the current Z3 controls together. `scripts/retail_inventory.sh` is read-only and
+records archive hashes plus executable/data CRCs before any Wine validation.
