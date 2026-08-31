@@ -70,6 +70,12 @@ Build a sorted candidate queue:
 ./scripts/symex_candidate_queue.py
 ```
 
+Evaluate the current formal-vs-fuzz effectiveness baseline:
+
+```bash
+python3 scripts/evaluate_symex_effectiveness.py
+```
+
 The optional numeric arguments are `activeMask` and `overrideMask`; both must fit
 in an unsigned byte. `overrideMask` is semantically relevant to TH08 raw ECL and
 ignored by the TH06/TH07 active-bit-intersection policy.

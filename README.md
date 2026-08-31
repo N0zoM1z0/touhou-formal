@@ -59,6 +59,7 @@ lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ./scripts/symex_materialize_raw_step.py th06 jumped-before-buffer 8 0 --ecl-file
 ./scripts/symex_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path jumped-before-buffer
+python3 scripts/evaluate_symex_effectiveness.py
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
@@ -70,11 +71,15 @@ python3 scripts/retail_confirm_th06_raw_symex.py --symex-path jumped-before-buff
 controls, and the current raw-ECL symbolic witness materializer. The
 materializer solves a path, asks Lean to encode the witness into bytes from the
 shared title profile, decodes it again, and checks that the concrete step lands
-back in the requested path class. `scripts/retail_inventory.sh` is read-only and
-records archive hashes plus executable/data CRCs before any Wine validation.
-Retail validation scripts operate on isolated copies under
+back in the requested path class. `scripts/evaluate_symex_effectiveness.py`
+reruns the symbolic candidate queue and reports which modeled branches are
+covered versus which source opcode/body branches remain outside the current
+semantics. `scripts/retail_inventory.sh` is read-only and records archive
+hashes plus executable/data CRCs before any Wine validation. Retail validation
+scripts operate on isolated copies under
 `/home/yann/yann/touhou/formal/retail_extract` and
 `/home/yann/yann/touhou/formal/retail_validation`.
 
 Current retained results are summarized in
-[`docs/formal-results.md`](docs/formal-results.md).
+[`docs/formal-results.md`](docs/formal-results.md). The current formal-vs-fuzz
+coverage assessment is in [`docs/effectiveness.md`](docs/effectiveness.md).
