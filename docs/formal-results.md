@@ -8,7 +8,7 @@ control, or retail-validation candidate.
 
 | ID | Kind | Oracle | Status |
 | --- | --- | --- | --- |
-| `TH06-ECL-SUBTABLE-ARG0-256` | counterexample | `arg0 = 256`, `subCount = 1` reaches `CallEclSub` and reads outside `subTable` | Lean theorem, SMT `sat`, retail-calibrated seed |
+| `TH06-ECL-SUBTABLE-ARG0-256` | counterexample | `arg0 = 256`, `subCount = 1` reaches `CallEclSub` and reads outside `subTable` | Lean theorem, SMT `sat`, Wine retail confirmation: `retail-frame-stall` |
 | `TH07-ECL-SUBTABLE-NEGATIVE` | counterexample | `subId = -1`, `subCount = 1` is unsafe under unchecked policy | Lean theorem, SMT `sat`, retail candidate |
 | `TH08-ECL-SUBTABLE-NEGATIVE` | negative control | `subId = -1` returns before table lookup | Lean theorem, SMT `unsat` for counterexample query |
 | `TH08-ECL-SUBTABLE-POSITIVE-OOB` | counterexample | `subId = 256`, `subCount = 1` is unsafe under TH08's nonnegative path | Lean theorem, SMT `sat`, retail candidate |
@@ -17,6 +17,10 @@ control, or retail-validation candidate.
 Formal value: this separates two inputs that ordinary fuzzing can easily group
 together as "bad sub ids." The source-backed model proves that TH07 and TH08
 have different negative-id semantics.
+
+Retail value: the TH06 case is no longer only a model result. The formal witness
+has been lowered into a one-field `ecldata5.ecl` mutation and confirmed against
+the extracted original game under Wine; see `docs/retail-validation.md`.
 
 ## Loader boundary
 
