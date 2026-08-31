@@ -8,6 +8,8 @@ def title : String := "TH06"
 def rawHeaderSize : Nat := 0x10
 def timelinePointerCount : Nat := 3
 def timelineInstrFixedSize : Nat := 0x1c
+def eclOpcodeJump : Int := 2
+def eclOpcodeJumpDec : Int := 3
 
 def isTimelineSpawnOpcode (opcode : Int) : Bool :=
   decide (0 <= opcode /\ opcode <= 7)
@@ -74,7 +76,9 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           difficultyMaskOffset := some 9
           difficultyMaskWidth := some .u8
           operandMaskOffset := none
-          operandMaskWidth := none }
+          operandMaskWidth := none
+          fixedI32OperandBaseOffset := some 12
+          fixedI32OperandStride := 4 }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

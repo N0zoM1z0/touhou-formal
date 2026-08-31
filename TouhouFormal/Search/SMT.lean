@@ -108,4 +108,39 @@ def th08PositiveSubTableOobQuery : String :=
     TouhouFormal.TH08.headerShape.negativeSubIdPolicy
     1
 
+private def signedI32Range (name : String) : String :=
+  "(assert (and (<= (- 2147483648) " ++ name ++ ") (<= " ++ name ++ " 2147483647)))"
+
+private def concreteRelativeJumpOobQuery
+    (title displacementValue : String)
+    (bufferSize : Nat) : String :=
+  joinLines
+    [ "(set-logic QF_LIA)"
+    , "; Concrete relative-jump target query generated from shared cursor-transfer semantics."
+    , "; Title: " ++ title
+    , "(declare-const fileOffset Int)"
+    , "(declare-const displacement Int)"
+    , "(declare-const bufferSize Int)"
+    , "(assert (= fileOffset 0))"
+    , "(assert (= displacement " ++ displacementValue ++ "))"
+    , "(assert (= bufferSize " ++ toString bufferSize ++ "))"
+    , signedI32Range "displacement"
+    , "(define-fun targetCursor () Int (+ fileOffset displacement))"
+    , "(define-fun cursor_safe () Bool (and (<= 0 targetCursor) (< targetCursor bufferSize)))"
+    , "(assert (not cursor_safe))"
+    , "(check-sat)"
+    , "(get-model)" ]
+
+def th06JumpMinusOneOobQuery : String :=
+  concreteRelativeJumpOobQuery
+    "TH06"
+    "(- 1)"
+    24
+
+def th07JumpMinusOneOobQuery : String :=
+  concreteRelativeJumpOobQuery
+    "TH07"
+    "(- 1)"
+    20
+
 end TouhouFormal.Search.SMT

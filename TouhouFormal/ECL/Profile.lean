@@ -36,6 +36,8 @@ structure RawInstrShape where
   difficultyMaskWidth : Option ScalarWidth := none
   operandMaskOffset : Option Nat := none
   operandMaskWidth : Option ScalarWidth := none
+  fixedI32OperandBaseOffset : Option Nat := none
+  fixedI32OperandStride : Nat := 4
 deriving Repr, DecidableEq
 
 structure HeaderShape where

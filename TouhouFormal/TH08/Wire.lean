@@ -76,7 +76,9 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           difficultyMaskOffset := some 9
           difficultyMaskWidth := some .u8
           operandMaskOffset := some 10
-          operandMaskWidth := some .u16 }
+          operandMaskWidth := some .u16
+          fixedI32OperandBaseOffset := none
+          fixedI32OperandStride := 4 }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

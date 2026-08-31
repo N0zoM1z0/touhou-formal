@@ -12,6 +12,11 @@ structure RawInstrPrefix where
   operandMask : Option Int := none
 deriving Repr, DecidableEq
 
+structure RawJumpOperands where
+  targetTime : Int
+  displacement : Int
+deriving Repr, DecidableEq
+
 def RawInstrPrefix.nextCursor (rawPrefix : RawInstrPrefix) : Int :=
   Int.ofNat rawPrefix.fileOffset + rawPrefix.nextOffset
 
@@ -23,6 +28,12 @@ private def missingRawInstrShapeFault (shape : HeaderShape) : Fault :=
     title := shape.title
     component := "EclRun.decode"
     detail := "profile does not define a raw ECL instruction wire shape" }
+
+private def missingFixedI32OperandShapeFault (shape : HeaderShape) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.decode.fixedI32Operand"
+    detail := "profile does not define fixed-width i32 raw operands for this title" }
 
 private def negativeCursorFault (shape : HeaderShape) (bytes : TouhouFormal.Bytes)
     (cursor : Int) : Fault :=
@@ -107,5 +118,44 @@ def decodeRawInstrPrefixAtCursor (shape : HeaderShape) (bytes : TouhouFormal.Byt
 def decodeRawInstrPrefixAfterAdvance (shape : HeaderShape) (bytes : TouhouFormal.Bytes)
     (rawPrefix : RawInstrPrefix) : Except Fault RawInstrPrefix :=
   decodeRawInstrPrefixAtCursor shape bytes rawPrefix.nextCursor
+
+def readFixedI32Operand
+    (shape : HeaderShape)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : RawInstrPrefix)
+    (operandIndex : Nat) :
+    Except Fault Int :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      match rawShape.fixedI32OperandBaseOffset with
+      | none => .error (missingFixedI32OperandShapeFault shape)
+      | some baseOffset =>
+          TouhouFormal.readI32LE
+            shape.title
+            "EclRun.decode.fixedI32Operand"
+            bytes
+            (rawPrefix.fileOffset + baseOffset + rawShape.fixedI32OperandStride * operandIndex)
+
+def decodeFixedJumpOperands
+    (shape : HeaderShape)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : RawInstrPrefix)
+    (timeOperandIndex displacementOperandIndex : Nat) :
+    Except Fault RawJumpOperands := do
+  let targetTime <- readFixedI32Operand shape bytes rawPrefix timeOperandIndex
+  let displacement <- readFixedI32Operand shape bytes rawPrefix displacementOperandIndex
+  pure { targetTime := targetTime, displacement := displacement }
+
+def decodeRawInstrPrefixAfterRelativeJump
+    (shape : HeaderShape)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : RawInstrPrefix)
+    (jump : RawJumpOperands) :
+    Except Fault RawInstrPrefix :=
+  decodeRawInstrPrefixAtCursor
+    shape
+    bytes
+    (Int.ofNat rawPrefix.fileOffset + jump.displacement)
 
 end TouhouFormal.ECL

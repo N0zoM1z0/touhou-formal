@@ -37,6 +37,12 @@ private def describeRawInstrPrefix : Except Fault TouhouFormal.ECL.RawInstrPrefi
         " operandMask=" ++ toString rawPrefix.operandMask
   | .error faultValue => faultValue.describe
 
+private def describeJumpOperands : Except Fault TouhouFormal.ECL.RawJumpOperands -> String
+  | .ok jump =>
+      "ok targetTime=" ++ toString jump.targetTime ++
+        " displacement=" ++ toString jump.displacement
+  | .error faultValue => faultValue.describe
+
 private def describeAnmEntry : Except Fault TouhouFormal.ANM.EntryHeader -> String
   | .ok entry =>
       "ok sprites=" ++ toString entry.numSprites ++
@@ -78,6 +84,12 @@ def main : IO Unit := do
   IO.println s!"TH06 nextOffset=-1 after advance: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefixAfterAdvance TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawNegativeNextOffsetInstrPrefixBytes { fileOffset := 0, time := 441, opcode := 0, nextOffset := -1, difficultyMask := some 0, operandMask := none })}"
   IO.println s!"TH07 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH07.headerShape TouhouFormal.TH07.rawInstrPrefixBytes 0)}"
   IO.println s!"TH08 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH08.headerShape TouhouFormal.TH08.rawInstrPrefixBytes 0)}"
+  IO.println ""
+  IO.println "Relative jump controls"
+  IO.println s!"TH06 jump operands: {describeJumpOperands TouhouFormal.TH06.rawJumpMinusOneOperands}"
+  IO.println s!"TH06 jump=-1 target decode: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefixAfterRelativeJump TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawJumpMinusOneInstrBytes { fileOffset := 0, time := 441, opcode := TouhouFormal.TH06.eclOpcodeJump, nextOffset := 12, difficultyMask := some 0, operandMask := none } { targetTime := 0, displacement := -1 })}"
+  IO.println s!"TH07 jump operands: {describeJumpOperands TouhouFormal.TH07.rawJumpMinusOneOperands}"
+  IO.println s!"TH07 jump=-1 target decode: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefixAfterRelativeJump TouhouFormal.TH07.headerShape TouhouFormal.TH07.rawJumpMinusOneInstrBytes { fileOffset := 0, time := 441, opcode := TouhouFormal.TH07.eclOpcodeJump, nextOffset := 12, difficultyMask := some 255, operandMask := some 0 } { targetTime := 0, displacement := -1 })}"
   IO.println ""
   IO.println "ANM entry controls"
   IO.println s!"TH06 ANM zero entry: {describeAnmEntry (TouhouFormal.ANM.decodeEntryHeader TouhouFormal.TH06.ANM.entryShape TouhouFormal.TH06.ANM.zeroEntryBytes 0)}"

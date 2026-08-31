@@ -51,6 +51,15 @@ def rawNegativeNextOffsetInstrPrefixBytes : TouhouFormal.Bytes :=
     TouhouFormal.leU16Bytes 0xffff ++
     [TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0]).toArray
 
+def rawJumpMinusOneInstrBytes : TouhouFormal.Bytes :=
+  (TouhouFormal.leU32Bytes 441 ++
+    TouhouFormal.leU16Bytes eclOpcodeJump.toNat ++
+    TouhouFormal.leU16Bytes 12 ++
+    [TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0] ++
+    TouhouFormal.leU32Bytes 0 ++
+    TouhouFormal.leU32Bytes 0xffffffff ++
+    TouhouFormal.leU32Bytes 0).toArray
+
 def rawOneSubArg0256Header : Except TouhouFormal.ECL.LoadError TouhouFormal.ECL.LoadedHeader :=
   TouhouFormal.ECL.loadHeaderOffsets headerShape rawOneSubArg0256Ecl
 
@@ -193,6 +202,40 @@ theorem rawNegativeNextOffsetInstrPrefix_after_advance_faults :
           "raw ECL instruction cursor moved before the beginning of the ECL buffer"
           (-1)
           rawNegativeNextOffsetInstrPrefixBytes.size) := by
+  rfl
+
+def rawJumpMinusOneOperands : Except Fault TouhouFormal.ECL.RawJumpOperands :=
+  match TouhouFormal.ECL.decodeRawInstrPrefix headerShape rawJumpMinusOneInstrBytes 0 with
+  | .ok rawPrefix =>
+      TouhouFormal.ECL.decodeFixedJumpOperands headerShape rawJumpMinusOneInstrBytes rawPrefix 0 1
+  | .error faultValue => .error faultValue
+
+theorem rawJumpMinusOneOperands_decode :
+    rawJumpMinusOneOperands =
+      .ok
+        { targetTime := 0
+          displacement := -1 } := by
+  rfl
+
+theorem rawJumpMinusOne_after_jump_faults :
+    TouhouFormal.ECL.decodeRawInstrPrefixAfterRelativeJump
+      headerShape
+      rawJumpMinusOneInstrBytes
+      { fileOffset := 0
+        time := 441
+        opcode := eclOpcodeJump
+        nextOffset := 12
+        difficultyMask := some 0
+        operandMask := none }
+      { targetTime := 0
+        displacement := -1 } =
+      .error
+        (Fault.outOfBoundsRead
+          title
+          "EclRun.decode.cursor"
+          "raw ECL instruction cursor moved before the beginning of the ECL buffer"
+          (-1)
+          rawJumpMinusOneInstrBytes.size) := by
   rfl
 
 end TouhouFormal.TH06

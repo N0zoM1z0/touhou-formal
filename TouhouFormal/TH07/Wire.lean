@@ -8,6 +8,8 @@ def title : String := "TH07"
 def rawHeaderFixedPrefixBytes : Nat := 0x44
 def timelinePointerCount : Nat := 16
 def timelineInstrFixedSize : Nat := 0x20
+def eclOpcodeJump : Int := 2
+def eclOpcodeDecJump : Int := 3
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
@@ -67,7 +69,9 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           difficultyMaskOffset := some 9
           difficultyMaskWidth := some .u8
           operandMaskOffset := some 10
-          operandMaskWidth := some .u16 }
+          operandMaskWidth := some .u16
+          fixedI32OperandBaseOffset := some 12
+          fixedI32OperandStride := 4 }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

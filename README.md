@@ -42,8 +42,8 @@ to predict arbitrary C++ undefined behavior after that point.
 ```bash
 lake build
 lake exe check
-lake exe th06_smt th06-sub-oob | z3 -in
-lake exe th06_smt th08-negative-noop-unsat | z3 -in
+lake exe smt th06-sub-oob | z3 -in
+lake exe smt th08-negative-noop-unsat | z3 -in
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ```
@@ -51,3 +51,6 @@ lake exe th06_smt th08-negative-noop-unsat | z3 -in
 `scripts/check.sh` runs the Lean build, executable counterexample check, and
 the current Z3 controls together. `scripts/retail_inventory.sh` is read-only and
 records archive hashes plus executable/data CRCs before any Wine validation.
+
+Current retained results are summarized in
+[`docs/formal-results.md`](docs/formal-results.md).
