@@ -138,6 +138,25 @@ structure RawIntConditionJumpShape where
   displacementOperandIndex : Nat
 deriving Repr, DecidableEq
 
+inductive RawRetUnderflowPolicy where
+  | uncheckedSavedContextRead
+  | th08ChildContextExit
+deriving Repr, DecidableEq
+
+def RawRetUnderflowPolicy.name : RawRetUnderflowPolicy -> String
+  | .uncheckedSavedContextRead => "unchecked-saved-context-read"
+  | .th08ChildContextExit => "th08-child-context-exit"
+
+structure RawCallRetShape where
+  callOpcode : Int
+  retOpcode : Int
+  subIdOperandIndex : Nat
+  stackEntryCount : Nat
+  stackIncrementGuardExclusive : Nat
+  retUnderflowPolicy : RawRetUnderflowPolicy
+  childContextSlotCount : Nat := 0
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -158,6 +177,7 @@ structure RawInstrShape where
   fixedDecJumpShape : Option RawDecJumpShape := none
   intRValueResolver : Option RawIntOperandResolverShape := none
   intConditionJumps : List RawIntConditionJumpShape := []
+  callRetShape : Option RawCallRetShape := none
   intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
 

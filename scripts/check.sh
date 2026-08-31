@@ -105,3 +105,21 @@ python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 
 python3 scripts/symex_int_resolver_queue.py > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 8; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {(c["title"], c["path"]) for c in data["candidates"]} == {("th06", "resolved-host"), ("th06", "resolved-default-raw"), ("th07", "raw-immediate"), ("th07", "resolved-host"), ("th07", "resolved-default-raw"), ("th08", "raw-immediate"), ("th08", "resolved-host"), ("th08", "resolved-default-raw")}' "$solver_output"
+
+lake exe symex query-callret th06 call-no-op 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-callret th08 ret-stack-read-before-stack 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+python3 scripts/symex_materialize_callret_step.py th08 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 10; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert {r["path"] for r in xs} == {"call-stack-write-before-stack", "call-stack-write-at-or-past-stack", "call-lookup-fault", "call-entered", "call-no-op", "ret-stack-read-at-or-past-stack", "ret-restored", "ret-exit-child", "ret-child-index-before-array", "ret-child-index-at-or-past-array"}' "$solver_output"
+
+python3 scripts/symex_materialize_callret_step.py th06 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 7; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert "ret-stack-read-before-stack" in {r["path"] for r in xs}' "$solver_output"
+
+python3 scripts/symex_callret_candidate_queue.py > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 41; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"])' "$solver_output"

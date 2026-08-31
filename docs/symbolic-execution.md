@@ -31,6 +31,11 @@ calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
 or selector resolution. Known selector ranges, source-backed exclusions, and
 default-to-raw fallthrough are title-profile facts.
 
+Plain CALL/RET stack behavior is also modeled as a shared layer. The model
+tracks CALL's save-before-guard order, title-specific stack sizes and increment
+guards, `CallEclSub` lookup policy, RET's decrement-before-restore order, and
+TH08's child-context exit path on RET depth underflow.
+
 This intentionally avoids hand-selecting a suspicious bug site. The executor
 enumerates generic path classes and asks Z3 for witnesses.
 
@@ -65,6 +70,13 @@ List and solve integer resolver branches:
 ```bash
 lake exe symex list-int-resolver-paths
 lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
+```
+
+List and solve CALL/RET stack branches:
+
+```bash
+lake exe symex list-callret-paths
+lake exe symex query-callret-values th08 ret-child-index-before-array 1 0 | z3 -in
 ```
 
 Run a matrix for one title and difficulty environment:
@@ -109,6 +121,13 @@ Solve/materialize integer resolver paths:
 ```bash
 ./scripts/symex_materialize_int_resolver.py th07 all 0
 ./scripts/symex_int_resolver_queue.py
+```
+
+Solve/materialize CALL/RET stack paths:
+
+```bash
+./scripts/symex_materialize_callret_step.py th08 all 1 0
+./scripts/symex_callret_candidate_queue.py
 ```
 
 Evaluate the current formal-vs-fuzz effectiveness baseline:
@@ -262,3 +281,31 @@ non-fuzzing distinction: an operand-mask bit can be set while the selector still
 falls through to raw-value behavior. That branch is easy for random testing to
 miss or misclassify because the raw bytes look like a variable reference, but
 the source resolver returns the operand unchanged.
+
+## CALL/RET candidate queue
+
+`scripts/symex_callret_candidate_queue.py` enumerates plain CALL/RET stack
+branches:
+
+- TH06/TH07: CALL stack-write before/at-past, CALL lookup fault, CALL entered,
+  RET stack-read before/at-past, and RET restored;
+- TH08: the same CALL cases plus negative-sub no-op, RET stack-read at-past,
+  RET restored, child-context exit, and child-index before/at-past.
+
+A full default run on 2026-08-31 produced 41 satisfiable materialized CALL/RET
+candidates:
+
+```text
+call-stack-oob-write: 10
+call-subtable-oob-read: 5
+ret-stack-oob-read: 8
+ret-child-context-oob-read: 4
+call-negative-no-op: 2
+ret-child-context-exit: 2
+callret-control: 10
+```
+
+All 41 replayed through Lean with `matchesPath=true`. Two unsat controls are
+now explicit: TH06/TH07 do not have TH08's negative-sub no-op CALL branch, and
+TH08 does not restore from `activeEclCallStack[-1]` on RET depth underflow—it
+routes into child-context selection instead.

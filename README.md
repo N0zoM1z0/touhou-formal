@@ -29,6 +29,9 @@ The executable model currently covers these source-backed boundaries:
   to raw immediates.
 - The first opcode-body slice includes `JUMPDEC`, integer conditional jumps,
   and immediate/raw integer div/mod zero-divisor hazards.
+- Plain CALL/RET stack behavior is modeled with shared semantics for stack
+  saves/restores, depth guards, subTable lookup, and TH08 child-context RET
+  exits.
 - Raw ECL instruction prefixes and ANM entry headers are decoded through shared
   profile-driven code across TH06/TH07/TH08.
 
@@ -64,6 +67,8 @@ lake exe symex list-body-paths
 lake exe symex query-body-values th08 int-divisor-zero 1 2 | z3 -in
 lake exe symex list-int-resolver-paths
 lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
+lake exe symex list-callret-paths
+lake exe symex query-callret-values th08 ret-child-index-before-array 1 0 | z3 -in
 ./scripts/symex_raw_step.sh th08 1 2
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ./scripts/symex_materialize_raw_step.py th06 jumped-before-buffer 8 0 --ecl-file
@@ -72,6 +77,8 @@ lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
 ./scripts/symex_body_candidate_queue.py
 ./scripts/symex_materialize_int_resolver.py th07 all 0
 ./scripts/symex_int_resolver_queue.py
+./scripts/symex_materialize_callret_step.py th08 all 1 0
+./scripts/symex_callret_candidate_queue.py
 python3 scripts/evaluate_symex_effectiveness.py
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
@@ -87,7 +94,9 @@ shared title profile, decodes it again, and checks that the concrete step lands
 back in the requested path class. The body materializer does the same for the
 first opcode-body layer: `JUMPDEC`, integer conditional jumps, and immediate/raw
 integer div/mod zero-divisor faults. The resolver materializer covers integer
-rvalue `operandFlags` branches separately from opcode-body effects.
+rvalue `operandFlags` branches separately from opcode-body effects. The CALL/RET
+materializer covers stack write/read faults, subTable lookup faults, and TH08
+child-context RET exits.
 `scripts/evaluate_symex_effectiveness.py` reruns the symbolic candidate queues
 and reports which modeled branches are covered versus which source opcode/body
 branches remain outside the current semantics. `scripts/retail_inventory.sh` is

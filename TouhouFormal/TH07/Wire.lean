@@ -16,6 +16,8 @@ def eclOpcodeJumpIfLt : Int := 32
 def eclOpcodeJumpIfLeq : Int := 34
 def eclOpcodeJumpIfGt : Int := 36
 def eclOpcodeJumpIfGeq : Int := 38
+def eclOpcodeSubCall : Int := 41
+def eclOpcodeSubRet : Int := 42
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
@@ -62,6 +64,15 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 1092
       endLine := 1166
       claim := "Integer JUMP_IF_* opcodes compare resolved operand slots 0 and 1, then taken branches set time from slot 2 and jump by slot 3." } ]
+    ++
+    [ { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1168
+        endLine := 1195
+        claim := "SUB_CALL saves the next instruction context at savedContextStack[stackDepth] before CallEclSub and increments depth only while stackDepth < ENEMY_STACK_SIZE; SUB_RET decrements stackDepth before restoring savedContextStack[stackDepth]." },
+      { path := "reference/th07/src/th07/EnemyManager.hpp"
+        startLine := 62
+        endLine := 134
+        claim := "ENEMY_STACK_SIZE is 15, and Enemy stores savedContextStack[ENEMY_STACK_SIZE + 1] plus signed stackDepth." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -174,6 +185,15 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 rhsOperandIndex := 1
                 targetTimeOperandIndex := 2
                 displacementOperandIndex := 3 } ]
+          callRetShape :=
+            some
+              { callOpcode := eclOpcodeSubCall
+                retOpcode := eclOpcodeSubRet
+                subIdOperandIndex := 0
+                stackEntryCount := 16
+                stackIncrementGuardExclusive := 15
+                retUnderflowPolicy := .uncheckedSavedContextRead
+                childContextSlotCount := 0 }
           intDivisorHazards :=
             [ { opcode := 15
                 kind := .div

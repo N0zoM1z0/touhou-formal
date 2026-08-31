@@ -8,3 +8,4 @@ import TouhouFormal.ECL.Instruction
 import TouhouFormal.ECL.Step
 import TouhouFormal.ECL.Operand
 import TouhouFormal.ECL.Body
+import TouhouFormal.ECL.Stack

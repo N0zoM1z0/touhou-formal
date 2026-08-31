@@ -6,8 +6,9 @@ already better than the previous fuzzing lane?
 
 Short answer: it is already better than fuzzing for the modeled VM-core
 dispatch skeleton, the first shared opcode-body slice, and the integer rvalue
-resolver slice. It is not yet better than fuzzing for the full ECL/ANM VM,
-because most opcode bodies and host-game side effects are not modeled yet.
+resolver/CALL/RET slices. It is not yet better than fuzzing for the full
+ECL/ANM VM, because most opcode bodies and host-game side effects are not
+modeled yet.
 
 ## Reproducible evaluation
 
@@ -25,8 +26,9 @@ python3 scripts/evaluate_symex_effectiveness.py --run-check
 
 The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_body_candidate_queue.py` and
-`scripts/symex_int_resolver_queue.py`, summarizes path coverage, reads the
-local reference source tree for opcode-surface counts, reads DanmakuFuzz's
+`scripts/symex_int_resolver_queue.py` and
+`scripts/symex_callret_candidate_queue.py`, summarizes path coverage, reads
+the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
 summaries from `../retail_validation` when present.
 
@@ -45,7 +47,8 @@ assessment is:
 python3 scripts/evaluate_symex_effectiveness.py \
   --queue-json /tmp/raw_queue.json \
   --body-queue-json /tmp/body_queue.json \
-  --resolver-queue-json /tmp/resolver_queue.json
+  --resolver-queue-json /tmp/resolver_queue.json \
+  --callret-queue-json /tmp/callret_queue.json
 ```
 
 The cost is mostly process startup: the current queues launch
@@ -238,29 +241,71 @@ mask-set/default-raw branch is semantically distinct from both ordinary
 immediate operands and real variable reads, but it can be hard to classify from
 runtime traces alone without source-backed path predicates.
 
+## CALL/RET stack coverage
+
+The shared CALL/RET model covers the plain subroutine control-transfer stack
+edges:
+
+- CALL saves the return context before calling `CallEclSub`;
+- the stack save happens before the increment guard, which creates an
+  out-of-bounds write path for abnormal `stackDepth`;
+- CALL then follows the title's existing `CallEclSub` subTable lookup policy;
+- RET decrements stack depth before restoring;
+- TH08 depth underflow uses `childContextSlot - 1` to leave a child context
+  instead of restoring from the saved stack.
+
+Observed result:
+
+| Metric | Result |
+| --- | --- |
+| environments | 5 |
+| modeled title-specific candidates | 41 |
+| solver status | 41 `sat` |
+| Lean byte materialization/replay | 41 `matchesPath=true` |
+| all modeled title-specific CALL/RET paths covered | yes |
+
+Risk split:
+
+| CALL/RET branch | Count | Interpretation |
+| --- | ---: | --- |
+| `call-stack-oob-write` | 10 | CALL writes at invalid stack depth before the guard |
+| `call-subtable-oob-read` | 5 | CALL reaches the title's unchecked subTable lookup |
+| `ret-stack-oob-read` | 8 | RET restores from an invalid saved-stack index |
+| `ret-child-context-oob-read` | 4 | TH08 RET underflow indexes invalid `childEclBlocks` slot |
+| `call-negative-no-op` | 2 | TH08 negative subId returns after CALL return-state handling |
+| `ret-child-context-exit` | 2 | TH08 valid child-context exit path |
+| `callret-control` | 10 | ordinary entered/restored controls |
+
+This is still a one-step stack abstraction. It does not yet prove which stack
+depths are reachable from a clean enemy context under bounded multi-step
+execution. Its value is that the edge semantics and title deltas are now
+explicit, source-backed, and solver-enumerated instead of being found by a
+manual crash hunt.
+
 ## What this does not cover yet
 
 The current executor still does not cover the full game semantics of each
 instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
-jumps, integer rvalue resolver branches, and immediate integer div/mod divisor
-hazards, but not most body internals.
+jumps, integer rvalue resolver branches, plain CALL/RET stack behavior, and
+immediate integer div/mod divisor hazards, but not most body internals.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `MATHINTDIV`, `MATHINTMOD` | 125 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `DIV`, `MOD` | 148 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, `case 13`, `case 14`, `case 23`, `case 24`, and integer condition cases `40/42/44/46/48/50` | 78 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, `MATHINTDIV`, `MATHINTMOD` | 123 |
+| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `DIV`, `MOD` | 146 |
+| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, `case 13`, `case 14`, `case 23`, `case 24`, integer condition cases `40/42/44/46/48/50`, and CALL/RET cases `52/53` | 76 |
 
 The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
-jumps, integer resolver branches, and integer div/mod zero-divisor hazards are
-now modeled; "ordinary advance" for the remaining opcodes still does not prove
-their internal branches.
+jumps, integer resolver branches, plain CALL/RET stack edges, and integer
+div/mod zero-divisor hazards are now modeled; "ordinary advance" for the
+remaining opcodes still does not prove their internal branches.
 
 Not covered:
 
-- `CALL`, `RET`, callback stacks;
+- conditional TH06 CALLs, interrupts, callback stacks, and TH08 high-opcode
+  pending-sub dispatch;
 - integer lvalue writes and non-integer operand-mask branches into variable
   reads/writes;
 - resolver-driven integer divide/modulo by zero, float division/fmod edge cases,
@@ -275,7 +320,8 @@ Why those branches are not covered:
 - they need a symbolic host state, not just raw bytes;
 - operand flags can turn the same raw field into an immediate, local variable,
   global variable, enemy field, player-derived value, or RNG-derived value;
-- `CALL`/`RET` and callbacks need bounded stack/context semantics;
+- nested `CALL`/`RET`, interrupts, and callbacks need bounded stack/context
+  semantics;
 - gameplay-visible effects need object invariants for bullets, lasers, enemies,
   items, resources, and render state;
 - retail validation needs title-specific archive adapters and stage-selection
@@ -287,6 +333,7 @@ So the current coverage claim is strong but scoped:
 complete for the implemented raw-step abstraction;
 complete for the first implemented raw-body abstraction;
 complete for the implemented integer rvalue resolver abstraction;
+complete for the implemented plain CALL/RET stack abstraction;
 incomplete for full ECL/ANM VM opcode semantics.
 ```
 
@@ -325,6 +372,8 @@ Concrete advantages already demonstrated:
 - every default TH06/TH07/TH08 environment covers all 17 modeled body path
   classes;
 - every title-specific integer rvalue resolver branch is solved and replayed;
+- every title/environment-specific plain CALL/RET branch is solved and
+  replayed;
 - solver witnesses are materialized into bytes by Lean using shared profile
   offsets, then replay-checked;
 - the body queue finds immediate integer div/mod zero-divisor paths for all
@@ -346,10 +395,10 @@ Fuzz is still better outside the current formal model:
 
 ## Current verdict
 
-For the implemented VM-core skeleton, first shared body slice, and integer
-resolver slice, Lean + SMT is already better than fuzzing: it gives exhaustive
-path-class coverage, satisfiable/unsatisfiable controls, concrete
-counterexample bytes, and shared TH06/TH07/TH08 semantics.
+For the implemented VM-core skeleton, first shared body slice, integer resolver
+slice, and plain CALL/RET stack slice, Lean + SMT is already better than
+fuzzing: it gives exhaustive path-class coverage, satisfiable/unsatisfiable
+controls, concrete counterexample bytes, and shared TH06/TH07/TH08 semantics.
 
 For the whole VM, it is not yet better. The model has to move down one layer
 into opcode bodies and bounded multi-step execution before we can honestly say
@@ -358,8 +407,8 @@ formal is finding classes that DanmakuFuzz cannot find in practice.
 The next technically useful targets are:
 
 1. add integer lvalue writes and resolver-driven arithmetic hazards;
-2. add bounded multi-step contexts for `CALL`, `RET`, callbacks, and nested
-   jumps;
+2. add bounded multi-step reachability for nested `CALL`, `RET`, callbacks, and
+   stacked jumps;
 3. extend arithmetic hazards beyond immediate integer div/mod zero;
 4. lower the top raw-step queue entries into TH06 retail batches;
 5. add TH07/TH08 archive adapters so the same shared witnesses can be validated

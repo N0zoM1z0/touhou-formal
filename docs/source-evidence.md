@@ -34,9 +34,16 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:229`: `JUMPLSS`, `JUMPLEQ`, `JUMPEQU`,
   `JUMPGRE`, `JUMPGEQ`, and `JUMPNEQ` branch on the compare register before
   falling into the shared raw jump body.
+- `reference/th06/src/EclManager.cpp:249`: `CALL` writes the next instruction
+  context to `savedContextStack[stackDepth]` before `CallEclSub`, then only
+  increments depth while `stackDepth < 7`.
+- `reference/th06/src/EclManager.cpp:266`: `RET` decrements `stackDepth` before
+  restoring `savedContextStack[stackDepth]`.
+- `reference/th06/src/Enemy.hpp:195`: TH06 stores `savedContextStack[8]` and
+  signed `stackDepth`.
 - `reference/th06/src/EnemyEclInstr.cpp:100`: `GetVar` resolves known negative
-  `EclVarId` selectors and falls through to the raw integer value for unknown
-  operands.
+  `EclVarId` selectors and falls through to the operand-cell pointer for
+  unknown operands, which reads back as the raw integer in rvalue positions.
 - `reference/th06/src/EclManager.cpp:120`: raw ECL skips an instruction when
   `skipForDifficulty & (1 << g_GameManager.difficulty)` is zero, so execution
   uses active-bit intersection.
@@ -84,6 +91,13 @@ relative to `/home/yann/yann/touhou/formal`.
   `ECL_JUMP_IF_NOT_EQUAL`, `ECL_JUMP_IF_LOWER_THAN`, `ECL_JUMP_IF_LEQ_THAN`,
   `ECL_JUMP_IF_GREATER_THAN`, and `ECL_JUMP_IF_GEQ_THAN` compare resolved
   integer operands 0 and 1, then jump using raw operands 2 and 3 when taken.
+- `reference/th07/src/th07/EclManager.cpp:1168`: `ECL_SUB_CALL` stores the next
+  instruction context at `savedContextStack[stackDepth]` before `CallEclSub`,
+  then increments only while `stackDepth < ENEMY_STACK_SIZE`.
+- `reference/th07/src/th07/EclManager.cpp:1183`: `ECL_SUB_RET` decrements
+  `stackDepth` before restoring `savedContextStack[stackDepth]`.
+- `reference/th07/src/th07/EnemyManager.hpp:62`: `ENEMY_STACK_SIZE` is 15 and
+  the concrete saved stack stores `ENEMY_STACK_SIZE + 1` contexts.
 - `reference/th07/src/th07/EclManager.cpp:1035`: raw `ECL_DIV` divides by
   `GET_INT_VALUE(enemy, 2)` without a zero-divisor guard.
 - `reference/th07/src/th07/EclManager.cpp:1043`: raw `ECL_MOD` computes modulo
@@ -141,6 +155,20 @@ relative to `/home/yann/yann/touhou/formal`.
   guard.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
+- `reference/th08/src/EclRunLow.inl:415`: low opcodes 52 and 53 call
+  `CallSubOnEnemy` and `PopEclContext`.
+- `reference/th08/src/EclDependencies.cpp:466`: `CallSubOnEnemy` stores the
+  next instruction context at `activeEclCallStack[activeEclCallStackDepth]`
+  before `CallEclSub`, then increments only while depth `< 15`.
+- `reference/th08/src/EclDependencies.cpp:499`: `PopEclContext` decrements
+  `activeEclCallStackDepth`; negative depth indexes
+  `childEclBlocks[childContextSlot - 1]`, otherwise it restores
+  `activeEclCallStack[depth]`.
+- `reference/th08/src/EnemyManager.hpp:211`: TH08 stores
+  `mainEclCallStackStorage[16]`, an active call-stack pointer, and signed
+  call-stack depths.
+- `reference/th08/src/EnemyManager.hpp:289`: TH08 has four `childEclBlocks`
+  slots for child context selection.
 - `reference/th08/src/EclRun.cpp:67`: TH08 raw ECL requires
   `instruction->difficultyMask` to contain every bit in
   `g_GameManager.difficultyMask | enemy->eclDifficultyMaskOverride`; otherwise

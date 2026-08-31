@@ -1,4 +1,5 @@
 import TouhouFormal.ECL.Body
+import TouhouFormal.ECL.Stack
 import TouhouFormal.ECL.Step
 import TouhouFormal.TH06.Wire
 import TouhouFormal.TH07.Wire
@@ -144,6 +145,71 @@ def RawIntResolverPath.parse? : String -> Option RawIntResolverPath
 
 def allRawIntResolverPaths : List RawIntResolverPath :=
   [ .rawImmediate, .resolvedHost, .resolvedDefaultRaw ]
+
+inductive RawCallRetPath where
+  | callStackWriteBeforeStack
+  | callStackWriteAtOrPastStack
+  | callLookupFault
+  | callEntered
+  | callNoOp
+  | retStackReadBeforeStack
+  | retStackReadAtOrPastStack
+  | retRestored
+  | retExitChild
+  | retChildIndexBeforeArray
+  | retChildIndexAtOrPastArray
+deriving Repr, DecidableEq
+
+def RawCallRetPath.name : RawCallRetPath -> String
+  | .callStackWriteBeforeStack => "call-stack-write-before-stack"
+  | .callStackWriteAtOrPastStack => "call-stack-write-at-or-past-stack"
+  | .callLookupFault => "call-lookup-fault"
+  | .callEntered => "call-entered"
+  | .callNoOp => "call-no-op"
+  | .retStackReadBeforeStack => "ret-stack-read-before-stack"
+  | .retStackReadAtOrPastStack => "ret-stack-read-at-or-past-stack"
+  | .retRestored => "ret-restored"
+  | .retExitChild => "ret-exit-child"
+  | .retChildIndexBeforeArray => "ret-child-index-before-array"
+  | .retChildIndexAtOrPastArray => "ret-child-index-at-or-past-array"
+
+def RawCallRetPath.parse? : String -> Option RawCallRetPath
+  | "call-stack-write-before-stack" => some .callStackWriteBeforeStack
+  | "call-stack-write-at-or-past-stack" => some .callStackWriteAtOrPastStack
+  | "call-lookup-fault" => some .callLookupFault
+  | "call-entered" => some .callEntered
+  | "call-no-op" => some .callNoOp
+  | "ret-stack-read-before-stack" => some .retStackReadBeforeStack
+  | "ret-stack-read-at-or-past-stack" => some .retStackReadAtOrPastStack
+  | "ret-restored" => some .retRestored
+  | "ret-exit-child" => some .retExitChild
+  | "ret-child-index-before-array" => some .retChildIndexBeforeArray
+  | "ret-child-index-at-or-past-array" => some .retChildIndexAtOrPastArray
+  | _ => none
+
+def allRawCallRetPaths : List RawCallRetPath :=
+  [ .callStackWriteBeforeStack
+  , .callStackWriteAtOrPastStack
+  , .callLookupFault
+  , .callEntered
+  , .callNoOp
+  , .retStackReadBeforeStack
+  , .retStackReadAtOrPastStack
+  , .retRestored
+  , .retExitChild
+  , .retChildIndexBeforeArray
+  , .retChildIndexAtOrPastArray ]
+
+def RawCallRetPath.isCall : RawCallRetPath -> Bool
+  | .callStackWriteBeforeStack
+  | .callStackWriteAtOrPastStack
+  | .callLookupFault
+  | .callEntered
+  | .callNoOp => true
+  | _ => false
+
+def RawCallRetPath.isRet (path : RawCallRetPath) : Bool :=
+  !path.isCall
 
 private def joinLines : List String -> String
   | [] => ""
@@ -325,6 +391,17 @@ private def requiredBodyInstructionBytes
             baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
       | none => rawShape.fixedPrefixBytes
 
+private def requiredCallRetInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawCallRetPath) : Nat :=
+  if path.isCall then
+    match rawShape.callRetShape, rawShape.fixedI32OperandBaseOffset with
+    | some callRet, some baseOffset =>
+        baseOffset + rawShape.fixedI32OperandStride * (callRet.subIdOperandIndex + 1)
+    | _, _ => rawShape.fixedPrefixBytes
+  else
+    rawShape.fixedPrefixBytes
+
 private def opcodeExclusions (rawShape : TouhouFormal.ECL.RawInstrShape) : List Int :=
   let excludeJump :=
     match rawShape.fixedJumpShape with
@@ -483,11 +560,121 @@ private def rawIntResolverPathConstraints
           [ "(assert " ++ switchPredicate ++ ")"
           , "(assert (not " ++ knownPredicate ++ "))" ]
 
+private def subLookupFaultPredicate
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (subIdName subCountName : String) : String :=
+  match shape.negativeSubIdPolicy with
+  | .unchecked =>
+      "(or (< " ++ subIdName ++ " 0) (<= " ++ subCountName ++ " " ++ subIdName ++ "))"
+  | .noOp =>
+      "(and (<= 0 " ++ subIdName ++ ") (<= " ++ subCountName ++ " " ++ subIdName ++ "))"
+
+private def subLookupOkOffsetPredicate (subIdName subCountName : String) : String :=
+  "(and (<= 0 " ++ subIdName ++ ") (< " ++ subIdName ++ " " ++ subCountName ++ "))"
+
+private def subLookupNoOpPredicate
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (subIdName : String) : String :=
+  match shape.negativeSubIdPolicy with
+  | .unchecked => "false"
+  | .noOp => "(< " ++ subIdName ++ " 0)"
+
+private def callStackSafeOrDisabledPredicate
+    (callRet : TouhouFormal.ECL.RawCallRetShape) : String :=
+  "(or stackDisabled (and (<= 0 stackDepth) (< stackDepth " ++
+    toString callRet.stackEntryCount ++ ")))"
+
+private def rawCallRetPathConstraints
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawCallRetPath) : List String :=
+  match rawShape.callRetShape with
+  | none => ["(assert false) ; profile has no source-backed CALL/RET semantics"]
+  | some callRet =>
+      let common :=
+        [ "(assert (= currentTime instrTime))"
+        , "(assert difficultyPass)"
+        , "(assert (and (<= (- 1) stackDepth) (<= stackDepth " ++
+            toString (callRet.stackEntryCount + 1) ++ ")))"
+        , "(assert (and (<= 0 subCount) (<= subCount 256)))"
+        , "(assert (and (<= (- 1) childContextSlot) (<= childContextSlot " ++
+            toString (callRet.childContextSlotCount + 1) ++ ")))"
+        , "(define-fun returnCursor () Int (+ fileOffset nextOffset))"
+        , "(define-fun stackDepthAfterRet () Int (- stackDepth 1))"
+        , "(define-fun childContextIndex () Int (- childContextSlot 1))" ]
+      let callPrefix := common ++
+        [ "(assert (= opcode " ++ toString callRet.callOpcode ++ "))" ]
+      let retPrefix := common ++
+        [ "(assert (= opcode " ++ toString callRet.retOpcode ++ "))" ]
+      match path with
+      | .callStackWriteBeforeStack =>
+          callPrefix ++
+            [ "(assert (not stackDisabled))"
+            , "(assert (< stackDepth 0))" ]
+      | .callStackWriteAtOrPastStack =>
+          callPrefix ++
+            [ "(assert (not stackDisabled))"
+            , "(assert (<= " ++ toString callRet.stackEntryCount ++ " stackDepth))" ]
+      | .callLookupFault =>
+          callPrefix ++
+            [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
+            , "(assert " ++ subLookupFaultPredicate shape "subId" "subCount" ++ ")" ]
+      | .callEntered =>
+          callPrefix ++
+            [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
+            , "(assert " ++ subLookupOkOffsetPredicate "subId" "subCount" ++ ")" ]
+      | .callNoOp =>
+          callPrefix ++
+            [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
+            , "(assert " ++ subLookupNoOpPredicate shape "subId" ++ ")" ]
+      | .retStackReadBeforeStack =>
+          match callRet.retUnderflowPolicy with
+          | .uncheckedSavedContextRead =>
+              retPrefix ++ [ "(assert (< stackDepthAfterRet 0))" ]
+          | .th08ChildContextExit =>
+              retPrefix ++ [ "(assert false) ; TH08 routes depth underflow into child-context exit" ]
+      | .retStackReadAtOrPastStack =>
+          retPrefix ++
+            [ "(assert (<= " ++ toString callRet.stackEntryCount ++ " stackDepthAfterRet))" ]
+      | .retRestored =>
+          retPrefix ++
+            [ "(assert (and (<= 0 stackDepthAfterRet) (< stackDepthAfterRet " ++
+                toString callRet.stackEntryCount ++ ")))" ]
+      | .retExitChild =>
+          match callRet.retUnderflowPolicy with
+          | .uncheckedSavedContextRead =>
+              retPrefix ++ [ "(assert false) ; this title restores from saved context on depth underflow" ]
+          | .th08ChildContextExit =>
+              retPrefix ++
+                [ "(assert (< stackDepthAfterRet 0))"
+                , "(assert (and (<= 0 childContextIndex) (< childContextIndex " ++
+                    toString callRet.childContextSlotCount ++ ")))" ]
+      | .retChildIndexBeforeArray =>
+          match callRet.retUnderflowPolicy with
+          | .uncheckedSavedContextRead =>
+              retPrefix ++ [ "(assert false) ; this title has no child-context RET exit" ]
+          | .th08ChildContextExit =>
+              retPrefix ++
+                [ "(assert (< stackDepthAfterRet 0))"
+                , "(assert (< childContextIndex 0))" ]
+      | .retChildIndexAtOrPastArray =>
+          match callRet.retUnderflowPolicy with
+          | .uncheckedSavedContextRead =>
+              retPrefix ++ [ "(assert false) ; this title has no child-context RET exit" ]
+          | .th08ChildContextExit =>
+              retPrefix ++
+                [ "(assert (< stackDepthAfterRet 0))"
+                , "(assert (<= " ++ toString callRet.childContextSlotCount ++
+                    " childContextIndex))" ]
+
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
 
 private def rawBodyValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement counterBefore divisorValue lhsRaw rhsRaw lhsHost rhsHost compareRegister bufferSize difficultyPass)"
+
+private def rawCallRetValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask subId stackDepth stackDisabled subCount childContextSlot bufferSize difficultyPass)"
 
 private def rawStepQueryWith
     (includeModel includeValues : Bool)
@@ -684,6 +871,74 @@ def rawIntResolverValuesQuery
 def listRawIntResolverPathsText : String :=
   joinLines (allRawIntResolverPaths.map RawIntResolverPath.name)
 
+private def rawCallRetQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawCallRetPath)
+    (activeMask overrideMask : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL CALL/RET query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      let difficultyExpr :=
+        match rawShape.difficultyMaskPolicy with
+        | none => "true"
+        | some policy => difficultyPassExpr policy
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared CALL/RET stack semantics."
+         , "; Title: " ++ shape.title
+         , "; CALL/RET path: " ++ path.name
+         , "(declare-const currentTime Int)"
+         , "(declare-const instrTime Int)"
+         , "(declare-const opcode Int)"
+         , "(declare-const nextOffset Int)"
+         , "(declare-const subId Int)"
+         , "(declare-const stackDepth Int)"
+         , "(declare-const stackDisabled Bool)"
+         , "(declare-const subCount Int)"
+         , "(declare-const childContextSlot Int)"
+         , "(declare-const bufferSize Int)"
+         , "(define-fun fileOffset () Int 0)"
+         , "(declare-const instructionMask (_ BitVec 8))"
+         , "(define-fun activeMask () (_ BitVec 8) " ++ bv8 activeMask ++ ")"
+         , "(define-fun overrideMask () (_ BitVec 8) " ++ bv8 overrideMask ++ ")"
+         , "(define-fun requiredDifficultyMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+         , "(define-fun difficultyPass () Bool " ++ difficultyExpr ++ ")"
+         , scalarRange "instrTime" rawShape.timeWidth
+         , scalarRange "opcode" rawShape.opcodeWidth
+         , scalarRange "nextOffset" rawShape.nextOffsetWidth
+         , signedI16Range "subId"
+         , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
+         , "(assert (and (<= " ++ toString (requiredCallRetInstructionBytes rawShape path) ++
+             " bufferSize) (<= bufferSize 1048576)))" ] ++
+         operandMaskSmtLines rawShape ++
+         rawCallRetPathConstraints shape rawShape path ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawCallRetValueTerms ++ ")"] else []))
+
+def rawCallRetQuery
+    (title : Title)
+    (path : RawCallRetPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawCallRetQueryWith false false title path activeMask overrideMask
+
+def rawCallRetValuesQuery
+    (title : Title)
+    (path : RawCallRetPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawCallRetQueryWith false true title path activeMask overrideMask
+
+def listRawCallRetPathsText : String :=
+  joinLines (allRawCallRetPaths.map RawCallRetPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -730,6 +985,14 @@ structure RawIntResolverWitness where
   operandMask : Int
 deriving Repr, DecidableEq
 
+structure RawCallRetWitness extends RawStepWitness where
+  subId : Int
+  stackDepth : Int
+  stackDisabled : Bool
+  subCount : Nat
+  childContextSlot : Int
+deriving Repr, DecidableEq
+
 structure RawIntResolverMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
@@ -737,6 +1000,13 @@ structure RawIntResolverMaterialization where
   resolution : TouhouFormal.ECL.RawIntOperandResolution
   matchesPath : Bool
 deriving Repr, DecidableEq
+
+structure RawCallRetMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome
+  matchesPath : Bool
+deriving Repr
 
 structure RawStepEclFileMaterialization where
   rawStep : RawStepMaterialization
@@ -940,6 +1210,100 @@ def rawIntResolverMaterialize
           resolution := resolution
           matchesPath := path.matchesResolution resolution }
 
+private def symbolicSubOffsetsOfCount (subCount : Nat) : Array Nat :=
+  (List.replicate subCount 0).toArray
+
+private def findCallRetShape
+    (shape : TouhouFormal.ECL.HeaderShape) :
+    Except String TouhouFormal.ECL.RawCallRetShape :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.callRetShape with
+      | none => .error ("profile has no CALL/RET shape for " ++ shape.title)
+      | some callRet => .ok callRet
+
+private def rawCallRetWitnessBaseBytes
+    (title : Title)
+    (path : RawCallRetPath)
+    (witness : RawCallRetWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredCallRetInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required CALL/RET bytes=" ++ toString requiredBytes)
+      else
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := witness.currentTime
+            instrTime := witness.instrTime
+            opcode := witness.opcode
+            nextOffset := witness.nextOffset
+            instructionMask := witness.instructionMask
+            operandMask := witness.operandMask
+            activeMask := witness.activeMask
+            overrideMask := witness.overrideMask
+            jumpTargetTime := witness.jumpTargetTime
+            jumpDisplacement := witness.jumpDisplacement
+            bufferSize := witness.bufferSize }
+
+private def rawCallRetWitnessBytes
+    (title : Title)
+    (path : RawCallRetPath)
+    (witness : RawCallRetWitness) : Except String TouhouFormal.Bytes := do
+  let shape := title.headerShape
+  let bytes <- rawCallRetWitnessBaseBytes title path witness
+  if path.isCall then
+    let callRet <- findCallRetShape shape
+    writeFixedI32OperandValue
+      bytes
+      shape
+      callRet.subIdOperandIndex
+      witness.subId
+      "callSubId"
+  else
+    .ok bytes
+
+private def runRawCallRetResult
+    (title : Title)
+    (path : RawCallRetPath)
+    (witness : RawCallRetWitness)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String (Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) :=
+  let shape := title.headerShape
+  if path.isCall then
+    .ok
+      (TouhouFormal.ECL.rawCallStep
+        shape
+        witness.currentTime
+        witness.activeMask
+        witness.overrideMask
+        8
+        witness.bufferSize
+        rawPrefix
+        { subId := witness.subId
+          stackDepth := witness.stackDepth
+          stackDisabled := witness.stackDisabled
+          subOffsets := symbolicSubOffsetsOfCount witness.subCount })
+  else
+    .ok
+      (TouhouFormal.ECL.rawRetStep
+        shape
+        witness.currentTime
+        witness.activeMask
+        witness.overrideMask
+        8
+        witness.bufferSize
+        rawPrefix
+        { stackDepth := witness.stackDepth
+          stackDisabled := witness.stackDisabled
+          childContextSlot := witness.childContextSlot })
+
 private def rawBodyWitnessBaseBytes
     (title : Title)
     (path : RawBodyPath)
@@ -1135,6 +1499,57 @@ private def RawBodyPath.matchesResult
         | none => false
   | _, _ => false
 
+private def faultIndexBeforeZero (faultValue : TouhouFormal.Fault) : Bool :=
+  match faultValue.index with
+  | some index => decide (index < 0)
+  | none => false
+
+private def faultIndexAtOrPastBound (faultValue : TouhouFormal.Fault) : Bool :=
+  match faultValue.index, faultValue.bound with
+  | some index, some bound => decide (Int.ofNat bound <= index)
+  | _, _ => false
+
+private def RawCallRetPath.matchesResult
+    (path : RawCallRetPath)
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : Bool :=
+  match path, result with
+  | .callStackWriteBeforeStack, .error faultValue =>
+      faultValue.kind == .outOfBoundsWrite &&
+        faultValue.component == "EclRun.stack.call" &&
+        faultIndexBeforeZero faultValue
+  | .callStackWriteAtOrPastStack, .error faultValue =>
+      faultValue.kind == .outOfBoundsWrite &&
+        faultValue.component == "EclRun.stack.call" &&
+        faultIndexAtOrPastBound faultValue
+  | .callLookupFault, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclManager.CallEclSub"
+  | .callEntered, .ok outcome =>
+      outcome.action == .callEntered
+  | .callNoOp, .ok outcome =>
+      outcome.action == .callNoOp
+  | .retStackReadBeforeStack, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.stack.ret" &&
+        faultIndexBeforeZero faultValue
+  | .retStackReadAtOrPastStack, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.stack.ret" &&
+        faultIndexAtOrPastBound faultValue
+  | .retRestored, .ok outcome =>
+      outcome.action == .retRestored
+  | .retExitChild, .ok outcome =>
+      outcome.action == .retExitedChild
+  | .retChildIndexBeforeArray, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.stack.retChild" &&
+        faultIndexBeforeZero faultValue
+  | .retChildIndexAtOrPastArray, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.stack.retChild" &&
+        faultIndexAtOrPastBound faultValue
+  | _, _ => false
+
 def rawStepMaterialize
     (title : Title)
     (path : RawStepPath)
@@ -1295,6 +1710,19 @@ def rawBodyMaterialize
       result := result
       matchesPath := path.matchesResult result }
 
+def rawCallRetMaterialize
+    (title : Title)
+    (path : RawCallRetPath)
+    (witness : RawCallRetWitness) : Except String RawCallRetMaterialization := do
+  let bytes <- rawCallRetWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix title.headerShape bytes 0)
+  let result <- runRawCallRetResult title path witness rawPrefix
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      result := result
+      matchesPath := path.matchesResult result }
+
 private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .yielded => "yielded"
   | .skipped => "skipped"
@@ -1302,7 +1730,19 @@ private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .jumped => "jumped"
   | .vmError => "vm-error"
 
+private def rawCallRetActionName : TouhouFormal.ECL.RawCallRetAction -> String
+  | .yielded => "yielded"
+  | .skipped => "skipped"
+  | .callEntered => "call-entered"
+  | .callNoOp => "call-no-op"
+  | .retRestored => "ret-restored"
+  | .retExitedChild => "ret-exited-child"
+
 private def optionIntText : Option Int -> String
+  | none => "-"
+  | some value => toString value
+
+private def optionNatText : Option Nat -> String
   | none => "-"
   | some value => toString value
 
@@ -1387,6 +1827,75 @@ def RawBodyMaterialization.report (materialization : RawBodyMaterialization) : S
     , "targetTime=" ++ optionIntText (bodyResultTargetTime materialization.result)
     , "faultKind=" ++ bodyResultFaultKind materialization.result
     , "faultDetail=" ++ bodyResultFaultDetail materialization.result
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+private def callRetResultActionText
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : String :=
+  match result with
+  | .ok outcome => rawCallRetActionName outcome.action
+  | .error faultValue => "fault:" ++ faultValue.kind.name
+
+private def callRetResultStackDepthAfter
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.stackDepthAfter
+  | .error _ => none
+
+private def callRetResultReturnCursor
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.returnCursor
+  | .error _ => none
+
+private def callRetResultReturnCursorClass
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) :
+    Option TouhouFormal.CursorClass :=
+  match result with
+  | .ok outcome => outcome.returnCursorClass
+  | .error _ => none
+
+private def callRetResultTargetSubOffset
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : Option Nat :=
+  match result with
+  | .ok outcome => outcome.targetSubOffset
+  | .error _ => none
+
+private def callRetResultChildContextIndex
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.childContextIndex
+  | .error _ => none
+
+private def callRetResultFaultKind
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.kind.name
+
+private def callRetResultFaultDetail
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.detail
+
+def RawCallRetMaterialization.report
+    (materialization : RawCallRetMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "action=" ++ callRetResultActionText materialization.result
+    , "stackDepthAfter=" ++ optionIntText (callRetResultStackDepthAfter materialization.result)
+    , "returnCursor=" ++ optionIntText (callRetResultReturnCursor materialization.result)
+    , "returnCursorClass=" ++ optionCursorClassText (callRetResultReturnCursorClass materialization.result)
+    , "targetSubOffset=" ++ optionNatText (callRetResultTargetSubOffset materialization.result)
+    , "childContextIndex=" ++ optionIntText (callRetResultChildContextIndex materialization.result)
+    , "faultKind=" ++ callRetResultFaultKind materialization.result
+    , "faultDetail=" ++ callRetResultFaultDetail materialization.result
     , "matchesPath=" ++ toString materialization.matchesPath ]
 
 def RawIntResolverMaterialization.report
