@@ -33,6 +33,7 @@ Current status: these deltas are profile facts consumed by shared Lean and SMT
 checks. TH08's timeline prefix is represented as `i32 time`, `i16 opcode`,
 `u8 size`, and `args.ints[0]` as the first spawn operand. Raw ECL instruction
 prefixes are also decoded by one profile-driven decoder across TH06/TH07/TH08.
+The first bounded call-policy sweep is shared across all three title profiles.
 
 ## Phase 3: Rich VM Semantics
 

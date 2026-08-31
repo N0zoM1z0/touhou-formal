@@ -12,6 +12,7 @@ control, or retail-validation candidate.
 | `TH07-ECL-SUBTABLE-NEGATIVE` | counterexample | `subId = -1`, `subCount = 1` is unsafe under unchecked policy | Lean theorem, SMT `sat`, retail candidate |
 | `TH08-ECL-SUBTABLE-NEGATIVE` | negative control | `subId = -1` returns before table lookup | Lean theorem, SMT `unsat` for counterexample query |
 | `TH08-ECL-SUBTABLE-POSITIVE-OOB` | counterexample | `subId = 256`, `subCount = 1` is unsafe under TH08's nonnegative path | Lean theorem, SMT `sat`, retail candidate |
+| `ECL-SUBTABLE-BOUNDED-SWEEP` | finite formal search | one shared sweep over `subCount ∈ {1,2}` and `subId ∈ {-1,0,1,256}` finds TH06/TH07 unchecked negative faults and TH08's first nonnegative OOB fault | Lean theorem |
 
 Formal value: this separates two inputs that ordinary fuzzing can easily group
 together as "bad sub ids." The source-backed model proves that TH07 and TH08

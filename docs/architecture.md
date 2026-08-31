@@ -39,7 +39,8 @@ script opcodes should be added after the source-backed VM boundary is clear.
 the duplicated relation is small and source-linked. Larger encodings should be
 generated from Lean-side definitions or a shared intermediate representation.
 Finite Lean-side sweeps live here when they are small enough to keep as
-executable regression guards.
+executable regression guards, including cross-title call-policy and
+cursor-transfer searches.
 
 ## Future VMs
 

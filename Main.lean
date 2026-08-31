@@ -12,6 +12,19 @@ private def describeLoadLookup : Except TouhouFormal.ECL.LoadError (Option Nat) 
   | .ok none => "ok no-op"
   | .error err => err.describe
 
+private def describeLookupProbe? : Option TouhouFormal.Search.Call.LookupProbe -> String
+  | none => "none"
+  | some probe =>
+      let faultText :=
+        match probe.fault with
+        | none => ""
+        | some faultValue => " fault=" ++ faultValue.describe
+      "title=" ++ probe.title ++
+        " subCount=" ++ toString probe.subCount ++
+        " subId=" ++ toString probe.subId ++
+        " class=" ++ probe.lookupClass.name ++
+        faultText
+
 private def describeLoadedHeader : Except TouhouFormal.ECL.LoadError TouhouFormal.ECL.LoadedHeader -> String
   | .ok header =>
       "ok subCount=" ++ toString header.subCount ++
@@ -68,6 +81,9 @@ def main : IO Unit := do
   IO.println "Cross-title lookup policy controls"
   IO.println s!"TH07 negative subId: {describeFaultLookup (TouhouFormal.ECL.lookupSubOffset TouhouFormal.TH07.headerShape TouhouFormal.TH07.oneSubOffsets (-1))}"
   IO.println s!"TH08 negative subId: {describeFaultLookup (TouhouFormal.ECL.lookupSubOffset TouhouFormal.TH08.headerShape TouhouFormal.TH08.oneSubOffsets (-1))}"
+  IO.println s!"TH06 first bounded lookup fault: {describeLookupProbe? TouhouFormal.Search.Call.th06FirstFault?}"
+  IO.println s!"TH07 first bounded lookup fault: {describeLookupProbe? TouhouFormal.Search.Call.th07FirstFault?}"
+  IO.println s!"TH08 first bounded lookup fault: {describeLookupProbe? TouhouFormal.Search.Call.th08FirstFault?}"
   IO.println ""
   IO.println "Bounded loader controls"
   IO.println s!"TH06 zero-count 7 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH06.headerShape (TouhouFormal.Search.Bounded.zeroBytesOfLength 7))}"
