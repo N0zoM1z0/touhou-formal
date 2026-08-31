@@ -9,3 +9,6 @@ lean_lib TouhouFormal where
 @[default_target]
 lean_exe check where
   root := `Main
+
+lean_exe th06_smt where
+  root := `SmtMain

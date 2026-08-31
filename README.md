@@ -35,7 +35,9 @@ to predict arbitrary C++ undefined behavior after that point.
 ```bash
 lake build
 lake exe check
+lake exe th06_smt th06-sub-oob | z3 -in
+./scripts/check.sh
 ```
 
-After the SMT bridge lands, `scripts/check.sh` will run the Lean checks and Z3
-queries together.
+`scripts/check.sh` runs the Lean build, executable counterexample check, and
+the initial Z3 query together.
