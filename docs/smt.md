@@ -30,5 +30,24 @@ fault path live.
 `lake exe smt th08-jump-minus-one-oob | z3 -in` check relative jump cursor
 counterexamples backed by the shared cursor-transfer semantics.
 
+Cursor-delta query generation also reuses profile scalar widths. These commands
+ask the solver for field values that reach a named cursor class:
+
+```bash
+lake exe smt th06-timeline-size-before-buffer | z3 -in
+lake exe smt th07-timeline-size-before-buffer | z3 -in
+lake exe smt th08-timeline-size-before-buffer-unsat | z3 -in
+lake exe smt th08-timeline-size-nonprogress | z3 -in
+lake exe smt th06-nextoffset-before-buffer | z3 -in
+lake exe smt th07-nextoffset-before-buffer | z3 -in
+lake exe smt th08-nextoffset-before-buffer | z3 -in
+```
+
+The important negative control is
+`th08-timeline-size-before-buffer-unsat`: TH08's timeline size is modeled as
+`u8`, so a single timeline-size field cannot produce a negative cursor transfer.
+The adjacent `th08-timeline-size-nonprogress` query remains `sat` with
+`size = 0`.
+
 The next step is to generate larger instruction-level SMT queries from shared
 Lean-side transition facts once more of the VM is encoded.

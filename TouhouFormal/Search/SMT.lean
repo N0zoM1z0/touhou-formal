@@ -1,6 +1,9 @@
 import TouhouFormal.ECL.Profile
+import TouhouFormal.TH06.Raw
 import TouhouFormal.TH06.Wire
+import TouhouFormal.TH07
 import TouhouFormal.TH07.Wire
+import TouhouFormal.TH08
 import TouhouFormal.TH08.Wire
 
 namespace TouhouFormal.Search.SMT
@@ -59,6 +62,16 @@ private def boundedFindSubTableOobQuery
 private def signedI16Range (name : String) : String :=
   "(assert (and (<= (- 32768) " ++ name ++ ") (<= " ++ name ++ " 32767)))"
 
+private def signedI32Range (name : String) : String :=
+  "(assert (and (<= (- 2147483648) " ++ name ++ ") (<= " ++ name ++ " 2147483647)))"
+
+private def scalarRange (name : String) : TouhouFormal.ScalarWidth -> String
+  | .u8 => "(assert (and (<= 0 " ++ name ++ ") (<= " ++ name ++ " 255)))"
+  | .u16 => "(assert (and (<= 0 " ++ name ++ ") (<= " ++ name ++ " 65535)))"
+  | .u32 => "(assert (and (<= 0 " ++ name ++ ") (<= " ++ name ++ " 4294967295)))"
+  | .i16 => signedI16Range name
+  | .i32 => signedI32Range name
+
 def th06SubTableOobQuery : String :=
   concreteSubTableOobQuery
     "TH06"
@@ -108,9 +121,6 @@ def th08PositiveSubTableOobQuery : String :=
     TouhouFormal.TH08.headerShape.negativeSubIdPolicy
     1
 
-private def signedI32Range (name : String) : String :=
-  "(assert (and (<= (- 2147483648) " ++ name ++ ") (<= " ++ name ++ " 2147483647)))"
-
 private def concreteRelativeJumpOobQuery
     (title displacementValue : String)
     (bufferSize : Nat) : String :=
@@ -148,5 +158,130 @@ def th08JumpMinusOneOobQuery : String :=
     "TH08"
     "(- 1)"
     20
+
+inductive CursorTarget where
+  | beforeBuffer
+  | nonProgress
+  | atOrPastEnd
+deriving Repr, DecidableEq
+
+private def CursorTarget.name : CursorTarget -> String
+  | .beforeBuffer => "before-buffer"
+  | .nonProgress => "non-progress"
+  | .atOrPastEnd => "at-or-past-end"
+
+private def CursorTarget.assertion : CursorTarget -> String
+  | .beforeBuffer => "(assert (< targetCursor 0))"
+  | .nonProgress => "(assert (= targetCursor fileOffset))"
+  | .atOrPastEnd => "(assert (<= bufferSize targetCursor))"
+
+private def cursorDeltaClassQuery
+    (title fieldName fieldDescription : String)
+    (width : TouhouFormal.ScalarWidth)
+    (bufferSize : Nat)
+    (target : CursorTarget)
+    (includeModel : Bool := true) : String :=
+  joinLines
+    ( [ "(set-logic QF_LIA)"
+      , "; Cursor-delta query generated from shared cursor-transfer semantics and profile scalar width."
+      , "; Title: " ++ title
+      , "; Field: " ++ fieldDescription
+      , "; Target: " ++ target.name
+      , "(declare-const fileOffset Int)"
+      , "(declare-const " ++ fieldName ++ " Int)"
+      , "(declare-const bufferSize Int)"
+      , "(assert (= fileOffset 0))"
+      , "(assert (= bufferSize " ++ toString bufferSize ++ "))"
+      , scalarRange fieldName width
+      , "(define-fun targetCursor () Int (+ fileOffset " ++ fieldName ++ "))"
+      , target.assertion
+      , "(check-sat)" ] ++
+      if includeModel then ["(get-model)"] else [] )
+
+private def missingProfileQuery (title fieldDescription : String) : String :=
+  joinLines
+    [ "(set-logic QF_LIA)"
+    , "; Profile is missing the requested cursor-delta field."
+    , "; Title: " ++ title
+    , "; Field: " ++ fieldDescription
+    , "(assert false)"
+    , "(check-sat)" ]
+
+private def timelineSizeCursorQuery
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (bufferSize : Nat)
+    (target : CursorTarget)
+    (includeModel : Bool := true) : String :=
+  match shape.timelineShape with
+  | none => missingProfileQuery shape.title "timeline.size"
+  | some timelineShape =>
+      cursorDeltaClassQuery
+        shape.title
+        "size"
+        "timeline.size"
+        timelineShape.sizeWidth
+        bufferSize
+        target
+        includeModel
+
+private def rawNextOffsetCursorQuery
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (bufferSize : Nat)
+    (target : CursorTarget)
+    (includeModel : Bool := true) : String :=
+  match shape.rawInstrShape with
+  | none => missingProfileQuery shape.title "raw.nextOffset"
+  | some rawShape =>
+      cursorDeltaClassQuery
+        shape.title
+        "nextOffset"
+        "raw.nextOffset"
+        rawShape.nextOffsetWidth
+        bufferSize
+        target
+        includeModel
+
+def th06TimelineSizeBeforeBufferQuery : String :=
+  timelineSizeCursorQuery
+    TouhouFormal.TH06.headerShape
+    TouhouFormal.TH06.rawZeroSizeTimelinePrefixBytes.size
+    .beforeBuffer
+
+def th07TimelineSizeBeforeBufferQuery : String :=
+  timelineSizeCursorQuery
+    TouhouFormal.TH07.headerShape
+    TouhouFormal.TH07.timelineInstrFixedSize
+    .beforeBuffer
+
+def th08TimelineSizeBeforeBufferUnsatQuery : String :=
+  timelineSizeCursorQuery
+    TouhouFormal.TH08.headerShape
+    TouhouFormal.TH08.rawTimelinePrefixBytes.size
+    .beforeBuffer
+    false
+
+def th08TimelineSizeNonProgressQuery : String :=
+  timelineSizeCursorQuery
+    TouhouFormal.TH08.headerShape
+    TouhouFormal.TH08.rawTimelinePrefixBytes.size
+    .nonProgress
+
+def th06RawNextOffsetBeforeBufferQuery : String :=
+  rawNextOffsetCursorQuery
+    TouhouFormal.TH06.headerShape
+    TouhouFormal.TH06.rawZeroNextOffsetInstrPrefixBytes.size
+    .beforeBuffer
+
+def th07RawNextOffsetBeforeBufferQuery : String :=
+  rawNextOffsetCursorQuery
+    TouhouFormal.TH07.headerShape
+    TouhouFormal.TH07.rawInstrPrefixBytes.size
+    .beforeBuffer
+
+def th08RawNextOffsetBeforeBufferQuery : String :=
+  rawNextOffsetCursorQuery
+    TouhouFormal.TH08.headerShape
+    TouhouFormal.TH08.rawInstrPrefixBytes.size
+    .beforeBuffer
 
 end TouhouFormal.Search.SMT

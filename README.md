@@ -47,6 +47,7 @@ lake build
 lake exe check
 lake exe smt th06-sub-oob | z3 -in
 lake exe smt th08-negative-noop-unsat | z3 -in
+lake exe smt th08-timeline-size-before-buffer-unsat | z3 -in
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
