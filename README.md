@@ -18,6 +18,9 @@ The executable model currently covers these source-backed boundaries:
   negative-sub-id policy difference.
 - Loader and cursor checks expose first missing-byte, zero-size, and
   before-buffer boundaries as executable theorems.
+- Timeline `size` and raw instruction `nextOffset` cursor sweeps are generated
+  from shared profile widths, so TH08's unsigned timeline-size delta is recorded
+  without title-local search logic.
 - Raw ECL instruction prefixes and ANM entry headers are decoded through shared
   profile-driven code across TH06/TH07/TH08.
 

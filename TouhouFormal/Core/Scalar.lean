@@ -32,4 +32,15 @@ def readScalar (title component : String) (bytes : TouhouFormal.Bytes) (offset :
   | .i16 => readI16LE title component bytes offset
   | .i32 => readI32LE title component bytes offset
 
+def ScalarWidth.cursorDeltaSamples : ScalarWidth -> List Int
+  | .u8 => [0, 1, 12, 24, 255]
+  | .u16 => [0, 1, 12, 24, 65535]
+  | .u32 => [0, 1, 12, 24, 4294967295]
+  | .i16 => [-1, 0, 1, 12, 24, 32767]
+  | .i32 => [-1, 0, 1, 12, 24, 2147483647]
+
+def ScalarWidth.canRepresentNegative : ScalarWidth -> Bool
+  | .u8 | .u16 | .u32 => false
+  | .i16 | .i32 => true
+
 end TouhouFormal

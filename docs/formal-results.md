@@ -46,12 +46,19 @@ read order matters for compatibility and crash triage.
 | `TH06-ECL-JUMP-MINUS-ONE` | cursor counterexample | `ECL_OPCODE_JUMP` with displacement `-1` jumps before the buffer | Lean theorem, SMT `sat`, retail candidate |
 | `TH07-ECL-JUMP-MINUS-ONE` | cursor counterexample | `ECL_JUMP` with displacement `-1` jumps before the buffer | Lean theorem, SMT `sat`, retail candidate |
 | `TH08-ECL-JUMP-MINUS-ONE` | cursor counterexample | low opcode 4 uses raw i32 operand 1 as a relative displacement; `-1` jumps before the buffer | Lean theorem, SMT `sat`, retail candidate |
+| `ECL-TIMELINE-SIZE-WIDTH-SWEEP` | finite formal search | shared profile-derived boundary samples show TH06/TH07 signed `i16 size` admits `-1` before-buffer and `0` non-progress; TH08 unsigned `u8 size` removes the single-field negative case but still admits `0` non-progress and `255` at/past-end | Lean theorem |
+| `ECL-RAW-NEXTOFFSET-WIDTH-SWEEP` | finite formal search | shared profile-derived boundary samples show TH06/TH07/TH08 raw `nextOffset : i16` all admit before-buffer, non-progress, and at/past-end cursor transfers | Lean theorem |
 | `ECL-JUMP-CURSOR-SWEEP` | finite formal search | shared classifier separates `-1` before-buffer, `0` non-progress, in-bounds positive offsets, and at-end/past-end targets for TH06/TH07/TH08 jump fixtures | Lean theorem |
 
 Formal value: fuzzing can observe hangs or divergent traces, but bounded formal
 models can state the responsible invariant directly: a transition must either
 halt, fault, yield, or move the instruction cursor. The original VM permits
 non-moving and before-buffer transitions.
+
+The size/nextOffset sweeps are deliberately generated from the shared profile
+widths (`i16` versus `u8`) instead of title-local fixtures. That makes the TH08
+timeline difference a modeled semantic delta rather than a hand-written
+exception.
 
 ## ANM entry chain
 
