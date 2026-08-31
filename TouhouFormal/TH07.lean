@@ -1,4 +1,5 @@
 import TouhouFormal.Core.Bytes
+import TouhouFormal.TH07.ANM
 import TouhouFormal.ECL.Call
 import TouhouFormal.ECL.Instruction
 import TouhouFormal.TH07.Wire

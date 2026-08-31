@@ -1,4 +1,5 @@
 import TouhouFormal.ECL.Scalar
+import TouhouFormal.ECL.Profile
 
 namespace TouhouFormal.ECL
 

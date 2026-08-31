@@ -31,12 +31,16 @@ contain profile facts and title deltas. Similar names across titles are not
 assumed equivalent; a title module should justify differences by filling a
 shared profile field before adding one-off logic.
 
+`TouhouFormal/ANM` follows the same pattern for animation resources. The first
+shared ANM layer decodes raw entry headers and next-entry cursor policy only;
+script opcodes should be added after the source-backed VM boundary is clear.
+
 `TouhouFormal/Search` is allowed to duplicate a bounded query in SMT-LIB when
 the duplicated relation is small and source-linked. Larger encodings should be
 generated from Lean-side definitions or a shared intermediate representation.
 
 ## Future VMs
 
-ANM and nontraditional bullet-hell VMs should enter through the same boundary:
-raw input, decoded instruction stream, host state assumptions, small-step
-semantics, fault outcomes, and retail validation evidence.
+Nontraditional bullet-hell VMs should enter through the same boundary: raw
+input, decoded instruction stream, host state assumptions, small-step semantics,
+fault outcomes, and retail validation evidence.

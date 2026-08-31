@@ -71,6 +71,22 @@ relative to `/home/yann/yann/touhou/formal`.
   prefix, so the Lean model now represents the corresponding TH08 layout as a
   profile delta instead of copying this old shape globally.
 
+## ANM
+
+- `reference/th06/src/AnmManager.hpp:59`: TH06 `AnmRawEntry` stores counts,
+  texture metadata, `nextOffset`, sprite offsets, and embedded scripts; its
+  asserted size is `0xb8`.
+- `reference/th06/src/AnmManager.cpp:341`: TH06 `LoadAnm` opens one raw entry and
+  consumes its sprite/script tables directly.
+- `reference/th07/src/th07/AnmManager.hpp:214`: TH07 `AnmRawEntry` has the same
+  `nextOffset` offset and embedded sprite/script tables.
+- `reference/th07/src/th07/AnmManager.cpp:402`: TH07 `LoadAnms` walks the entry
+  chain until `nextOffset == 0`.
+- `reference/th08/src/AnmManager.hpp:227`: TH08 `AnmRawEntry` is a compact
+  `0x40`-byte header with `nextOffset` and no embedded sprite/script arrays.
+- `reference/th08/src/AnmManager.cpp:2354`: TH08 counts entries, scripts, and
+  sprites while walking the same `nextOffset` chain.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has already been retail-checked in

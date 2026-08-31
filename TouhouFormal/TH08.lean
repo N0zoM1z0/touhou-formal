@@ -1,4 +1,5 @@
 import TouhouFormal.Core.Bytes
+import TouhouFormal.TH08.ANM
 import TouhouFormal.ECL.Call
 import TouhouFormal.ECL.Instruction
 import TouhouFormal.ECL.Loader

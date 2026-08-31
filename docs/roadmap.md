@@ -49,3 +49,6 @@ script mutations and validate selected cases on retail binaries under Wine.
 Use the same transition-system interface for ANM and other script-like game
 systems, including nontraditional bullet-hell designs where scripts manipulate
 timelines, entities, or visual state without a standard enemy-bullet loop.
+
+Current status: ANM has a shared entry-header decoder and title profiles for
+TH06/TH07/TH08. Full ANM script execution is intentionally not modeled yet.

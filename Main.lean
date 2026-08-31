@@ -37,6 +37,14 @@ private def describeRawInstrPrefix : Except Fault TouhouFormal.ECL.RawInstrPrefi
         " operandMask=" ++ toString rawPrefix.operandMask
   | .error faultValue => faultValue.describe
 
+private def describeAnmEntry : Except Fault TouhouFormal.ANM.EntryHeader -> String
+  | .ok entry =>
+      "ok sprites=" ++ toString entry.numSprites ++
+        " scripts=" ++ toString entry.numScripts ++
+        " nextOffset=" ++ toString entry.nextOffset ++
+        " nextCursor=" ++ toString entry.nextCursor
+  | .error faultValue => faultValue.describe
+
 def main : IO Unit := do
   let result := runBounded TouhouFormal.TH06.stepTimeline 1 TouhouFormal.TH06.arg0_256State
   IO.println "TH06 timeline/subTable counterexample seed"
@@ -70,3 +78,8 @@ def main : IO Unit := do
   IO.println s!"TH06 nextOffset=-1 after advance: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefixAfterAdvance TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawNegativeNextOffsetInstrPrefixBytes { fileOffset := 0, time := 441, opcode := 0, nextOffset := -1, difficultyMask := some 0, operandMask := none })}"
   IO.println s!"TH07 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH07.headerShape TouhouFormal.TH07.rawInstrPrefixBytes 0)}"
   IO.println s!"TH08 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH08.headerShape TouhouFormal.TH08.rawInstrPrefixBytes 0)}"
+  IO.println ""
+  IO.println "ANM entry controls"
+  IO.println s!"TH06 ANM zero entry: {describeAnmEntry (TouhouFormal.ANM.decodeEntryHeader TouhouFormal.TH06.ANM.entryShape TouhouFormal.TH06.ANM.zeroEntryBytes 0)}"
+  IO.println s!"TH07 ANM next entry: {describeAnmEntry (TouhouFormal.ANM.decodeEntryHeader TouhouFormal.TH07.ANM.entryShape TouhouFormal.TH07.ANM.nextEntryBytes 0)}"
+  IO.println s!"TH08 ANM next entry: {describeAnmEntry (TouhouFormal.ANM.decodeEntryHeader TouhouFormal.TH08.ANM.entryShape TouhouFormal.TH08.ANM.nextEntryBytes 0)}"

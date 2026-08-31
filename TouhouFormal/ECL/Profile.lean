@@ -1,4 +1,5 @@
 import TouhouFormal.Core.Evidence
+import TouhouFormal.Core.Scalar
 
 namespace TouhouFormal.ECL
 
@@ -10,21 +11,6 @@ deriving Repr, DecidableEq
 def NegativeSubIdPolicy.name : NegativeSubIdPolicy -> String
   | .unchecked => "unchecked"
   | .noOp => "no-op"
-
-inductive ScalarWidth where
-  | u8
-  | u16
-  | u32
-  | i16
-  | i32
-deriving Repr, DecidableEq
-
-def ScalarWidth.bytes : ScalarWidth -> Nat
-  | .u8 => 1
-  | .u16 => 2
-  | .u32 => 4
-  | .i16 => 2
-  | .i32 => 4
 
 structure TimelineShape where
   fixedSize : Nat
