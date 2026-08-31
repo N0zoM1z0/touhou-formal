@@ -1,4 +1,5 @@
 import TouhouFormal.Core.Evidence
+import TouhouFormal.Core.Bytes
 import TouhouFormal.Core.Fault
 import TouhouFormal.Core.Transition
 import TouhouFormal.ECL

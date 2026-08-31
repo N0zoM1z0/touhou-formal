@@ -7,6 +7,7 @@ def title : String := "TH07"
 
 def rawHeaderFixedPrefixBytes : Nat := 0x44
 def timelinePointerCount : Nat := 16
+def timelineInstrFixedSize : Nat := 0x20
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
@@ -33,11 +34,27 @@ def eclEvidence : List TouhouFormal.SourceRef :=
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
     hasVersionField := false
+    versionOffset := none
     expectedVersion := none
+    subCountOffset := 0
+    timelineCountOffset := 2
+    timelineTableOffset := 4
     fixedHeaderBytes := rawHeaderFixedPrefixBytes
     timelineSlots := timelinePointerCount
+    loaderTimelineSlots := timelinePointerCount
     subTableField := "subTable[]"
     negativeSubIdPolicy := .unchecked
+    timelineShape :=
+      some
+        { fixedSize := timelineInstrFixedSize
+          timeOffset := 0
+          timeWidth := .i16
+          opcodeOffset := 4
+          opcodeWidth := .i16
+          sizeOffset := 6
+          sizeWidth := .i16
+          firstArgOffset := some 2
+          firstArgWidth := some .i16 }
     evidence := eclEvidence }
 
 end TouhouFormal.TH07

@@ -41,11 +41,27 @@ def eclEvidence : List TouhouFormal.SourceRef :=
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
     hasVersionField := false
+    versionOffset := none
     expectedVersion := none
+    subCountOffset := 0
+    timelineCountOffset := 2
+    timelineTableOffset := 4
     fixedHeaderBytes := rawHeaderSize
     timelineSlots := timelinePointerCount
+    loaderTimelineSlots := 1
     subTableField := "subOffsets[0]"
     negativeSubIdPolicy := .unchecked
+    timelineShape :=
+      some
+        { fixedSize := timelineInstrFixedSize
+          timeOffset := 0
+          timeWidth := .i16
+          opcodeOffset := 4
+          opcodeWidth := .i16
+          sizeOffset := 6
+          sizeWidth := .i16
+          firstArgOffset := some 2
+          firstArgWidth := some .i16 }
     evidence := eclEvidence }
 
 end TouhouFormal.TH06

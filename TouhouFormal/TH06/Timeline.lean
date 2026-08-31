@@ -1,4 +1,5 @@
 import TouhouFormal.Core.Transition
+import TouhouFormal.ECL.Call
 import TouhouFormal.TH06.Wire
 
 namespace TouhouFormal.TH06
@@ -35,26 +36,16 @@ structure TimelineState where
 deriving Repr, DecidableEq
 
 def subTableOobFault (subId : Int) (subCount : Nat) : Fault :=
-  Fault.outOfBoundsRead
-    title
-    "EclManager.CallEclSub"
-    "source reads this->subTable[subId] without validating the timeline-provided sub id"
-    subId
-    subCount
+  TouhouFormal.ECL.subTableOobFault headerShape subId subCount
 
 def isSubIdInBounds (file : EclFile) (subId : Int) : Bool :=
-  if subId < 0 then
-    false
-  else
-    subId.toNat < file.subCount
+  TouhouFormal.ECL.isSubIdInBounds file.subOffsets subId
 
 def callEclSub (file : EclFile) (ctx : EnemyContext) (subId : Int) : Except Fault EnemyContext :=
-  if subId < 0 then
-    .error (subTableOobFault subId file.subCount)
-  else
-    match file.subOffsets[subId.toNat]? with
-    | some offset => .ok { ctx with currentInstr := some offset, subId := subId, time := 0 }
-    | none => .error (subTableOobFault subId file.subCount)
+  match TouhouFormal.ECL.lookupSubOffset headerShape file.subOffsets subId with
+  | .ok (some offset) => .ok { ctx with currentInstr := some offset, subId := subId, time := 0 }
+  | .ok none => .ok { ctx with currentInstr := none, subId := subId, time := 0 }
+  | .error fault => .error fault
 
 def advanceTimeline (state : TimelineState) : TimelineState :=
   { state with pc := state.pc + 1 }
