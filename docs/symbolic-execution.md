@@ -58,9 +58,51 @@ Solve and materialize every path class for a title/environment:
 ./scripts/symex_materialize_raw_step.py th08 all 1 2
 ```
 
+Build a sorted candidate queue:
+
+```bash
+./scripts/symex_candidate_queue.py
+```
+
 The optional numeric arguments are `activeMask` and `overrideMask`; both must fit
 in an unsigned byte. `overrideMask` is semantically relevant to TH08 raw ECL and
 ignored by the TH06/TH07 active-bit-intersection policy.
+
+## Candidate queue
+
+`scripts/symex_candidate_queue.py` is the current non-manual triage layer. It
+uses the materializer for each requested title/environment/path, then ranks
+records by generic path properties:
+
+- `cursor-underflow` and `cursor-out-of-range`: high priority;
+- `liveness`: high priority;
+- `explicit-vm-error`: medium priority;
+- in-bounds execution/skip paths: low priority controls;
+- time-gate yield: coverage control.
+
+The default matrix currently covers:
+
+- TH06 active bit 0;
+- TH06 retail Lunatic bit 3 (`activeMask = 8`);
+- TH07 active bit 0;
+- TH08 active bit 0;
+- TH08 active bit 0 plus override bit 1.
+
+A full default run on 2026-08-31 produced 70 satisfiable candidates:
+
+```text
+cursor-underflow: 15
+cursor-out-of-range: 15
+liveness: 15
+reachable-control-path: 15
+explicit-vm-error: 5
+time-gate-control: 5
+```
+
+This is not yet a claim that all 45 high-priority candidates are distinct retail
+bugs. It is the formal queue that should replace ad-hoc manual hunting: every
+entry has a solver witness, a Lean-materialized byte fixture, and a concrete
+`rawStep` replay result.
 
 ## Witness materialization
 

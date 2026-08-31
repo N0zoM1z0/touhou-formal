@@ -84,6 +84,7 @@ when `enemy->eclDifficultyMaskOverride` is nonzero.
 | --- | --- | --- | --- |
 | `ECL-RAW-STEP-SYMEX-BASELINE` | symbolic execution baseline | profile-driven raw ECL single-step executor enumerates time-gate, difficulty-skip, ordinary-advance, fixed-jump, and VM-error paths, then emits SMT path constraints for Z3 | Lean model, Z3-backed `symex` executable, check-script witnesses |
 | `ECL-RAW-STEP-WITNESS-MATERIALIZATION` | solver-to-fixture bridge | Z3 `get-value` witnesses are encoded into raw ECL bytes by Lean using `HeaderShape.rawInstrShape`, decoded again, and replayed through `rawStep`; accepted fixtures must report `matchesPath=true` | TH08 all-path smoke covers 14 path classes under `activeMask=1`, `overrideMask=2`; single fixed-hex regression for TH08 `jumped-before-buffer` |
+| `ECL-RAW-STEP-CANDIDATE-QUEUE` | symbolic triage baseline | default queue solves/materializes raw-step path classes across five title/difficulty environments and ranks them by generic cursor/liveness/VM-error properties | 70 satisfiable materialized candidates on 2026-08-31; 45 high-priority cursor/liveness candidates |
 
 Formal value: this is the baseline the project should compare fuzzing against.
 The executor is not given a concrete bug. It enumerates source-backed path
@@ -98,6 +99,12 @@ witness is byte-realizable under the modeled raw instruction shape and that the
 same shared concrete step classifies it consistently. The TH06
 `jumped-before-buffer` witness now has a separate retail confirmation path; the
 remaining path classes still need prioritization and full ECL/DAT validation.
+
+The candidate queue is the current answer to "do not manually find examples
+first." It starts from enumerated symbolic path classes, materializes every
+satisfiable record, and ranks by a title-independent property of the transition.
+Fuzzing can still validate and minimize the resulting cases, but it is no longer
+responsible for discovering that those path classes exist.
 
 ## ANM entry chain
 

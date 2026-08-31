@@ -74,3 +74,7 @@ grep -q '"hex": "00000000040000000001000000000000ffffffff"' "$solver_output"
 python3 scripts/symex_materialize_raw_step.py th08 all 1 2 > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 14; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs)' "$solver_output"
+
+python3 scripts/symex_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path jumped-before-buffer > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 1; c=data["candidates"][0]; assert c["risk"]["class"] == "cursor-underflow"; assert c["nextAction"].startswith("retained Wine confirmation exists")' "$solver_output"

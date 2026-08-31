@@ -57,6 +57,7 @@ lake exe symex query th08 jumped-before-buffer 1 0 | z3 -in
 lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
 ./scripts/symex_raw_step.sh th08 1 2
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
+./scripts/symex_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path jumped-before-buffer
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
