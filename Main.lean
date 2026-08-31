@@ -12,6 +12,13 @@ private def describeLoadLookup : Except TouhouFormal.ECL.LoadError (Option Nat) 
   | .ok none => "ok no-op"
   | .error err => err.describe
 
+private def describeLoadedHeader : Except TouhouFormal.ECL.LoadError TouhouFormal.ECL.LoadedHeader -> String
+  | .ok header =>
+      "ok subCount=" ++ toString header.subCount ++
+        " timelineOffsets=" ++ toString header.timelineOffsets.size ++
+        " subOffsets=" ++ toString header.subOffsets.size
+  | .error err => err.describe
+
 def main : IO Unit := do
   let result := runBounded TouhouFormal.TH06.stepTimeline 1 TouhouFormal.TH06.arg0_256State
   IO.println "TH06 timeline/subTable counterexample seed"
@@ -29,3 +36,9 @@ def main : IO Unit := do
   IO.println "Cross-title lookup policy controls"
   IO.println s!"TH07 negative subId: {describeFaultLookup (TouhouFormal.ECL.lookupSubOffset TouhouFormal.TH07.headerShape TouhouFormal.TH07.oneSubOffsets (-1))}"
   IO.println s!"TH08 negative subId: {describeFaultLookup (TouhouFormal.ECL.lookupSubOffset TouhouFormal.TH08.headerShape TouhouFormal.TH08.oneSubOffsets (-1))}"
+  IO.println ""
+  IO.println "Bounded loader controls"
+  IO.println s!"TH06 zero-count 7 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH06.headerShape (TouhouFormal.Search.Bounded.zeroBytesOfLength 7))}"
+  IO.println s!"TH06 zero-count 8 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH06.headerShape TouhouFormal.Search.Bounded.th06ZeroCountMinimalBytes)}"
+  IO.println s!"TH08 versioned 71 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH08.headerShape TouhouFormal.Search.Bounded.th08AlmostMinimalBytes)}"
+  IO.println s!"TH08 versioned 72 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH08.headerShape TouhouFormal.Search.Bounded.th08ZeroCountMinimalBytes)}"

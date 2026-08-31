@@ -12,6 +12,11 @@ Add little-endian byte decoding for the TH06 header, timeline records, and raw
 ECL instruction headers. Preserve loader rebasing behavior and expose malformed
 or undersized files as first-operation faults.
 
+Current status: the byte reader and loader are shared ECL code, with TH06 raw
+bytes already flowing through loader, timeline-prefix decoding, and shared
+subTable lookup. Bounded loader checks also record first missing-byte faults for
+undersized files.
+
 ## Phase 2: TH07 and TH08 Deltas
 
 Encode title-specific differences:
@@ -20,6 +25,10 @@ Encode title-specific differences:
   encoding with `paramMask`.
 - TH08 adds an ECL version field, rebases sixteen timeline offsets, and treats
   negative `CallEclSub` ids as a successful no-op.
+
+Current status: these deltas are profile facts consumed by shared Lean and SMT
+checks. TH08's timeline prefix is represented as `i32 time`, `i16 opcode`,
+`u8 size`, and `args.ints[0]` as the first spawn operand.
 
 ## Phase 3: Rich VM Semantics
 
