@@ -1,8 +1,9 @@
 # touhou-formal
 
-> OS 都能 formal verification，凭什么 Gensokyo 没有？
+> If operating systems get formal verification, Gensokyo gets an executable
+> specification.
 >
-> Gensokyo deserves an executable specification.
+> The bullets are already formal. The VM should be, too.
 
 `touhou-formal` is a formal-methods workbench for Touhou script VMs, starting
 with the ECL VM family in TH06, TH07, and TH08.
