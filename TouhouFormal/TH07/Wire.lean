@@ -10,6 +10,12 @@ def timelinePointerCount : Nat := 16
 def timelineInstrFixedSize : Nat := 0x20
 def eclOpcodeJump : Int := 2
 def eclOpcodeDecJump : Int := 3
+def eclOpcodeJumpIfEq : Int := 28
+def eclOpcodeJumpIfNeq : Int := 30
+def eclOpcodeJumpIfLt : Int := 32
+def eclOpcodeJumpIfLeq : Int := 34
+def eclOpcodeJumpIfGt : Int := 36
+def eclOpcodeJumpIfGeq : Int := 38
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
@@ -25,6 +31,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       endLine := 324
       claim := "EclTimelineInstr stores i16 time, arg0, opcode, size, and six AnyArg payload slots." },
     { path := "reference/th07/src/th07/EclManager.cpp"
+      startLine := 23
+      endLine := 33
+      claim := "GET_INT_VALUE checks paramMask bit idx; a clear bit uses the raw operand and a set bit resolves the var id." },
+    { path := "reference/th07/src/th07/EclManager.cpp"
       startLine := 70
       endLine := 101
       claim := "Load rebases sixteen timeline pointers and subTable entries for i < subCount." },
@@ -32,6 +42,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 106
       endLine := 114
       claim := "CallEclSub reads this->subTable[subId] without checking subId." },
+    { path := "reference/th07/src/th07/EclManager.cpp"
+      startLine := 116
+      endLine := 264
+      claim := "GetVarValue resolves known ECL var ids and returns the raw operand value in the default case." },
     { path := "reference/th07/src/th07/EclManager.cpp"
       startLine := 946
       endLine := 954
@@ -43,7 +57,11 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th07/src/th07/EclManager.cpp"
       startLine := 1043
       endLine := 1045
-      claim := "MOD performs integer modulo by operand slot 2 without a zero-divisor guard." } ]
+      claim := "MOD performs integer modulo by operand slot 2 without a zero-divisor guard." },
+    { path := "reference/th07/src/th07/EclManager.cpp"
+      startLine := 1092
+      endLine := 1166
+      claim := "Integer JUMP_IF_* opcodes compare resolved operand slots 0 and 1, then taken branches set time from slot 2 and jump by slot 3." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -97,6 +115,65 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 targetTimeOperandIndex := 0
                 displacementOperandIndex := 1
                 counterOperandIndex := 2 }
+          intRValueResolver :=
+            some
+              { maskPolicy := .bitSetMeansResolve
+                knownRValueSelectors :=
+                  { ranges := [ { first := 10000, last := 10073 } ]
+                    exclusions := [10057, 10058, 10059, 10060] }
+                knownLValueSelectors :=
+                  { ranges :=
+                      [ { first := 10000, last := 10003 },
+                        { first := 10012, last := 10017 },
+                        { first := 10025, last := 10025 },
+                        { first := 10027, last := 10027 },
+                        { first := 10029, last := 10032 },
+                        { first := 10037, last := 10040 },
+                        { first := 10070, last := 10071 } ]
+                    exclusions := [] } }
+          intConditionJumps :=
+            [ { opcode := eclOpcodeJumpIfEq
+                op := .eq
+                source := .resolvedOperands
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1
+                targetTimeOperandIndex := 2
+                displacementOperandIndex := 3 },
+              { opcode := eclOpcodeJumpIfNeq
+                op := .neq
+                source := .resolvedOperands
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1
+                targetTimeOperandIndex := 2
+                displacementOperandIndex := 3 },
+              { opcode := eclOpcodeJumpIfLt
+                op := .lt
+                source := .resolvedOperands
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1
+                targetTimeOperandIndex := 2
+                displacementOperandIndex := 3 },
+              { opcode := eclOpcodeJumpIfLeq
+                op := .le
+                source := .resolvedOperands
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1
+                targetTimeOperandIndex := 2
+                displacementOperandIndex := 3 },
+              { opcode := eclOpcodeJumpIfGt
+                op := .gt
+                source := .resolvedOperands
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1
+                targetTimeOperandIndex := 2
+                displacementOperandIndex := 3 },
+              { opcode := eclOpcodeJumpIfGeq
+                op := .ge
+                source := .resolvedOperands
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1
+                targetTimeOperandIndex := 2
+                displacementOperandIndex := 3 } ]
           intDivisorHazards :=
             [ { opcode := 15
                 kind := .div

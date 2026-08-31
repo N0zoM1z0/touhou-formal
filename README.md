@@ -24,6 +24,11 @@ The executable model currently covers these source-backed boundaries:
 - Raw ECL difficulty-mask semantics are modeled as profile policy; TH08's
   override-mask rule is proven distinct from the TH06/TH07 active-bit
   intersection rule.
+- Shared integer operand resolution covers TH06's always-`GetVar` behavior and
+  TH07/TH08 `operandFlags` mask branches, including known selector fallthrough
+  to raw immediates.
+- The first opcode-body slice includes `JUMPDEC`, integer conditional jumps,
+  and immediate/raw integer div/mod zero-divisor hazards.
 - Raw ECL instruction prefixes and ANM entry headers are decoded through shared
   profile-driven code across TH06/TH07/TH08.
 
@@ -57,12 +62,16 @@ lake exe symex query th08 jumped-before-buffer 1 0 | z3 -in
 lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
 lake exe symex list-body-paths
 lake exe symex query-body-values th08 int-divisor-zero 1 2 | z3 -in
+lake exe symex list-int-resolver-paths
+lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
 ./scripts/symex_raw_step.sh th08 1 2
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ./scripts/symex_materialize_raw_step.py th06 jumped-before-buffer 8 0 --ecl-file
 ./scripts/symex_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path jumped-before-buffer
 ./scripts/symex_materialize_body_step.py th08 all 1 2
 ./scripts/symex_body_candidate_queue.py
+./scripts/symex_materialize_int_resolver.py th07 all 0
+./scripts/symex_int_resolver_queue.py
 python3 scripts/evaluate_symex_effectiveness.py
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
@@ -76,11 +85,13 @@ controls, and the current raw-ECL symbolic witness materializer. The
 materializer solves a path, asks Lean to encode the witness into bytes from the
 shared title profile, decodes it again, and checks that the concrete step lands
 back in the requested path class. The body materializer does the same for the
-first opcode-body layer: `JUMPDEC` taken/not-taken paths and immediate/raw
-integer div/mod zero-divisor faults. `scripts/evaluate_symex_effectiveness.py`
-reruns the symbolic candidate queues and reports which modeled branches are
-covered versus which source opcode/body branches remain outside the current
-semantics. `scripts/retail_inventory.sh` is read-only and records archive
+first opcode-body layer: `JUMPDEC`, integer conditional jumps, and immediate/raw
+integer div/mod zero-divisor faults. The resolver materializer covers integer
+rvalue `operandFlags` branches separately from opcode-body effects.
+`scripts/evaluate_symex_effectiveness.py` reruns the symbolic candidate queues
+and reports which modeled branches are covered versus which source opcode/body
+branches remain outside the current semantics. `scripts/retail_inventory.sh` is
+read-only and records archive
 hashes plus executable/data CRCs before any Wine validation. Retail validation
 scripts operate on isolated copies under
 `/home/yann/yann/touhou/formal/retail_extract` and

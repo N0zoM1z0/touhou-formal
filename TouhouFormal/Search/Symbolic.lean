@@ -86,12 +86,16 @@ def allRawStepPaths : List RawStepPath :=
 inductive RawBodyPath where
   | decJumpTaken (cursor : CursorGoal)
   | decJumpNotTaken (cursor : CursorGoal)
+  | intCondJumpTaken (cursor : CursorGoal)
+  | intCondJumpNotTaken (cursor : CursorGoal)
   | intDivisorZero
 deriving Repr, DecidableEq
 
 def RawBodyPath.name : RawBodyPath -> String
   | .decJumpTaken cursor => "decjump-taken-" ++ cursor.name
   | .decJumpNotTaken cursor => "decjump-not-taken-" ++ cursor.name
+  | .intCondJumpTaken cursor => "int-condjump-taken-" ++ cursor.name
+  | .intCondJumpNotTaken cursor => "int-condjump-not-taken-" ++ cursor.name
   | .intDivisorZero => "int-divisor-zero"
 
 def RawBodyPath.parse? : String -> Option RawBodyPath
@@ -103,13 +107,43 @@ def RawBodyPath.parse? : String -> Option RawBodyPath
   | "decjump-not-taken-non-progress" => some (.decJumpNotTaken .nonProgress)
   | "decjump-not-taken-in-bounds" => some (.decJumpNotTaken .inBounds)
   | "decjump-not-taken-at-or-past-end" => some (.decJumpNotTaken .atOrPastEnd)
+  | "int-condjump-taken-before-buffer" => some (.intCondJumpTaken .beforeBuffer)
+  | "int-condjump-taken-non-progress" => some (.intCondJumpTaken .nonProgress)
+  | "int-condjump-taken-in-bounds" => some (.intCondJumpTaken .inBounds)
+  | "int-condjump-taken-at-or-past-end" => some (.intCondJumpTaken .atOrPastEnd)
+  | "int-condjump-not-taken-before-buffer" => some (.intCondJumpNotTaken .beforeBuffer)
+  | "int-condjump-not-taken-non-progress" => some (.intCondJumpNotTaken .nonProgress)
+  | "int-condjump-not-taken-in-bounds" => some (.intCondJumpNotTaken .inBounds)
+  | "int-condjump-not-taken-at-or-past-end" => some (.intCondJumpNotTaken .atOrPastEnd)
   | "int-divisor-zero" => some .intDivisorZero
   | _ => none
 
 def allRawBodyPaths : List RawBodyPath :=
   allCursorGoals.map RawBodyPath.decJumpTaken ++
     allCursorGoals.map RawBodyPath.decJumpNotTaken ++
+    allCursorGoals.map RawBodyPath.intCondJumpTaken ++
+    allCursorGoals.map RawBodyPath.intCondJumpNotTaken ++
     [ .intDivisorZero ]
+
+inductive RawIntResolverPath where
+  | rawImmediate
+  | resolvedHost
+  | resolvedDefaultRaw
+deriving Repr, DecidableEq
+
+def RawIntResolverPath.name : RawIntResolverPath -> String
+  | .rawImmediate => "raw-immediate"
+  | .resolvedHost => "resolved-host"
+  | .resolvedDefaultRaw => "resolved-default-raw"
+
+def RawIntResolverPath.parse? : String -> Option RawIntResolverPath
+  | "raw-immediate" => some .rawImmediate
+  | "resolved-host" => some .resolvedHost
+  | "resolved-default-raw" => some .resolvedDefaultRaw
+  | _ => none
+
+def allRawIntResolverPaths : List RawIntResolverPath :=
+  [ .rawImmediate, .resolvedHost, .resolvedDefaultRaw ]
 
 private def joinLines : List String -> String
   | [] => ""
@@ -183,8 +217,72 @@ private def maxDecJumpOperandIndex (decJumpShape : TouhouFormal.ECL.RawDecJumpSh
     (Nat.max decJumpShape.targetTimeOperandIndex decJumpShape.displacementOperandIndex)
     decJumpShape.counterOperandIndex
 
+private def maxIntConditionJumpOperandIndex
+    (condShape : TouhouFormal.ECL.RawIntConditionJumpShape) : Nat :=
+  Nat.max
+    (Nat.max condShape.lhsOperandIndex condShape.rhsOperandIndex)
+    (Nat.max condShape.targetTimeOperandIndex condShape.displacementOperandIndex)
+
 private def maxNatList (values : List Nat) : Nat :=
   values.foldl (fun acc value => Nat.max acc value) 0
+
+private def intSelectorRangePredicate
+    (valueName : String)
+    (range : TouhouFormal.ECL.IntSelectorRange) : String :=
+  "(and (<= " ++ toString range.first ++ " " ++ valueName ++ ") (<= " ++
+    valueName ++ " " ++ toString range.last ++ "))"
+
+private def intSelectorSetPredicate
+    (valueName : String)
+    (set : TouhouFormal.ECL.IntSelectorSet) : String :=
+  let rangePredicate :=
+    match set.ranges with
+    | [] => "false"
+    | [range] => intSelectorRangePredicate valueName range
+    | _ =>
+        "(or " ++
+          joinWith " " (set.ranges.map (intSelectorRangePredicate valueName)) ++
+          ")"
+  let exclusionPredicate :=
+    match set.exclusions with
+    | [] => "true"
+    | exclusions =>
+        "(and " ++
+          joinWith " " (exclusions.map fun value =>
+            "(not (= " ++ valueName ++ " " ++ toString value ++ "))") ++
+          ")"
+  "(and " ++ rangePredicate ++ " " ++ exclusionPredicate ++ ")"
+
+private def intMaskBitSetPredicate (maskName : String) (slot : Nat) : String :=
+  "(= (mod (div " ++ maskName ++ " " ++ toString (2 ^ slot) ++ ") 2) 1)"
+
+private def intResolverSwitchPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (slot : Nat)
+    (maskName : String) : String :=
+  match resolver.maskPolicy with
+  | .noMaskAlwaysResolve => "true"
+  | .bitSetMeansResolve => intMaskBitSetPredicate maskName slot
+
+private def rawIntResolvedValueAssertions
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (slot : Nat)
+    (rawName hostName resolvedName : String) : List String :=
+  let switchPredicate := intResolverSwitchPredicate resolver slot "operandMask"
+  let knownPredicate := intSelectorSetPredicate rawName resolver.knownRValueSelectors
+  [ "(define-fun " ++ resolvedName ++ " () Int (ite (and " ++ switchPredicate ++
+      " " ++ knownPredicate ++ ") " ++ hostName ++ " " ++ rawName ++ "))" ]
+
+private def rawIntComparePredicate
+    (op : TouhouFormal.ECL.RawIntCompareOp)
+    (lhs rhs : String) : String :=
+  match op with
+  | .eq => "(= " ++ lhs ++ " " ++ rhs ++ ")"
+  | .neq => "(not (= " ++ lhs ++ " " ++ rhs ++ "))"
+  | .lt => "(< " ++ lhs ++ " " ++ rhs ++ ")"
+  | .le => "(<= " ++ lhs ++ " " ++ rhs ++ ")"
+  | .gt => "(> " ++ lhs ++ " " ++ rhs ++ ")"
+  | .ge => "(>= " ++ lhs ++ " " ++ rhs ++ ")"
 
 private def requiredInstructionBytes
     (rawShape : TouhouFormal.ECL.RawInstrShape)
@@ -206,6 +304,16 @@ private def requiredBodyInstructionBytes
       | some decJumpShape, some baseOffset =>
           baseOffset + rawShape.fixedI32OperandStride * (maxDecJumpOperandIndex decJumpShape + 1)
       | _, _ => rawShape.fixedPrefixBytes
+  | .intCondJumpTaken _ | .intCondJumpNotTaken _ =>
+      match rawShape.fixedI32OperandBaseOffset with
+      | some baseOffset =>
+          let maxOperand :=
+            maxNatList (rawShape.intConditionJumps.map maxIntConditionJumpOperandIndex)
+          if rawShape.intConditionJumps.isEmpty then
+            rawShape.fixedPrefixBytes
+          else
+            baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
+      | none => rawShape.fixedPrefixBytes
   | .intDivisorZero =>
       match rawShape.fixedI32OperandBaseOffset with
       | some baseOffset =>
@@ -276,6 +384,42 @@ private def rawStepPathConstraints
       , "(assert difficultyPass)" ] ++
       unimpConstraints
 
+private def intConditionJumpCasePredicate
+    (condShape : TouhouFormal.ECL.RawIntConditionJumpShape)
+    (taken : Bool) : String :=
+  let condition :=
+    match condShape.source with
+    | .compareRegister => rawIntComparePredicate condShape.op "compareRegister" "0"
+    | .resolvedOperands => rawIntComparePredicate condShape.op "lhsResolvedValue" "rhsResolvedValue"
+  "(and (= opcode " ++ toString condShape.opcode ++ ") " ++
+    (if taken then condition else "(not " ++ condition ++ ")") ++
+    ")"
+
+private def intConditionJumpPathConstraints
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (taken : Bool)
+    (cursor : CursorGoal) : List String :=
+  let opcodeCondition :=
+    match rawShape.intConditionJumps with
+    | [] => "(assert false) ; profile has no integer conditional-jump opcodes"
+    | [condShape] => "(assert " ++ intConditionJumpCasePredicate condShape taken ++ ")"
+    | condShapes =>
+        "(assert (or " ++
+          joinWith " " (condShapes.map fun condShape =>
+            intConditionJumpCasePredicate condShape taken) ++
+          "))"
+  let resolverLines :=
+    match rawShape.intRValueResolver with
+    | none => []
+    | some resolver =>
+        rawIntResolvedValueAssertions resolver 0 "lhsRaw" "lhsHost" "lhsResolvedValue" ++
+          rawIntResolvedValueAssertions resolver 1 "rhsRaw" "rhsHost" "rhsResolvedValue"
+  resolverLines ++
+    [ opcodeCondition
+    , "(define-fun targetCursor () Int (+ fileOffset " ++
+        (if taken then "jumpDisplacement" else "nextOffset") ++ "))"
+    , cursorGoalAssertion "targetCursor" cursor ]
+
 private def rawBodyPathConstraints
     (rawShape : TouhouFormal.ECL.RawInstrShape)
     (path : RawBodyPath) : List String :=
@@ -287,31 +431,63 @@ private def rawBodyPathConstraints
     rawShape.intDivisorHazards.map (fun hazard => hazard.opcode)
   let dispatchPrefix :=
     [ "(assert (= currentTime instrTime))"
+    , "(assert difficultyPass)" ]
+  let immediateDispatchPrefix :=
+    [ "(assert (= currentTime instrTime))"
     , "(assert difficultyPass)"
     , "(assert (= operandMask 0)) ; immediate/raw operand branch" ]
   match path with
   | .decJumpTaken cursor =>
-      dispatchPrefix ++
+      immediateDispatchPrefix ++
       decJumpOpcodeConstraints ++
       [ "(assert (> (- counterBefore 1) 0))"
       , "(define-fun targetCursor () Int (+ fileOffset jumpDisplacement))"
       , cursorGoalAssertion "targetCursor" cursor ]
   | .decJumpNotTaken cursor =>
-      dispatchPrefix ++
+      immediateDispatchPrefix ++
       decJumpOpcodeConstraints ++
       [ "(assert (<= (- counterBefore 1) 0))"
       , "(define-fun targetCursor () Int (+ fileOffset nextOffset))"
       , cursorGoalAssertion "targetCursor" cursor ]
-  | .intDivisorZero =>
+  | .intCondJumpTaken cursor =>
       dispatchPrefix ++
+        intConditionJumpPathConstraints rawShape true cursor
+  | .intCondJumpNotTaken cursor =>
+      dispatchPrefix ++
+        intConditionJumpPathConstraints rawShape false cursor
+  | .intDivisorZero =>
+      immediateDispatchPrefix ++
       [ opcodeSetAssertion divisorHazardOpcodes
       , "(assert (= divisorValue 0))" ]
+
+private def rawIntResolverPathConstraints
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawIntResolverPath)
+    (slot : Nat) : List String :=
+  match rawShape.intRValueResolver with
+  | none => ["(assert false) ; profile has no integer rvalue resolver"]
+  | some resolver =>
+      let switchPredicate := intResolverSwitchPredicate resolver slot "operandMask"
+      let knownPredicate := intSelectorSetPredicate "rawValue" resolver.knownRValueSelectors
+      match path with
+      | .rawImmediate =>
+          match resolver.maskPolicy with
+          | .noMaskAlwaysResolve =>
+              ["(assert false) ; this title has no mask-clear immediate branch"]
+          | .bitSetMeansResolve =>
+              [ "(assert (not " ++ switchPredicate ++ "))" ]
+      | .resolvedHost =>
+          [ "(assert " ++ switchPredicate ++ ")"
+          , "(assert " ++ knownPredicate ++ ")" ]
+      | .resolvedDefaultRaw =>
+          [ "(assert " ++ switchPredicate ++ ")"
+          , "(assert (not " ++ knownPredicate ++ "))" ]
 
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
 
 private def rawBodyValueTerms : String :=
-  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement counterBefore divisorValue bufferSize difficultyPass)"
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement counterBefore divisorValue lhsRaw rhsRaw lhsHost rhsHost compareRegister bufferSize difficultyPass)"
 
 private def rawStepQueryWith
     (includeModel includeValues : Bool)
@@ -411,6 +587,11 @@ private def rawBodyQueryWith
          , "(declare-const jumpDisplacement Int)"
          , "(declare-const counterBefore Int)"
          , "(declare-const divisorValue Int)"
+         , "(declare-const lhsRaw Int)"
+         , "(declare-const rhsRaw Int)"
+         , "(declare-const lhsHost Int)"
+         , "(declare-const rhsHost Int)"
+         , "(declare-const compareRegister Int)"
          , "(declare-const bufferSize Int)"
          , "(define-fun fileOffset () Int 0)"
          , "(declare-const instructionMask (_ BitVec 8))"
@@ -425,6 +606,11 @@ private def rawBodyQueryWith
          , signedI32Range "jumpDisplacement"
          , signedI32Range "counterBefore"
          , signedI32Range "divisorValue"
+         , signedI32Range "lhsRaw"
+         , signedI32Range "rhsRaw"
+         , signedI32Range "lhsHost"
+         , signedI32Range "rhsHost"
+         , signedI32Range "compareRegister"
          , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
          , "(assert (and (<= " ++ toString (requiredBodyInstructionBytes rawShape path) ++
              " bufferSize) (<= bufferSize 1048576)))" ] ++
@@ -449,6 +635,55 @@ def rawBodyValuesQuery
 def listRawBodyPathsText : String :=
   joinLines (allRawBodyPaths.map RawBodyPath.name)
 
+private def rawIntResolverValueTerms : String :=
+  "(slot rawValue hostValue operandMask)"
+
+private def rawIntResolverQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawIntResolverPath)
+    (slot : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL integer resolver query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared integer operand resolver semantics."
+         , "; Title: " ++ shape.title
+         , "; Resolver path: " ++ path.name
+         , "(define-fun slot () Int " ++ toString slot ++ ")"
+         , "(declare-const rawValue Int)"
+         , "(declare-const hostValue Int)"
+         , signedI32Range "rawValue"
+         , signedI32Range "hostValue" ] ++
+         operandMaskSmtLines rawShape ++
+         rawIntResolverPathConstraints rawShape path slot ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawIntResolverValueTerms ++ ")"] else []))
+
+def rawIntResolverQuery
+    (title : Title)
+    (path : RawIntResolverPath)
+    (slot : Nat) : String :=
+  rawIntResolverQueryWith false false title path slot
+
+def rawIntResolverValuesQuery
+    (title : Title)
+    (path : RawIntResolverPath)
+    (slot : Nat) : String :=
+  rawIntResolverQueryWith false true title path slot
+
+def listRawIntResolverPathsText : String :=
+  joinLines (allRawIntResolverPaths.map RawIntResolverPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -466,6 +701,11 @@ deriving Repr, DecidableEq
 structure RawBodyWitness extends RawStepWitness where
   counterBefore : Int
   divisorValue : Int
+  lhsRaw : Int
+  rhsRaw : Int
+  lhsHost : Int
+  rhsHost : Int
+  compareRegister : Int
 deriving Repr, DecidableEq
 
 structure RawStepMaterialization where
@@ -482,6 +722,21 @@ structure RawBodyMaterialization where
   result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome
   matchesPath : Bool
 deriving Repr
+
+structure RawIntResolverWitness where
+  slot : Nat
+  rawValue : Int
+  hostValue : Int
+  operandMask : Int
+deriving Repr, DecidableEq
+
+structure RawIntResolverMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  rawValue : Int
+  resolution : TouhouFormal.ECL.RawIntOperandResolution
+  matchesPath : Bool
+deriving Repr, DecidableEq
 
 structure RawStepEclFileMaterialization where
   rawStep : RawStepMaterialization
@@ -614,6 +869,77 @@ private def writeFixedI32OperandValue
             value
             fieldName
 
+private def requiredResolverInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (slot : Nat) : Nat :=
+  match rawShape.fixedI32OperandBaseOffset with
+  | none => rawShape.fixedPrefixBytes
+  | some baseOffset =>
+      baseOffset + rawShape.fixedI32OperandStride * (slot + 1)
+
+private def RawIntResolverPath.matchesResolution
+    (path : RawIntResolverPath)
+    (resolution : TouhouFormal.ECL.RawIntOperandResolution) : Bool :=
+  match path, resolution.kind with
+  | .rawImmediate, .rawImmediate => true
+  | .resolvedHost, .resolvedHost => true
+  | .resolvedDefaultRaw, .resolvedDefaultRaw => true
+  | _, _ => false
+
+def rawIntResolverMaterialize
+    (title : Title)
+    (path : RawIntResolverPath)
+    (witness : RawIntResolverWitness) : Except String RawIntResolverMaterialization := do
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredResolverInstructionBytes rawShape witness.slot
+      let baseBytes <-
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := 0
+            instrTime := 0
+            opcode := 0
+            nextOffset := Int.ofNat rawShape.fixedPrefixBytes
+            instructionMask := 1
+            operandMask := witness.operandMask
+            activeMask := 1
+            overrideMask := 0
+            jumpTargetTime := 0
+            jumpDisplacement := 0
+            bufferSize := requiredBytes }
+      let bytes <-
+        writeFixedI32OperandValue
+          baseBytes
+          shape
+          witness.slot
+          witness.rawValue
+          "resolverRawValue"
+      let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix shape bytes 0)
+      let rawValue <-
+        liftFaultToString
+          (TouhouFormal.ECL.readFixedI32Operand
+            shape
+            bytes
+            rawPrefix
+            witness.slot)
+      let resolution <-
+        liftFaultToString
+          (TouhouFormal.ECL.resolveIntRValue
+            shape
+            rawPrefix
+            witness.slot
+            rawValue
+            witness.hostValue)
+      .ok
+        { bytes := bytes
+          rawPrefix := rawPrefix
+          rawValue := rawValue
+          resolution := resolution
+          matchesPath := path.matchesResolution resolution }
+
 private def rawBodyWitnessBaseBytes
     (title : Title)
     (path : RawBodyPath)
@@ -657,6 +983,20 @@ private def findBodyDivisorHazard
               " is not a source-backed integer divisor hazard for " ++ shape.title)
       | some hazard => .ok hazard
 
+private def findIntConditionJump
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (opcode : Int) :
+    Except String TouhouFormal.ECL.RawIntConditionJumpShape :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.findIntConditionJump? opcode with
+      | none =>
+          .error
+            ("opcode " ++ toString opcode ++
+              " is not a source-backed integer conditional jump for " ++ shape.title)
+      | some condShape => .ok condShape
+
 private def rawBodyWitnessBytes
     (title : Title)
     (path : RawBodyPath)
@@ -691,6 +1031,38 @@ private def rawBodyWitnessBytes
                 decJumpShape.counterOperandIndex
                 witness.counterBefore
                 "decJumpCounterBefore"
+  | .intCondJumpTaken _ | .intCondJumpNotTaken _ =>
+      let condShape <- findIntConditionJump shape witness.opcode
+      let bytes <-
+        match condShape.source with
+        | .compareRegister => .ok bytes
+        | .resolvedOperands => do
+            let bytes <-
+              writeFixedI32OperandValue
+                bytes
+                shape
+                condShape.lhsOperandIndex
+                witness.lhsRaw
+                "intCondJumpLhsRaw"
+            writeFixedI32OperandValue
+              bytes
+              shape
+              condShape.rhsOperandIndex
+              witness.rhsRaw
+              "intCondJumpRhsRaw"
+      let bytes <-
+        writeFixedI32OperandValue
+          bytes
+          shape
+          condShape.targetTimeOperandIndex
+          witness.jumpTargetTime
+          "intCondJumpTargetTime"
+      writeFixedI32OperandValue
+        bytes
+        shape
+        condShape.displacementOperandIndex
+        witness.jumpDisplacement
+        "intCondJumpDisplacement"
   | .intDivisorZero =>
       let hazard <- findBodyDivisorHazard shape witness.opcode
       writeFixedI32OperandValue
@@ -747,6 +1119,16 @@ private def RawBodyPath.matchesResult
         | some actual => actual == cursor.toCursorClass
         | none => false
   | .decJumpNotTaken cursor, .ok outcome =>
+      outcome.action == .advanced &&
+        match outcome.cursorClass with
+        | some actual => actual == cursor.toCursorClass
+        | none => false
+  | .intCondJumpTaken cursor, .ok outcome =>
+      outcome.action == .jumped &&
+        match outcome.cursorClass with
+        | some actual => actual == cursor.toCursorClass
+        | none => false
+  | .intCondJumpNotTaken cursor, .ok outcome =>
       outcome.action == .advanced &&
         match outcome.cursorClass with
         | some actual => actual == cursor.toCursorClass
@@ -828,6 +1210,58 @@ private def runRawBodyResult
                   { targetTime := targetTime
                     displacement := displacement
                     counterBefore := counterBefore })
+  | .intCondJumpTaken _ | .intCondJumpNotTaken _ => do
+      let condShape <- findIntConditionJump shape rawPrefix.opcode
+      let targetTime <-
+        liftFaultToString
+          (TouhouFormal.ECL.readFixedI32Operand
+            shape
+            bytes
+            rawPrefix
+            condShape.targetTimeOperandIndex)
+      let displacement <-
+        liftFaultToString
+          (TouhouFormal.ECL.readFixedI32Operand
+            shape
+            bytes
+            rawPrefix
+            condShape.displacementOperandIndex)
+      let lhsRaw <-
+        match condShape.source with
+        | .compareRegister => .ok witness.lhsRaw
+        | .resolvedOperands =>
+            liftFaultToString
+              (TouhouFormal.ECL.readFixedI32Operand
+                shape
+                bytes
+                rawPrefix
+                condShape.lhsOperandIndex)
+      let rhsRaw <-
+        match condShape.source with
+        | .compareRegister => .ok witness.rhsRaw
+        | .resolvedOperands =>
+            liftFaultToString
+              (TouhouFormal.ECL.readFixedI32Operand
+                shape
+                bytes
+                rawPrefix
+                condShape.rhsOperandIndex)
+      .ok
+        (TouhouFormal.ECL.rawIntConditionJumpStep
+          shape
+          witness.currentTime
+          witness.activeMask
+          witness.overrideMask
+          8
+          witness.bufferSize
+          rawPrefix
+          { lhsRaw := lhsRaw
+            rhsRaw := rhsRaw
+            lhsHost := witness.lhsHost
+            rhsHost := witness.rhsHost
+            compareRegister := witness.compareRegister
+            targetTime := targetTime
+            displacement := displacement })
   | .intDivisorZero => do
       let hazard <- findBodyDivisorHazard shape rawPrefix.opcode
       let divisor <-
@@ -953,6 +1387,20 @@ def RawBodyMaterialization.report (materialization : RawBodyMaterialization) : S
     , "targetTime=" ++ optionIntText (bodyResultTargetTime materialization.result)
     , "faultKind=" ++ bodyResultFaultKind materialization.result
     , "faultDetail=" ++ bodyResultFaultDetail materialization.result
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+def RawIntResolverMaterialization.report
+    (materialization : RawIntResolverMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "rawValue=" ++ toString materialization.rawValue
+    , "resolvedKind=" ++ materialization.resolution.kind.name
+    , "resolvedValue=" ++ toString materialization.resolution.value
+    , "selectorKnown=" ++ toString materialization.resolution.selectorKnown
+    , "flagEnabled=" ++ toString materialization.resolution.flagEnabled
+    , "hostValue=" ++ optionIntText materialization.resolution.hostValue
     , "matchesPath=" ++ toString materialization.matchesPath ]
 
 private def writeOptionalVersion

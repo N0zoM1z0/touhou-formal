@@ -61,6 +61,83 @@ structure RawIntDivisorHazard where
   divisorOperandIndex : Nat
 deriving Repr, DecidableEq
 
+structure IntSelectorRange where
+  first : Int
+  last : Int
+deriving Repr, DecidableEq
+
+def IntSelectorRange.contains (range : IntSelectorRange) (value : Int) : Bool :=
+  decide (range.first <= value ∧ value <= range.last)
+
+structure IntSelectorSet where
+  ranges : List IntSelectorRange := []
+  exclusions : List Int := []
+deriving Repr, DecidableEq
+
+def IntSelectorSet.contains (set : IntSelectorSet) (value : Int) : Bool :=
+  set.ranges.any (fun range => range.contains value) &&
+    !set.exclusions.contains value
+
+inductive RawIntOperandMaskPolicy where
+  | noMaskAlwaysResolve
+  | bitSetMeansResolve
+deriving Repr, DecidableEq
+
+def RawIntOperandMaskPolicy.name : RawIntOperandMaskPolicy -> String
+  | .noMaskAlwaysResolve => "no-mask-always-resolve"
+  | .bitSetMeansResolve => "bit-set-means-resolve"
+
+structure RawIntOperandResolverShape where
+  maskPolicy : RawIntOperandMaskPolicy
+  knownRValueSelectors : IntSelectorSet
+  knownLValueSelectors : IntSelectorSet := {}
+deriving Repr, DecidableEq
+
+inductive RawIntCompareOp where
+  | eq
+  | neq
+  | lt
+  | le
+  | gt
+  | ge
+deriving Repr, DecidableEq
+
+def RawIntCompareOp.name : RawIntCompareOp -> String
+  | .eq => "eq"
+  | .neq => "neq"
+  | .lt => "lt"
+  | .le => "le"
+  | .gt => "gt"
+  | .ge => "ge"
+
+def RawIntCompareOp.holds (op : RawIntCompareOp) (lhs rhs : Int) : Bool :=
+  match op with
+  | .eq => lhs == rhs
+  | .neq => lhs != rhs
+  | .lt => decide (lhs < rhs)
+  | .le => decide (lhs <= rhs)
+  | .gt => decide (lhs > rhs)
+  | .ge => decide (lhs >= rhs)
+
+inductive RawIntConditionSource where
+  | compareRegister
+  | resolvedOperands
+deriving Repr, DecidableEq
+
+def RawIntConditionSource.name : RawIntConditionSource -> String
+  | .compareRegister => "compare-register"
+  | .resolvedOperands => "resolved-operands"
+
+structure RawIntConditionJumpShape where
+  opcode : Int
+  op : RawIntCompareOp
+  source : RawIntConditionSource
+  lhsOperandIndex : Nat
+  rhsOperandIndex : Nat
+  targetTimeOperandIndex : Nat
+  displacementOperandIndex : Nat
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -79,6 +156,8 @@ structure RawInstrShape where
   fixedI32OperandStride : Nat := 4
   fixedJumpShape : Option RawFixedJumpShape := none
   fixedDecJumpShape : Option RawDecJumpShape := none
+  intRValueResolver : Option RawIntOperandResolverShape := none
+  intConditionJumps : List RawIntConditionJumpShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
 
@@ -86,6 +165,11 @@ def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawIntDivisorHazard :=
   rawShape.intDivisorHazards.find? (fun hazard => hazard.opcode == opcode)
+
+def RawInstrShape.findIntConditionJump?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawIntConditionJumpShape :=
+  rawShape.intConditionJumps.find? (fun jump => jump.opcode == opcode)
 
 structure HeaderShape where
   title : String

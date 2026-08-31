@@ -123,6 +123,11 @@ def compact_record(record: dict[str, Any], env_name: str) -> dict[str, Any]:
                 "jumpDisplacement",
                 "counterBefore",
                 "divisorValue",
+                "lhsRaw",
+                "rhsRaw",
+                "lhsHost",
+                "rhsHost",
+                "compareRegister",
                 "bufferSize",
                 "difficultyPass",
             )
@@ -134,6 +139,8 @@ def compact_record(record: dict[str, Any], env_name: str) -> dict[str, Any]:
 def next_action_for(risk_class: str, title: str, path: str) -> str:
     if title == "th06" and path == "int-divisor-zero":
         return "splice into TH06 stage ECL and run retail confirmation for integer div/mod zero"
+    if path.startswith("int-condjump-"):
+        return "compose with multi-step context bounds; then splice into a reachable conditional jump site for retail confirmation"
     if risk_class == "arithmetic-fault":
         return "retain as body-level formal finding; needs title retail adapter before Wine confirmation"
     if risk_class in {"cursor-underflow", "cursor-out-of-range", "liveness"}:

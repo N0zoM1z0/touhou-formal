@@ -3,7 +3,7 @@ import TouhouFormal.Search.Symbolic
 namespace SymexMain
 
 private def usage : String :=
-  "usage: lake exe symex <list-paths|list-body-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|query-body|query-body-values <th06|th07|th08> <bodyPath> [activeMask] [overrideMask]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>|materialize-body <th06|th07|th08> <bodyPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <counterBefore> <divisorValue> <bufferSize>>"
+  "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|query-body|query-body-values <th06|th07|th08> <bodyPath> [activeMask] [overrideMask]|query-int-resolver|query-int-resolver-values <th06|th07|th08> <resolverPath> [slot]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>|materialize-body <th06|th07|th08> <bodyPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <counterBefore> <divisorValue> <lhsRaw> <rhsRaw> <lhsHost> <rhsHost> <compareRegister> <bufferSize>|materialize-int-resolver <th06|th07|th08> <resolverPath> <slot> <rawValue> <hostValue> <operandMask>>"
 
 private def parseNat? (value : String) : Option Nat :=
   value.toNat?
@@ -68,6 +68,30 @@ private def runBodyQuery
         IO.eprintln s!"unknown body path: {pathText}"
         IO.eprintln usage
         return 2
+
+private def runIntResolverQuery
+    (valuesOnly : Bool)
+    (titleText pathText : String)
+    (slot : Nat) :
+    IO UInt32 := do
+  match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+        TouhouFormal.Search.Symbolic.RawIntResolverPath.parse? pathText with
+  | some title, some path =>
+      if valuesOnly then
+        IO.print
+          (TouhouFormal.Search.Symbolic.rawIntResolverValuesQuery title path slot)
+      else
+        IO.print
+          (TouhouFormal.Search.Symbolic.rawIntResolverQuery title path slot)
+      return 0
+  | none, _ =>
+      IO.eprintln s!"unknown title: {titleText}"
+      IO.eprintln usage
+      return 2
+  | _, none =>
+      IO.eprintln s!"unknown integer resolver path: {pathText}"
+      IO.eprintln usage
+      return 2
 
 private def runMaterialize
     (asFile : Bool)
@@ -134,7 +158,8 @@ private def runMaterialize
 private def runBodyMaterialize
     (titleText pathText currentTimeText instrTimeText opcodeText nextOffsetText
       instructionMaskText operandMaskText activeMaskText overrideMaskText jumpTargetTimeText
-      jumpDisplacementText counterBeforeText divisorValueText bufferSizeText : String) :
+      jumpDisplacementText counterBeforeText divisorValueText lhsRawText rhsRawText lhsHostText
+      rhsHostText compareRegisterText bufferSizeText : String) :
     IO UInt32 := do
   match TouhouFormal.Search.Symbolic.Title.parse? titleText,
         TouhouFormal.Search.Symbolic.RawBodyPath.parse? pathText,
@@ -150,11 +175,16 @@ private def runBodyMaterialize
         parseInt? jumpDisplacementText,
         parseInt? counterBeforeText,
         parseInt? divisorValueText,
+        parseInt? lhsRawText,
+        parseInt? rhsRawText,
+        parseInt? lhsHostText,
+        parseInt? rhsHostText,
+        parseInt? compareRegisterText,
         parseNat? bufferSizeText with
   | some title, some path, some currentTime, some instrTime, some opcode, some nextOffset,
       some instructionMask, some operandMask, some activeMask, some overrideMask,
       some jumpTargetTime, some jumpDisplacement, some counterBefore, some divisorValue,
-      some bufferSize =>
+      some lhsRaw, some rhsRaw, some lhsHost, some rhsHost, some compareRegister, some bufferSize =>
       let witness : TouhouFormal.Search.Symbolic.RawBodyWitness :=
         { currentTime := currentTime
           instrTime := instrTime
@@ -168,7 +198,12 @@ private def runBodyMaterialize
           jumpDisplacement := jumpDisplacement
           bufferSize := bufferSize
           counterBefore := counterBefore
-          divisorValue := divisorValue }
+          divisorValue := divisorValue
+          lhsRaw := lhsRaw
+          rhsRaw := rhsRaw
+          lhsHost := lhsHost
+          rhsHost := rhsHost
+          compareRegister := compareRegister }
       match TouhouFormal.Search.Symbolic.rawBodyMaterialize title path witness with
       | .ok materialization =>
           IO.print materialization.report
@@ -176,16 +211,51 @@ private def runBodyMaterialize
       | .error message =>
           IO.eprintln message
           return 1
-  | none, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+  | none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
       IO.eprintln s!"unknown title: {titleText}"
       IO.eprintln usage
       return 2
-  | _, none, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+  | _, none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
       IO.eprintln s!"unknown body path: {pathText}"
       IO.eprintln usage
       return 2
-  | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+  | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
       IO.eprintln "invalid materialize-body witness field"
+      IO.eprintln usage
+      return 2
+
+private def runIntResolverMaterialize
+    (titleText pathText slotText rawValueText hostValueText operandMaskText : String) :
+    IO UInt32 := do
+  match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+        TouhouFormal.Search.Symbolic.RawIntResolverPath.parse? pathText,
+        parseNat? slotText,
+        parseInt? rawValueText,
+        parseInt? hostValueText,
+        parseInt? operandMaskText with
+  | some title, some path, some slot, some rawValue, some hostValue, some operandMask =>
+      let witness : TouhouFormal.Search.Symbolic.RawIntResolverWitness :=
+        { slot := slot
+          rawValue := rawValue
+          hostValue := hostValue
+          operandMask := operandMask }
+      match TouhouFormal.Search.Symbolic.rawIntResolverMaterialize title path witness with
+      | .ok materialization =>
+          IO.print materialization.report
+          return 0
+      | .error message =>
+          IO.eprintln message
+          return 1
+  | none, _, _, _, _, _ =>
+      IO.eprintln s!"unknown title: {titleText}"
+      IO.eprintln usage
+      return 2
+  | _, none, _, _, _, _ =>
+      IO.eprintln s!"unknown integer resolver path: {pathText}"
+      IO.eprintln usage
+      return 2
+  | _, _, _, _, _, _ =>
+      IO.eprintln "invalid materialize-int-resolver witness field"
       IO.eprintln usage
       return 2
 
@@ -197,6 +267,9 @@ def main (args : List String) : IO UInt32 := do
   | ["list-body-paths"] =>
       IO.print TouhouFormal.Search.Symbolic.listRawBodyPathsText
       return 0
+  | ["list-int-resolver-paths"] =>
+      IO.print TouhouFormal.Search.Symbolic.listRawIntResolverPathsText
+      return 0
   | ["query", title, path] =>
       runQuery false title path 1 0
   | ["query-values", title, path] =>
@@ -205,6 +278,10 @@ def main (args : List String) : IO UInt32 := do
       runBodyQuery false title path 1 0
   | ["query-body-values", title, path] =>
       runBodyQuery true title path 1 0
+  | ["query-int-resolver", title, path] =>
+      runIntResolverQuery false title path 0
+  | ["query-int-resolver-values", title, path] =>
+      runIntResolverQuery true title path 0
   | ["query", title, path, activeMaskText, overrideMaskText] =>
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
@@ -235,6 +312,20 @@ def main (args : List String) : IO UInt32 := do
           runQuery true title path activeMask overrideMask
       | _, _ =>
           IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-int-resolver", title, path, slotText] =>
+      match parseNat? slotText with
+      | some slot => runIntResolverQuery false title path slot
+      | none =>
+          IO.eprintln "slot must be a natural number"
+          IO.eprintln usage
+          return 2
+  | ["query-int-resolver-values", title, path, slotText] =>
+      match parseNat? slotText with
+      | some slot => runIntResolverQuery true title path slot
+      | none =>
+          IO.eprintln "slot must be a natural number"
           IO.eprintln usage
           return 2
   | [ "materialize", title, path, currentTime, instrTime, opcode, nextOffset,
@@ -275,7 +366,8 @@ def main (args : List String) : IO UInt32 := do
         bufferSize
   | [ "materialize-body", title, path, currentTime, instrTime, opcode, nextOffset,
       instructionMask, operandMask, activeMask, overrideMask, jumpTargetTime,
-      jumpDisplacement, counterBefore, divisorValue, bufferSize ] =>
+      jumpDisplacement, counterBefore, divisorValue, lhsRaw, rhsRaw, lhsHost,
+      rhsHost, compareRegister, bufferSize ] =>
       runBodyMaterialize
         title
         path
@@ -291,7 +383,14 @@ def main (args : List String) : IO UInt32 := do
         jumpDisplacement
         counterBefore
         divisorValue
+        lhsRaw
+        rhsRaw
+        lhsHost
+        rhsHost
+        compareRegister
         bufferSize
+  | [ "materialize-int-resolver", title, path, slot, rawValue, hostValue, operandMask ] =>
+      runIntResolverMaterialize title path slot rawValue hostValue operandMask
   | _ =>
       IO.eprintln usage
       return 2

@@ -5,9 +5,9 @@ symbolic execution baseline cover, where does it fail to cover, and is it
 already better than the previous fuzzing lane?
 
 Short answer: it is already better than fuzzing for the modeled VM-core
-dispatch skeleton and the first shared opcode-body slice. It is not yet better
-than fuzzing for the full ECL/ANM VM, because most opcode bodies and host-game
-side effects are not modeled yet.
+dispatch skeleton, the first shared opcode-body slice, and the integer rvalue
+resolver slice. It is not yet better than fuzzing for the full ECL/ANM VM,
+because most opcode bodies and host-game side effects are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -24,7 +24,8 @@ python3 scripts/evaluate_symex_effectiveness.py --run-check
 ```
 
 The script reruns `scripts/symex_candidate_queue.py` and
-`scripts/symex_body_candidate_queue.py`, summarizes path coverage, reads the
+`scripts/symex_body_candidate_queue.py` and
+`scripts/symex_int_resolver_queue.py`, summarizes path coverage, reads the
 local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
 summaries from `../retail_validation` when present.
@@ -43,7 +44,8 @@ assessment is:
 ```bash
 python3 scripts/evaluate_symex_effectiveness.py \
   --queue-json /tmp/raw_queue.json \
-  --body-queue-json /tmp/body_queue.json
+  --body-queue-json /tmp/body_queue.json \
+  --resolver-queue-json /tmp/resolver_queue.json
 ```
 
 The cost is mostly process startup: the current queues launch
@@ -142,13 +144,16 @@ enough across TH06/TH07/TH08 to keep in one semantics:
 - `JUMPDEC`: decrement operand slot 2; if the decremented value is positive,
   jump by the same target-time/displacement operand slots as `JUMP`; otherwise
   advance by `nextOffset`.
+- Integer conditional jumps: TH06 uses the previous compare register; TH07 and
+  TH08 compare operand-resolved integer slots 0 and 1, then jump by raw slots 2
+  and 3 when the condition holds.
 - Integer div/mod zero-divisor hazard: source-backed div/mod opcodes and
   divisor operand slots are recorded in `RawInstrShape.intDivisorHazards`.
 
-The first body baseline intentionally constrains `operandMask = 0`, i.e. the
-immediate/raw operand branch. This keeps witnesses byte-realizable without
-inventing symbolic host variables. Resolver-backed operands are the next layer,
-not silently approximated here.
+The div/mod hazard baseline still constrains the divisor to the immediate/raw
+operand branch. Conditional jumps use the shared integer resolver abstraction,
+where a known selector reads from symbolic host state and an unknown selector
+falls through to the raw operand as in the source.
 
 The body path classes are:
 
@@ -161,6 +166,14 @@ decjump-not-taken-before-buffer
 decjump-not-taken-non-progress
 decjump-not-taken-in-bounds
 decjump-not-taken-at-or-past-end
+int-condjump-taken-before-buffer
+int-condjump-taken-non-progress
+int-condjump-taken-in-bounds
+int-condjump-taken-at-or-past-end
+int-condjump-not-taken-before-buffer
+int-condjump-not-taken-non-progress
+int-condjump-not-taken-in-bounds
+int-condjump-not-taken-at-or-past-end
 int-divisor-zero
 ```
 
@@ -169,10 +182,10 @@ Observed result:
 | Metric | Result |
 | --- | --- |
 | environments | 5 |
-| modeled body path classes | 9 |
-| candidates | 45 |
-| solver status | 45 `sat` |
-| Lean byte materialization/replay | 45 `matchesPath=true` |
+| modeled body path classes | 17 |
+| candidates | 85 |
+| solver status | 85 `sat` |
+| Lean byte materialization/replay | 85 `matchesPath=true` |
 | all modeled body paths covered per environment | yes |
 
 Risk split:
@@ -180,37 +193,76 @@ Risk split:
 | Risk class | Count | Interpretation |
 | --- | ---: | --- |
 | `arithmetic-fault` | 5 | integer div/mod reaches zero divisor |
-| `cursor-underflow` | 10 | body-level cursor is negative |
-| `cursor-out-of-range` | 10 | body-level cursor is at/past raw buffer |
-| `liveness` | 10 | body-level cursor does not move |
-| `reachable-control-path` | 10 | in-bounds controls |
+| `cursor-underflow` | 20 | body-level cursor is negative |
+| `cursor-out-of-range` | 20 | body-level cursor is at/past raw buffer |
+| `liveness` | 20 | body-level cursor does not move |
+| `reachable-control-path` | 20 | in-bounds controls |
 
 This is a real expansion beyond the dispatch skeleton. The new `int-divisor-zero`
 paths are body-level formal findings: they are produced by shared opcode-family
 semantics and profile data, not by a hand-selected TH06 mutation.
 
+## Integer operand resolver coverage
+
+The shared resolver model covers the integer rvalue branches that condition
+jumps and later arithmetic/state opcodes need:
+
+- TH06 has no operand-mask branch at this layer: `GetVar` is always called, and
+  unknown selectors return the raw operand by default.
+- TH07/TH08 use `operandFlags`/`paramMask` bits: clear bit means raw immediate;
+  set bit means selector resolution.
+- Known selector sets and explicit exclusions are title-profile data, not
+  copied into title-specific symbolic executors.
+
+Observed result:
+
+| Metric | Result |
+| --- | --- |
+| environments | 3 |
+| modeled path families | 3 |
+| title-specific candidates | 8 |
+| solver status | 8 `sat` |
+| Lean byte materialization/replay | 8 `matchesPath=true` |
+| all modeled title-specific resolver paths covered | yes |
+
+Risk split:
+
+| Resolver branch | Count | Interpretation |
+| --- | ---: | --- |
+| `mask-set-known-selector` | 3 | selector reads symbolic host state |
+| `mask-set-default-raw` | 3 | mask bit is set, but unknown selector falls through to raw value |
+| `mask-clear-raw-immediate` | 2 | TH07/TH08 raw immediate branch |
+
+This is a concrete formal advantage over plain fuzzing: the
+mask-set/default-raw branch is semantically distinct from both ordinary
+immediate operands and real variable reads, but it can be hard to classify from
+runtime traces alone without source-backed path predicates.
+
 ## What this does not cover yet
 
 The current executor still does not cover the full game semantics of each
-instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, and immediate integer
-div/mod divisor hazards, but not most body internals.
+instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
+jumps, integer rvalue resolver branches, and immediate integer div/mod divisor
+hazards, but not most body internals.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, `MATHINTDIV`, `MATHINTMOD` | 131 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, `DIV`, `MOD` | 154 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, `case 13`, `case 14`, `case 23`, `case 24` | 84 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `MATHINTDIV`, `MATHINTMOD` | 125 |
+| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `DIV`, `MOD` | 148 |
+| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, `case 13`, `case 14`, `case 23`, `case 24`, and integer condition cases `40/42/44/46/48/50` | 78 |
 
-The lower bound is intentionally conservative. `JUMPDEC` and integer div/mod
-zero-divisor hazards are now modeled; "ordinary advance" for the remaining
-opcodes still does not prove their internal branches.
+The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
+jumps, integer resolver branches, and integer div/mod zero-divisor hazards are
+now modeled; "ordinary advance" for the remaining opcodes still does not prove
+their internal branches.
 
 Not covered:
 
-- conditional jumps, `CALL`, `RET`, callback stacks;
-- TH07/TH08 operand-mask branches into variable reads/writes;
+- `CALL`, `RET`, callback stacks;
+- integer lvalue writes and non-integer operand-mask branches into variable
+  reads/writes;
 - resolver-driven integer divide/modulo by zero, float division/fmod edge cases,
   overflow, and other C/C++ arithmetic hazards;
 - bullet, laser, enemy, item, ANM, sound, and callback side effects;
@@ -234,6 +286,7 @@ So the current coverage claim is strong but scoped:
 ```text
 complete for the implemented raw-step abstraction;
 complete for the first implemented raw-body abstraction;
+complete for the implemented integer rvalue resolver abstraction;
 incomplete for full ECL/ANM VM opcode semantics.
 ```
 
@@ -269,8 +322,9 @@ Concrete advantages already demonstrated:
 
 - no title-specific manual witness is needed for the raw-step queue;
 - every default TH06/TH07/TH08 environment covers all 14 modeled path classes;
-- every default TH06/TH07/TH08 environment covers all 9 modeled body path
+- every default TH06/TH07/TH08 environment covers all 17 modeled body path
   classes;
+- every title-specific integer rvalue resolver branch is solved and replayed;
 - solver witnesses are materialized into bytes by Lean using shared profile
   offsets, then replay-checked;
 - the body queue finds immediate integer div/mod zero-divisor paths for all
@@ -292,10 +346,10 @@ Fuzz is still better outside the current formal model:
 
 ## Current verdict
 
-For the implemented VM-core skeleton and the first shared body slice, Lean +
-SMT is already better than fuzzing: it gives exhaustive path-class coverage,
-satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
-TH06/TH07/TH08 semantics.
+For the implemented VM-core skeleton, first shared body slice, and integer
+resolver slice, Lean + SMT is already better than fuzzing: it gives exhaustive
+path-class coverage, satisfiable/unsatisfiable controls, concrete
+counterexample bytes, and shared TH06/TH07/TH08 semantics.
 
 For the whole VM, it is not yet better. The model has to move down one layer
 into opcode bodies and bounded multi-step execution before we can honestly say
@@ -303,8 +357,9 @@ formal is finding classes that DanmakuFuzz cannot find in practice.
 
 The next technically useful targets are:
 
-1. add symbolic operand resolver semantics;
-2. add bounded multi-step contexts for conditional jumps, `CALL`, and `RET`;
+1. add integer lvalue writes and resolver-driven arithmetic hazards;
+2. add bounded multi-step contexts for `CALL`, `RET`, callbacks, and nested
+   jumps;
 3. extend arithmetic hazards beyond immediate integer div/mod zero;
 4. lower the top raw-step queue entries into TH06 retail batches;
 5. add TH07/TH08 archive adapters so the same shared witnesses can be validated

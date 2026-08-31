@@ -51,8 +51,39 @@ MODELED_RAW_BODY_PATHS = [
     "decjump-not-taken-non-progress",
     "decjump-not-taken-in-bounds",
     "decjump-not-taken-at-or-past-end",
+    "int-condjump-taken-before-buffer",
+    "int-condjump-taken-non-progress",
+    "int-condjump-taken-in-bounds",
+    "int-condjump-taken-at-or-past-end",
+    "int-condjump-not-taken-before-buffer",
+    "int-condjump-not-taken-non-progress",
+    "int-condjump-not-taken-in-bounds",
+    "int-condjump-not-taken-at-or-past-end",
     "int-divisor-zero",
 ]
+
+MODELED_INT_RESOLVER_PATHS_BY_TITLE = {
+    "th06": [
+        "resolved-host",
+        "resolved-default-raw",
+    ],
+    "th07": [
+        "raw-immediate",
+        "resolved-host",
+        "resolved-default-raw",
+    ],
+    "th08": [
+        "raw-immediate",
+        "resolved-host",
+        "resolved-default-raw",
+    ],
+}
+
+MODELED_INT_RESOLVER_PATHS = sorted({
+    path
+    for paths in MODELED_INT_RESOLVER_PATHS_BY_TITLE.values()
+    for path in paths
+})
 
 SOURCE_COVERAGE = [
     {
@@ -86,6 +117,16 @@ SOURCE_COVERAGE = [
         "reason": "shared profile records source-backed integer div/mod opcodes and divisor operand slots; SMT finds zero-divisor body faults",
     },
     {
+        "area": "integer operandFlags / rvalue resolver",
+        "status": "covered-by-symbolic-execution",
+        "reason": "shared resolver profile distinguishes TH06 always-resolve from TH07/TH08 bit-set operand masks, known selector ranges, exclusions, and default-to-raw fallthrough",
+    },
+    {
+        "area": "integer conditional jumps",
+        "status": "covered-by-symbolic-execution",
+        "reason": "TH06 compare-register jumps and TH07/TH08 operand-resolved compare jumps are modeled as shared RawIntConditionJumpShape profiles",
+    },
+    {
         "area": "raw ECL difficulty mask policy",
         "status": "covered-by-model",
         "reason": "TH06/TH07 active-bit intersection and TH08 contains(active|override) are separate profile policies",
@@ -98,15 +139,15 @@ SOURCE_COVERAGE = [
     {
         "area": "full raw ECL opcode bodies",
         "status": "partially-covered",
-        "reason": "UNIMP, fixed JUMP, JUMPDEC, and integer div/mod divisor hazards are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
+        "reason": "UNIMP, fixed JUMP, JUMPDEC, integer conditional jumps, and integer div/mod divisor hazards are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
     },
     {
-        "area": "operandFlags / variable lvalue-rvalue resolution",
-        "status": "not-yet-modeled",
-        "reason": "TH07/TH08 operand masks branch into local/global/enemy/player/RNG state; those host-state cells are not yet in the symbolic state",
+        "area": "integer lvalue writes and resolver-driven arithmetic",
+        "status": "partially-covered",
+        "reason": "writable selector sets are profiled, but assignment, arithmetic writes, resolver-driven divisors, and aliasing into host state are not executed yet",
     },
     {
-        "area": "conditional jumps, CALL/RET, callback stack",
+        "area": "CALL/RET, callback stack",
         "status": "not-yet-modeled",
         "reason": "needs multi-step ECL context state, stack depth, time updates, comparison flags, and target subroutine bounds",
     },
@@ -207,6 +248,20 @@ def load_body_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str,
     return payload, command
 
 
+def load_int_resolver_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
+    if args.resolver_queue_json:
+        path = Path(args.resolver_queue_json)
+        return json.loads(path.read_text()), {
+            "argv": ["read-existing-json", str(path)],
+            "returncode": 0,
+            "elapsedSeconds": 0.0,
+        }
+    payload, command = run_json_command([sys.executable, "scripts/symex_int_resolver_queue.py"])
+    if not isinstance(payload, dict):
+        raise EvaluationError("int resolver candidate queue did not return an object")
+    return payload, command
+
+
 def action_from_path(path: str) -> str:
     if path == "yielded":
         return "yielded"
@@ -218,6 +273,10 @@ def action_from_path(path: str) -> str:
 def body_action_from_path(path: str) -> str:
     if path == "int-divisor-zero":
         return "int-divisor-zero"
+    if path.startswith("int-condjump-taken-"):
+        return "int-condjump-taken"
+    if path.startswith("int-condjump-not-taken-"):
+        return "int-condjump-not-taken"
     if path.startswith("decjump-taken-"):
         return "decjump-taken"
     if path.startswith("decjump-not-taken-"):
@@ -234,6 +293,10 @@ def cursor_goal_from_path(path: str) -> str:
 def body_cursor_goal_from_path(path: str) -> str:
     if path == "int-divisor-zero":
         return "-"
+    if path.startswith("int-condjump-taken-"):
+        return path.removeprefix("int-condjump-taken-")
+    if path.startswith("int-condjump-not-taken-"):
+        return path.removeprefix("int-condjump-not-taken-")
     if path.startswith("decjump-taken-"):
         return path.removeprefix("decjump-taken-")
     if path.startswith("decjump-not-taken-"):
@@ -398,6 +461,84 @@ def summarize_body_queue(queue: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def summarize_int_resolver_queue(queue: dict[str, Any]) -> dict[str, Any]:
+    candidates = queue.get("candidates", [])
+    if not isinstance(candidates, list):
+        raise EvaluationError("int resolver candidate queue has no candidate list")
+
+    statuses = Counter(str(candidate.get("status")) for candidate in candidates)
+    risks = Counter(str(candidate.get("risk", {}).get("class")) for candidate in candidates)
+    priorities = Counter(str(candidate.get("risk", {}).get("priority")) for candidate in candidates)
+    paths = Counter(str(candidate.get("path")) for candidate in candidates)
+    resolved_kinds = Counter(str(candidate.get("fixture", {}).get("resolvedKind", "-")) for candidate in candidates)
+    selector_known = Counter(str(candidate.get("fixture", {}).get("selectorKnown", "-")) for candidate in candidates)
+    flag_enabled = Counter(str(candidate.get("fixture", {}).get("flagEnabled", "-")) for candidate in candidates)
+    matches = Counter(str(candidate.get("fixture", {}).get("matchesPath")) for candidate in candidates)
+
+    by_environment: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for candidate in candidates:
+        key = f"{candidate.get('title')}:{candidate.get('environment')}"
+        by_environment[key].append(candidate)
+
+    env_reports = {}
+    for env, env_candidates in sorted(by_environment.items()):
+        title = str(env_candidates[0].get("title"))
+        expected_paths = set(MODELED_INT_RESOLVER_PATHS_BY_TITLE.get(title, MODELED_INT_RESOLVER_PATHS))
+        observed_paths = {str(candidate.get("path")) for candidate in env_candidates}
+        env_reports[env] = {
+            "title": title,
+            "pathCount": len(observed_paths),
+            "candidateCount": len(env_candidates),
+            "satCount": sum(1 for candidate in env_candidates if candidate.get("status") == "sat"),
+            "matchesPathCount": sum(
+                1 for candidate in env_candidates
+                if candidate.get("fixture", {}).get("matchesPath") == "true"
+            ),
+            "modeledPathsForTitle": sorted(expected_paths),
+            "missingModeledPaths": sorted(expected_paths - observed_paths),
+            "extraPaths": sorted(observed_paths - expected_paths),
+        }
+
+    top_candidates = [
+        {
+            "id": candidate.get("id"),
+            "risk": candidate.get("risk", {}).get("class"),
+            "priority": candidate.get("risk", {}).get("priority"),
+            "hex": candidate.get("fixture", {}).get("hex"),
+            "resolvedKind": candidate.get("fixture", {}).get("resolvedKind"),
+            "rawValue": candidate.get("fixture", {}).get("rawValue"),
+            "selectorKnown": candidate.get("fixture", {}).get("selectorKnown"),
+            "flagEnabled": candidate.get("fixture", {}).get("flagEnabled"),
+        }
+        for candidate in candidates[:10]
+    ]
+
+    return {
+        "schema": queue.get("schema"),
+        "environmentCount": queue.get("environmentCount"),
+        "candidateCount": queue.get("candidateCount"),
+        "uniquePathCount": len({str(candidate.get("path")) for candidate in candidates}),
+        "modeledPathFamilies": MODELED_INT_RESOLVER_PATHS,
+        "modeledPathsByTitle": MODELED_INT_RESOLVER_PATHS_BY_TITLE,
+        "statuses": dict(statuses),
+        "matchesPath": dict(matches),
+        "riskCounts": dict(risks),
+        "priorityCounts": dict(priorities),
+        "pathCounts": dict(paths),
+        "resolvedKindCounts": dict(resolved_kinds),
+        "selectorKnownCounts": dict(selector_known),
+        "flagEnabledCounts": dict(flag_enabled),
+        "allModeledPathsCoveredPerEnvironment": all(
+            not report["missingModeledPaths"] and not report["extraPaths"]
+            for report in env_reports.values()
+        ),
+        "allSat": statuses == Counter({"sat": len(candidates)}),
+        "allMaterializedAndReplayMatched": matches == Counter({"true": len(candidates)}),
+        "byEnvironment": env_reports,
+        "topCandidates": top_candidates,
+    }
+
+
 def unique_preserving(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result = []
@@ -435,10 +576,16 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "ECL_OPCODE_UNIMP",
                 "ECL_OPCODE_JUMP",
                 "ECL_OPCODE_JUMPDEC",
+                "ECL_OPCODE_JUMPLSS",
+                "ECL_OPCODE_JUMPLEQ",
+                "ECL_OPCODE_JUMPEQU",
+                "ECL_OPCODE_JUMPGRE",
+                "ECL_OPCODE_JUMPGEQ",
+                "ECL_OPCODE_JUMPNEQ",
                 "ECL_OPCODE_MATHINTDIV",
                 "ECL_OPCODE_MATHINTMOD",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 5),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 11),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -458,10 +605,16 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "ECL_UNIMP",
                 "ECL_JUMP",
                 "ECL_DEC_JUMP",
+                "ECL_JUMP_IF_EQUAL",
+                "ECL_JUMP_IF_NOT_EQUAL",
+                "ECL_JUMP_IF_LOWER_THAN",
+                "ECL_JUMP_IF_LEQ_THAN",
+                "ECL_JUMP_IF_GREATER_THAN",
+                "ECL_JUMP_IF_GEQ_THAN",
                 "ECL_DIV",
                 "ECL_MOD",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 5),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 11),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -481,8 +634,14 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "case 14",
                 "case 23",
                 "case 24",
+                "case 40",
+                "case 42",
+                "case 44",
+                "case 46",
+                "case 48",
+                "case 50",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 7),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 13),
             "firstCaseLabels": case_labels[:12],
             "lastCaseLabels": case_labels[-12:],
         }
@@ -597,7 +756,8 @@ def fuzz_comparison() -> dict[str, Any]:
     return {
         "formalCurrentlyBeatsFuzzFor": [
             "exhaustively enumerating the implemented raw-step path classes instead of waiting for random mutation to hit each class",
-            "exhaustively enumerating the implemented JUMPDEC taken/not-taken cursor classes and immediate integer div/mod zero-divisor faults",
+            "exhaustively enumerating the implemented JUMPDEC and integer conditional jump taken/not-taken cursor classes plus immediate integer div/mod zero-divisor faults",
+            "separating operandFlags resolver branches, including TH06's no-mask behavior and TH07/TH08's mask-clear/mask-set selector behavior",
             "returning satisfiable/unsatisfiable path facts with concrete byte-realizable witnesses",
             "keeping TH06/TH07/TH08 differences in shared profiles, reducing per-title semantic drift",
             "explaining exact invariants such as cursor must progress and remain in-bounds",
@@ -610,14 +770,15 @@ def fuzz_comparison() -> dict[str, Any]:
         ],
         "currentVerdict": (
             "The current Lean+SMT baseline is stronger than prior fuzzing on the modeled VM-core skeleton, "
-            "because all 14 raw-step path classes and all 9 initial body-step path classes are solved and materialized for every default environment. "
+            "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
+            "are solved and materialized for the default environments. "
             "It is not yet stronger than fuzzing for the full ECL/ANM VM, because most opcode bodies and host-state branches "
             "remain outside the semantics."
         ),
         "nextHighValueFormalWork": [
-            "add operand resolver state and symbolic lvalue/rvalue branches",
-            "add bounded multi-step raw ECL contexts for JUMPDEC, conditional jumps, CALL, and RET",
-            "model integer division/modulo preconditions and prove divide-by-zero reachability or absence",
+            "add lvalue writes and resolver-driven arithmetic hazards on top of the shared integer resolver",
+            "add bounded multi-step raw ECL contexts for CALL, RET, callbacks, and stacked jumps",
+            "model float division/fmod preconditions and C/C++-faithful non-finite behavior",
             "reuse the existing materializer queue to lower top-ranked TH07/TH08 witnesses once retail archive adapters exist",
         ],
     }
@@ -634,6 +795,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--body-queue-json",
         help="reuse an existing symex_body_candidate_queue.py JSON payload instead of rerunning the body solver",
+    )
+    parser.add_argument(
+        "--resolver-queue-json",
+        help="reuse an existing symex_int_resolver_queue.py JSON payload instead of rerunning the resolver solver",
     )
     parser.add_argument(
         "--run-check",
@@ -667,6 +832,9 @@ def main(argv: list[str]) -> int:
     body_queue, body_command = load_body_queue(args)
     commands["bodyCandidateQueue"] = body_command
     body_queue_summary = summarize_body_queue(body_queue)
+    resolver_queue, resolver_command = load_int_resolver_queue(args)
+    commands["intResolverQueue"] = resolver_command
+    resolver_queue_summary = summarize_int_resolver_queue(resolver_queue)
 
     payload = {
         "schema": "touhou-formal-symex-effectiveness-v1",
@@ -674,6 +842,7 @@ def main(argv: list[str]) -> int:
         "commands": commands,
         "rawStepSymbolicCoverage": queue_summary,
         "rawBodySymbolicCoverage": body_queue_summary,
+        "rawIntResolverCoverage": resolver_queue_summary,
         "sourceOpcodeSurface": source_opcode_surface(args.reference_root),
         "sourceCoverage": SOURCE_COVERAGE,
         "retailConfirmations": retail_confirmations(args.retail_root),

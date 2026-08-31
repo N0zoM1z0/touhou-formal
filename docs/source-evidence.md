@@ -29,6 +29,14 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:134`: `ECL_OPCODE_JUMPDEC` falls through to
   the `ECL_OPCODE_JUMP` implementation when the decremented counter remains
   positive; otherwise it only advances normally.
+- `reference/th06/src/EclManager.cpp:215`: `CMPINT` and `CMPFLOAT` update the
+  context compare register.
+- `reference/th06/src/EclManager.cpp:229`: `JUMPLSS`, `JUMPLEQ`, `JUMPEQU`,
+  `JUMPGRE`, `JUMPGEQ`, and `JUMPNEQ` branch on the compare register before
+  falling into the shared raw jump body.
+- `reference/th06/src/EnemyEclInstr.cpp:100`: `GetVar` resolves known negative
+  `EclVarId` selectors and falls through to the raw integer value for unknown
+  operands.
 - `reference/th06/src/EclManager.cpp:120`: raw ECL skips an instruction when
   `skipForDifficulty & (1 << g_GameManager.difficulty)` is zero, so execution
   uses active-bit intersection.
@@ -65,6 +73,17 @@ relative to `/home/yann/yann/touhou/formal`.
   value remains positive.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
+- `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
+  bit `1 << index` to choose raw operand versus `GetVarValue` resolution.
+- `reference/th07/src/th07/EclManager.cpp:116`: `GetVarValue` resolves known
+  integer selectors and falls through to the raw operand for default cases.
+- `reference/th07/src/th07/EclManager.cpp:268`: `GetVar` records the writable
+  lvalue selector subset; unknown selectors fall through to raw-pointer
+  behavior in the original C++.
+- `reference/th07/src/th07/EclManager.cpp:1092`: `ECL_JUMP_IF_EQUAL`,
+  `ECL_JUMP_IF_NOT_EQUAL`, `ECL_JUMP_IF_LOWER_THAN`, `ECL_JUMP_IF_LEQ_THAN`,
+  `ECL_JUMP_IF_GREATER_THAN`, and `ECL_JUMP_IF_GEQ_THAN` compare resolved
+  integer operands 0 and 1, then jump using raw operands 2 and 3 when taken.
 - `reference/th07/src/th07/EclManager.cpp:1035`: raw `ECL_DIV` divides by
   `GET_INT_VALUE(enemy, 2)` without a zero-divisor guard.
 - `reference/th07/src/th07/EclManager.cpp:1043`: raw `ECL_MOD` computes modulo
@@ -96,6 +115,14 @@ relative to `/home/yann/yann/touhou/formal`.
   by `instruction->size`.
 - `reference/th08/src/EclRunLow.inl:88`: TH08 `RawInt` reads four-byte raw
   operands at `operands + index * 4`.
+- `reference/th08/src/EclRunLow.inl:97`: TH08 `ReadInt` uses the corresponding
+  `operandFlags` bit to choose raw operand versus `ResolveInt`.
+- `reference/th08/src/EclRunLow.inl:112`: TH08 `WriteInt` uses the corresponding
+  `operandFlags` bit to choose raw-pointer versus `ResolveIntLValue`.
+- `reference/th08/src/EclOperandsInt.cpp:26`: `ResolveInt` resolves known
+  integer selectors and falls through to the raw operand for default cases.
+- `reference/th08/src/EclOperandsInt.cpp:156`: `ResolveIntLValue` records the
+  writable integer selector subset.
 - `reference/th08/src/EclRunLow.inl:194`: TH08 low-opcode dispatch keeps both
   raw operand access and `operandFlags`-resolved reads; jump operands below use
   the raw path.

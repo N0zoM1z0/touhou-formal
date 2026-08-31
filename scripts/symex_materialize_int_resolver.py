@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Solve raw ECL body paths and materialize Lean-checked fixtures.
+"""Solve integer operand resolver paths and replay them in Lean.
 
-This is the opcode-body companion to ``symex_materialize_raw_step.py``.  The
-Python layer still does not know TH06/TH07/TH08 wire offsets; it only asks Lean
-for SMT, lets Z3 solve, and sends the witness back to Lean for profile-driven
-byte encoding and replay.
+The resolver layer is intentionally host-symbolic: Lean materializes the raw
+instruction bytes and operand mask, while ``hostValue`` stands for the concrete
+value that a known selector would read from Enemy/GameManager/context state.
 """
 
 from __future__ import annotations
@@ -25,38 +24,29 @@ from symex_materialize_raw_step import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WITNESS_FIELDS = [
-    "currentTime",
-    "instrTime",
-    "opcode",
-    "nextOffset",
-    "instructionMask",
+    "slot",
+    "rawValue",
+    "hostValue",
     "operandMask",
-    "activeMask",
-    "overrideMask",
-    "jumpTargetTime",
-    "jumpDisplacement",
-    "counterBefore",
-    "divisorValue",
-    "lhsRaw",
-    "rhsRaw",
-    "lhsHost",
-    "rhsHost",
-    "compareRegister",
-    "bufferSize",
 ]
 
+POSSIBLE_PATHS = {
+    "th06": ["resolved-host", "resolved-default-raw"],
+    "th07": ["raw-immediate", "resolved-host", "resolved-default-raw"],
+    "th08": ["raw-immediate", "resolved-host", "resolved-default-raw"],
+}
 
-def solve_path(title: str, path: str, active_mask: int, override_mask: int) -> Any:
+
+def solve_path(title: str, path: str, slot: int) -> Any:
     query = checked_stdout(
         [
             "lake",
             "exe",
             "symex",
-            "query-body-values",
+            "query-int-resolver-values",
             title,
             path,
-            str(active_mask),
-            str(override_mask),
+            str(slot),
         ]
     )
     z3 = run_command(["z3", "-in"], input_text=query)
@@ -73,7 +63,7 @@ def materialize(title: str, path: str, values: dict[str, Any]) -> dict[str, str]
         "lake",
         "exe",
         "symex",
-        "materialize-body",
+        "materialize-int-resolver",
         title,
         path,
         *[str(values[field]) for field in WITNESS_FIELDS],
@@ -86,27 +76,22 @@ def materialize(title: str, path: str, values: dict[str, Any]) -> dict[str, str]
         key, value = line.split("=", 1)
         result[key] = value
     if result.get("matchesPath") != "true":
-        raise SymexError(f"materialized body witness did not replay into requested path: {result}")
+        raise SymexError(f"materialized resolver witness did not replay into requested path: {result}")
     return result
 
 
-def list_paths() -> list[str]:
-    text = checked_stdout(["lake", "exe", "symex", "list-body-paths"])
-    return [line.strip() for line in text.splitlines() if line.strip()]
+def list_paths(title: str, requested: str) -> list[str]:
+    if requested == "all":
+        return POSSIBLE_PATHS[title]
+    return [requested]
 
 
-def solve_and_materialize(
-    title: str,
-    path: str,
-    active_mask: int,
-    override_mask: int,
-) -> dict[str, Any]:
-    z3_result = solve_path(title, path, active_mask, override_mask)
+def solve_and_materialize(title: str, path: str, slot: int) -> dict[str, Any]:
+    z3_result = solve_path(title, path, slot)
     record: dict[str, Any] = {
         "title": title,
         "path": path,
-        "activeMask": active_mask,
-        "overrideMask": override_mask,
+        "slot": slot,
         "status": z3_result.status,
     }
     if z3_result.status == "sat":
@@ -117,29 +102,20 @@ def solve_and_materialize(
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Solve raw ECL body paths with Z3 and materialize Lean-checked fixtures."
+        description="Solve integer operand resolver paths with Z3 and replay in Lean."
     )
     parser.add_argument("title", choices=["th06", "th07", "th08"])
-    parser.add_argument("path", help="path name from `lake exe symex list-body-paths`, or `all`")
-    parser.add_argument("active_mask", nargs="?", type=int, default=1)
-    parser.add_argument("override_mask", nargs="?", type=int, default=0)
+    parser.add_argument("path", help="path name from `lake exe symex list-int-resolver-paths`, or `all`")
+    parser.add_argument("slot", nargs="?", type=int, default=0)
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
-    if not 0 <= args.active_mask <= 255 or not 0 <= args.override_mask <= 255:
-        raise SymexError("active_mask and override_mask must fit in an unsigned byte")
-    paths = list_paths() if args.path == "all" else [args.path]
-    records = [
-        solve_and_materialize(
-            args.title,
-            path,
-            args.active_mask,
-            args.override_mask,
-        )
-        for path in paths
-    ]
+    if args.slot < 0:
+        raise SymexError("slot must be nonnegative")
+    paths = list_paths(args.title, args.path)
+    records = [solve_and_materialize(args.title, path, args.slot) for path in paths]
     payload: Any = records if args.path == "all" else records[0]
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

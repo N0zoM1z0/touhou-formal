@@ -85,8 +85,23 @@ python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["can
 
 python3 scripts/symex_materialize_body_step.py th08 all 1 2 > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
-python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 9; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert any(r["path"] == "int-divisor-zero" and r["fixture"]["faultKind"] == "divide-by-zero" for r in xs)' "$solver_output"
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 17; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert any(r["path"] == "int-divisor-zero" and r["fixture"]["faultKind"] == "divide-by-zero" for r in xs); assert any(r["path"].startswith("int-condjump-") for r in xs)' "$solver_output"
 
 python3 scripts/symex_body_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path int-divisor-zero > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 1; c=data["candidates"][0]; assert c["risk"]["class"] == "arithmetic-fault"; assert c["fixture"]["faultKind"] == "divide-by-zero"' "$solver_output"
+
+lake exe symex query-int-resolver th06 raw-immediate 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+python3 scripts/symex_materialize_int_resolver.py th07 all 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 3; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert {r["path"] for r in xs} == {"raw-immediate", "resolved-host", "resolved-default-raw"}' "$solver_output"
+
+python3 scripts/symex_materialize_int_resolver.py th06 all 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 2; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert {r["path"] for r in xs} == {"resolved-host", "resolved-default-raw"}' "$solver_output"
+
+python3 scripts/symex_int_resolver_queue.py > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 8; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {(c["title"], c["path"]) for c in data["candidates"]} == {("th06", "resolved-host"), ("th06", "resolved-default-raw"), ("th07", "raw-immediate"), ("th07", "resolved-host"), ("th07", "resolved-default-raw"), ("th08", "raw-immediate"), ("th08", "resolved-host"), ("th08", "resolved-default-raw")}' "$solver_output"

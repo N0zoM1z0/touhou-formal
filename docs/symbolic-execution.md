@@ -21,11 +21,15 @@ The first opcode-body layer is also modeled through shared title profiles:
 
 1. `JUMPDEC` decrements operand slot 2, jumps iff the decremented value is
    positive, and otherwise advances by `nextOffset`;
-2. integer div/mod hazards use source-backed opcode lists and divisor operand
-   slots;
-3. body symbolic execution currently uses the immediate/raw operand branch
-   (`operandMask = 0`) so that witnesses are byte-realizable without a symbolic
-   host-state resolver.
+2. integer conditional jumps are profile-backed for TH06's compare-register
+   branch opcodes and TH07/TH08's operand-resolved compare opcodes;
+3. integer div/mod hazards use source-backed opcode lists and divisor operand
+   slots on the immediate/raw branch.
+
+The integer rvalue resolver is modeled as its own shared layer: TH06 always
+calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
+or selector resolution. Known selector ranges, source-backed exclusions, and
+default-to-raw fallthrough are title-profile facts.
 
 This intentionally avoids hand-selecting a suspicious bug site. The executor
 enumerates generic path classes and asks Z3 for witnesses.
@@ -54,6 +58,13 @@ Emit and solve one body-level query:
 
 ```bash
 lake exe symex query-body-values th08 int-divisor-zero 1 2 | z3 -in
+```
+
+List and solve integer resolver branches:
+
+```bash
+lake exe symex list-int-resolver-paths
+lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
 ```
 
 Run a matrix for one title and difficulty environment:
@@ -91,6 +102,13 @@ Solve/materialize body-level paths:
 ```bash
 ./scripts/symex_materialize_body_step.py th08 all 1 2
 ./scripts/symex_body_candidate_queue.py
+```
+
+Solve/materialize integer resolver paths:
+
+```bash
+./scripts/symex_materialize_int_resolver.py th07 all 0
+./scripts/symex_int_resolver_queue.py
 ```
 
 Evaluate the current formal-vs-fuzz effectiveness baseline:
@@ -201,20 +219,46 @@ layer for the first opcode-body slice. It enumerates these path classes:
 
 - `decjump-taken-*` for four cursor classes;
 - `decjump-not-taken-*` for four cursor classes;
+- `int-condjump-taken-*` for four cursor classes;
+- `int-condjump-not-taken-*` for four cursor classes;
 - `int-divisor-zero`.
 
-A full default run on 2026-08-31 produced 45 satisfiable materialized
+A full default run on 2026-08-31 produced 85 satisfiable materialized
 candidates:
 
 ```text
 arithmetic-fault: 5
-cursor-underflow: 10
-cursor-out-of-range: 10
-liveness: 10
-reachable-control-path: 10
+cursor-underflow: 20
+cursor-out-of-range: 20
+liveness: 20
+reachable-control-path: 20
 ```
 
-All 45 replayed through Lean with `matchesPath=true`. The five
+All 85 replayed through Lean with `matchesPath=true`. The five
 `arithmetic-fault` witnesses are integer div/mod zero-divisor paths: one per
 default title/difficulty environment. They are source-backed body-level formal
 findings, not yet retail-confirmed cases.
+
+## Integer resolver candidate queue
+
+`scripts/symex_int_resolver_queue.py` enumerates the title-specific rvalue
+resolver branches:
+
+- TH06: `resolved-host` and `resolved-default-raw`;
+- TH07/TH08: `raw-immediate`, `resolved-host`, and
+  `resolved-default-raw`.
+
+A full default run on 2026-08-31 produced 8 satisfiable materialized resolver
+candidates:
+
+```text
+mask-set-known-selector: 3
+mask-set-default-raw: 3
+mask-clear-raw-immediate: 2
+```
+
+All 8 replayed through Lean with `matchesPath=true`. This confirms a useful
+non-fuzzing distinction: an operand-mask bit can be set while the selector still
+falls through to raw-value behavior. That branch is easy for random testing to
+miss or misclassify because the raw bytes look like a variable reference, but
+the source resolver returns the operand unchanged.
