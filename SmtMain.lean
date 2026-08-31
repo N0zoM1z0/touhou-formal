@@ -1,7 +1,7 @@
 import TouhouFormal.Search.SMT
 
 def smtUsage : String :=
-  "usage: lake exe smt <th06-sub-oob|th06-find-oob|th07-negative-oob|th08-negative-noop-unsat|th08-positive-oob|th06-jump-minus-one-oob|th07-jump-minus-one-oob>"
+  "usage: lake exe smt <th06-sub-oob|th06-find-oob|th07-negative-oob|th08-negative-noop-unsat|th08-positive-oob|th06-jump-minus-one-oob|th07-jump-minus-one-oob|th08-jump-minus-one-oob>"
 
 def main (args : List String) : IO UInt32 := do
   match args with
@@ -25,6 +25,9 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["th07-jump-minus-one-oob"] =>
       IO.print TouhouFormal.Search.SMT.th07JumpMinusOneOobQuery
+      return 0
+  | ["th08-jump-minus-one-oob"] =>
+      IO.print TouhouFormal.Search.SMT.th08JumpMinusOneOobQuery
       return 0
   | _ =>
       IO.eprintln smtUsage

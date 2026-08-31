@@ -34,6 +34,15 @@ def rawInstrPrefixBytes : TouhouFormal.Bytes :=
     [TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0xff] ++
     TouhouFormal.leU16Bytes 3).toArray
 
+def rawJumpMinusOneInstrBytes : TouhouFormal.Bytes :=
+  (TouhouFormal.leU32Bytes 441 ++
+    TouhouFormal.leU16Bytes eclOpcodeJump.toNat ++
+    TouhouFormal.leU16Bytes 12 ++
+    [TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0xff] ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU32Bytes 0 ++
+    TouhouFormal.leU32Bytes 0xffffffff).toArray
+
 theorem negative_sub_id_noops :
     TouhouFormal.ECL.lookupSubOffset headerShape oneSubOffsets (-1) =
       .ok (none : Option Nat) := by
@@ -68,6 +77,40 @@ theorem raw_instr_prefix_decodes_shared_shape :
           nextOffset := 12
           difficultyMask := some 255
           operandMask := some 3 } := by
+  rfl
+
+def rawJumpMinusOneOperands : Except TouhouFormal.Fault TouhouFormal.ECL.RawJumpOperands :=
+  match TouhouFormal.ECL.decodeRawInstrPrefix headerShape rawJumpMinusOneInstrBytes 0 with
+  | .ok rawPrefix =>
+      TouhouFormal.ECL.decodeFixedJumpOperands headerShape rawJumpMinusOneInstrBytes rawPrefix 0 1
+  | .error faultValue => .error faultValue
+
+theorem raw_jump_minus_one_operands_decode :
+    rawJumpMinusOneOperands =
+      .ok
+        { targetTime := 0
+          displacement := -1 } := by
+  rfl
+
+theorem raw_jump_minus_one_after_jump_faults :
+    TouhouFormal.ECL.decodeRawInstrPrefixAfterRelativeJump
+      headerShape
+      rawJumpMinusOneInstrBytes
+      { fileOffset := 0
+        time := 441
+        opcode := eclOpcodeJump
+        nextOffset := 12
+        difficultyMask := some 255
+        operandMask := some 0 }
+      { targetTime := 0
+        displacement := -1 } =
+      .error
+        (Fault.outOfBoundsRead
+          title
+          "EclRun.decode.cursor"
+          "raw ECL instruction cursor moved before the beginning of the ECL buffer"
+          (-1)
+          rawJumpMinusOneInstrBytes.size) := by
   rfl
 
 end TouhouFormal.TH08

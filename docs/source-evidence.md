@@ -67,7 +67,12 @@ relative to `/home/yann/yann/touhou/formal`.
   `args.ints[0]` into `SpawnEnemy1`, which then calls `CallEclSub`.
 - `reference/th08/src/EnemyTimeline.cpp:292`: TH08 advances the timeline cursor
   by `instruction->size`.
-- `reference/th08/src/EclRunLow.inl:236`: TH08 low opcode 4 sets context time
+- `reference/th08/src/EclRunLow.inl:88`: TH08 `RawInt` reads four-byte raw
+  operands at `operands + index * 4`.
+- `reference/th08/src/EclRunLow.inl:194`: TH08 low-opcode dispatch keeps both
+  raw operand access and `operandFlags`-resolved reads; jump operands below use
+  the raw path.
+- `reference/th08/src/EclRunLow.inl:238`: TH08 low opcode 4 sets context time
   from `RawInt(instruction, 0)` and jumps by `RawInt(instruction, 1)`.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.

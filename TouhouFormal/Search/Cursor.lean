@@ -1,6 +1,7 @@
 import TouhouFormal.Core.Cursor
 import TouhouFormal.TH06.Raw
 import TouhouFormal.TH07
+import TouhouFormal.TH08
 
 namespace TouhouFormal.Search.Cursor
 
@@ -26,6 +27,9 @@ def th06JumpSweep : List CursorSweepCase :=
 def th07JumpSweep : List CursorSweepCase :=
   cursorSweep 0 TouhouFormal.TH07.rawJumpMinusOneInstrBytes.size smallDisplacements
 
+def th08JumpSweep : List CursorSweepCase :=
+  cursorSweep 0 TouhouFormal.TH08.rawJumpMinusOneInstrBytes.size smallDisplacements
+
 theorem th06_jump_sweep_expected :
     th06JumpSweep =
       [ { displacement := -1, targetCursor := -1, cursorClass := .beforeBuffer }
@@ -37,6 +41,15 @@ theorem th06_jump_sweep_expected :
 
 theorem th07_jump_sweep_expected :
     th07JumpSweep =
+      [ { displacement := -1, targetCursor := -1, cursorClass := .beforeBuffer }
+      , { displacement := 0, targetCursor := 0, cursorClass := .nonProgress }
+      , { displacement := 1, targetCursor := 1, cursorClass := .inBounds }
+      , { displacement := 12, targetCursor := 12, cursorClass := .inBounds }
+      , { displacement := 24, targetCursor := 24, cursorClass := .atOrPastEnd } ] := by
+  rfl
+
+theorem th08_jump_sweep_expected :
+    th08JumpSweep =
       [ { displacement := -1, targetCursor := -1, cursorClass := .beforeBuffer }
       , { displacement := 0, targetCursor := 0, cursorClass := .nonProgress }
       , { displacement := 1, targetCursor := 1, cursorClass := .inBounds }

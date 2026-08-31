@@ -25,8 +25,9 @@ negative id is not a counterexample under TH08's source-backed no-op policy.
 `lake exe smt th08-positive-oob | z3 -in` keeps TH08's positive upper-bound
 fault path live.
 
-`lake exe smt th06-jump-minus-one-oob | z3 -in` and
-`lake exe smt th07-jump-minus-one-oob | z3 -in` check relative jump cursor
+`lake exe smt th06-jump-minus-one-oob | z3 -in`,
+`lake exe smt th07-jump-minus-one-oob | z3 -in`, and
+`lake exe smt th08-jump-minus-one-oob | z3 -in` check relative jump cursor
 counterexamples backed by the shared cursor-transfer semantics.
 
 The next step is to generate larger instruction-level SMT queries from shared

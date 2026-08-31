@@ -143,4 +143,10 @@ def th07JumpMinusOneOobQuery : String :=
     "(- 1)"
     20
 
+def th08JumpMinusOneOobQuery : String :=
+  concreteRelativeJumpOobQuery
+    "TH08"
+    "(- 1)"
+    20
+
 end TouhouFormal.Search.SMT

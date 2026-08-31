@@ -24,3 +24,6 @@ grep -q '^sat$' "$solver_output"
 
 lake exe smt th07-jump-minus-one-oob | z3 -in | tee "$solver_output"
 grep -q '^sat$' "$solver_output"
+
+lake exe smt th08-jump-minus-one-oob | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"
