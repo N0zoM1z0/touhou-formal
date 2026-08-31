@@ -1,0 +1,40 @@
+# Roadmap
+
+## Phase 0: Executable Counterexample Seed
+
+Model the TH06 timeline spawn path from decoded timeline instruction to
+`CallEclSub`. Prove that `arg0 = 256` with one subroutine is outside the sub
+table and emit the same relation as an SMT query.
+
+## Phase 1: Raw TH06 ECL Loader Model
+
+Add little-endian byte decoding for the TH06 header, timeline records, and raw
+ECL instruction headers. Preserve loader rebasing behavior and expose malformed
+or undersized files as first-operation faults.
+
+## Phase 2: TH07 and TH08 Deltas
+
+Encode title-specific differences:
+
+- TH07 uses sixteen timeline pointers and a variable-argument raw instruction
+  encoding with `paramMask`.
+- TH08 adds an ECL version field, rebases sixteen timeline offsets, and treats
+  negative `CallEclSub` ids as a successful no-op.
+
+## Phase 3: Rich VM Semantics
+
+Add call/return stack behavior, jumps, arithmetic, divide/modulo checks,
+host-indexed operations, enemy child contexts, and ANM interactions. Each new
+host boundary should have an explicit assumption or a model.
+
+## Phase 4: Search and Validation
+
+Generate solver queries from the Lean-side relation where practical. Keep
+handwritten SMT only for small audit-friendly seeds. Convert solver models into
+script mutations and validate selected cases on retail binaries under Wine.
+
+## Phase 5: Beyond Traditional Danmaku
+
+Use the same transition-system interface for ANM and other script-like game
+systems, including nontraditional bullet-hell designs where scripts manipulate
+timelines, entities, or visual state without a standard enemy-bullet loop.

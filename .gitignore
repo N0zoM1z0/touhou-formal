@@ -1,0 +1,21 @@
+.lake/
+build/
+*.olean
+*.ilean
+*.trace
+*.log
+
+# Keep proprietary retail binaries and local dynamic traces out of this repo.
+*.exe
+*.dll
+*.rar
+*.zip
+*.7z
+*.idb
+*.i64
+*.ghidra/
+
+# Local solver output and scratch data.
+.analysis/
+reports/
+tmp/
