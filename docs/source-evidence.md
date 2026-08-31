@@ -131,3 +131,11 @@ The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in
 `retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/result.json`.
 The mutant reaches the formal `CallEclSub` out-of-bounds witness and is
 classified as `retail-frame-stall` against a clean `game-window-live` baseline.
+
+The TH06 raw ECL `jumped-before-buffer` symbolic witness has also been
+retail-checked under Wine in
+`retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z`.
+The witness bytes are produced by `scripts/symex_materialize_raw_step.py` and
+then spliced into stage 5 subroutine 0 instruction 0 by
+`scripts/retail_confirm_th06_raw_symex.py`. Two repeated attempts classified
+the mutant as `crash-dialog` against clean `game-window-live` baselines.

@@ -102,3 +102,8 @@ These are not final retail findings by themselves. They are the baseline path
 coverage that later bounded opcode semantics, full subroutine state, and
 metamorphic checks should reuse. The materialized hex fixtures are the next
 bridge into DAT/ECL mutation and Wine validation.
+
+The TH06 `jumped-before-buffer` materialized witness has been taken through that
+bridge once: `scripts/retail_confirm_th06_raw_symex.py` splices it into a
+reachable stage-5 subroutine entry and the retained 2026-08-31 repeat run
+classifies the mutant as `crash-dialog` in 2/2 Wine attempts.

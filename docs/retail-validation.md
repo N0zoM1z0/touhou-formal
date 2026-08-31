@@ -97,3 +97,63 @@ Observed report:
 The long progress probe is part of the oracle. A short two-second probe can
 misclassify this case as still live because the mutated script enters stage 5
 but then stops making enough frame progress.
+
+## TH06 raw ECL symbolic jump-before-buffer confirmation
+
+`scripts/retail_confirm_th06_raw_symex.py` turns a Z3/Lean raw-step witness into
+a reachable TH06 stage mutation:
+
+- ask `scripts/symex_materialize_raw_step.py` for a TH06 raw-step path witness;
+- default to `symex-path = jumped-before-buffer`;
+- default to stage 5, `ecldata5.ecl`, subroutine `0`, instruction `0`;
+- default the formal active mask to `1 << retail_difficulty`, matching
+  `reference/th06/src/EclManager.cpp:120`;
+- replace that raw instruction with the Lean-materialized bytes;
+- write an override payload for DanmakuFuzz's retail harness;
+- compare the mutant against a clean baseline under Wine.
+
+Prepare only:
+
+```bash
+python3 scripts/retail_confirm_th06_raw_symex.py \
+  --symex-path jumped-before-buffer \
+  --prepare-only
+```
+
+Repeated confirmation command used on 2026-08-31:
+
+```bash
+python3 scripts/retail_confirm_th06_raw_symex.py \
+  --symex-path jumped-before-buffer \
+  --expect-classification crash-dialog \
+  --repeat 2 \
+  --require 2 \
+  --timeout-seconds 28 \
+  --stage-entry-wait-seconds 4 \
+  --progress-probe-seconds 12 \
+  --progress-probe-frames 450 \
+  --startup-normalization auto
+```
+
+Observed report:
+
+- result JSON:
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/result.json`
+- repeated summary:
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/report.json`
+- run reports:
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-001/report.json`
+  and
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/report.json`
+- Lean/Z3 materialized raw instruction:
+  `00000000020000000008000000000000ffffffff`
+- mutated payload SHA-256:
+  `f98076878c4cd7d3f30c210c3eaa559b85ba42479a199db6076f3c171a593ba1`
+- patched archive SHA-256:
+  `1f721f629c4fcba2e45a2dbdf65c7d1e3d2dd5f44f8e3f4323f9f94e6a144a96`
+- clean baseline classification: `game-window-live`
+- mutant classification: `crash-dialog`
+- repeated expectation: `2/2` attempts passed.
+
+The Wine crash signature normalizes to
+`crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...`.

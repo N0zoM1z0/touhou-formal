@@ -61,6 +61,7 @@ lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
 python3 scripts/retail_confirm_th06_arg0_256.py --prepare-only
+python3 scripts/retail_confirm_th06_raw_symex.py --symex-path jumped-before-buffer --prepare-only
 ```
 
 `scripts/check.sh` runs the Lean build, executable counterexample check, Z3
