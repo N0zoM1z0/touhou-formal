@@ -1,4 +1,4 @@
-import TouhouFormal.TH06.Timeline
+import TouhouFormal
 
 open TouhouFormal
 open TouhouFormal.TH06

@@ -1,4 +1,5 @@
 import TouhouFormal.Core.Evidence
+import TouhouFormal.ECL.Profile
 
 namespace TouhouFormal.TH06
 
@@ -36,5 +37,15 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 92
       endLine := 125
       claim := "SpawnEnemy passes eclSubId directly to g_EclManager.CallEclSub." } ]
+
+def headerShape : TouhouFormal.ECL.HeaderShape :=
+  { title := title
+    hasVersionField := false
+    expectedVersion := none
+    fixedHeaderBytes := rawHeaderSize
+    timelineSlots := timelinePointerCount
+    subTableField := "subOffsets[0]"
+    negativeSubIdPolicy := .unchecked
+    evidence := eclEvidence }
 
 end TouhouFormal.TH06
