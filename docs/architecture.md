@@ -46,6 +46,11 @@ cursor-transfer searches.
 from shared Lean profile/step semantics and emits SMT path constraints for Z3,
 instead of adding isolated hand-written bug queries.
 
+Raw ECL witness materialization keeps the same ownership split. Z3 chooses
+values; Python may parse solver output and orchestrate commands; only Lean may
+turn witness fields into title-specific raw bytes, because Lean owns the
+`HeaderShape.rawInstrShape` offsets, widths, and concrete replay check.
+
 ## Future VMs
 
 Nontraditional bullet-hell VMs should enter through the same boundary: raw

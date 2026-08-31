@@ -66,3 +66,11 @@ grep -q '^sat$' "$solver_output"
 
 lake exe symex query th08 advanced-non-progress 1 0 | z3 -in | tee "$solver_output"
 grep -q '^sat$' "$solver_output"
+
+python3 scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0 | tee "$solver_output"
+grep -q '"matchesPath": "true"' "$solver_output"
+grep -q '"hex": "00000000040000000001000000000000ffffffff"' "$solver_output"
+
+python3 scripts/symex_materialize_raw_step.py th08 all 1 2 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 14; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs)' "$solver_output"

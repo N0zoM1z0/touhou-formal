@@ -8,6 +8,11 @@ The forward symbolic execution baseline now lives in `lake exe symex`; see
 `docs/symbolic-execution.md`. New instruction-level work should prefer
 extending that executor over adding one-off SMT seeds here.
 
+For fixture-producing paths, use `lake exe symex query-values ...` or
+`scripts/symex_materialize_raw_step.py`. The materializer parses Z3 values but
+delegates title-specific byte encoding back to Lean, so script-level automation
+does not fork TH06/TH07/TH08 layouts.
+
 ```text
 unchecked: safe(subId, subCount) := 0 <= subId && subId < subCount
 no-op:     safe(subId, subCount) := subId < 0 || (0 <= subId && subId < subCount)
@@ -61,4 +66,5 @@ test while failing TH08 raw ECL's stronger
 `instructionMask = #x01` for `activeMask = #x01`, `overrideMask = #x02`.
 
 The next step is to generate larger instruction-level SMT queries from shared
-Lean-side transition facts once more of the VM is encoded.
+Lean-side transition facts once more of the VM is encoded, then lower the most
+useful witnesses into full ECL/DAT mutations for Wine validation.

@@ -54,15 +54,20 @@ lake exe smt th08-timeline-size-before-buffer-unsat | z3 -in
 lake exe smt th08-raw-difficulty-override-delta | z3 -in
 lake exe symex list-paths
 lake exe symex query th08 jumped-before-buffer 1 0 | z3 -in
+lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
 ./scripts/symex_raw_step.sh th08 1 2
+./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
 python3 scripts/retail_confirm_th06_arg0_256.py --prepare-only
 ```
 
-`scripts/check.sh` runs the Lean build, executable counterexample check, and
-the current Z3 controls together. `scripts/retail_inventory.sh` is read-only and
+`scripts/check.sh` runs the Lean build, executable counterexample check, Z3
+controls, and the current raw-ECL symbolic witness materializer. The
+materializer solves a path, asks Lean to encode the witness into bytes from the
+shared title profile, decodes it again, and checks that the concrete step lands
+back in the requested path class. `scripts/retail_inventory.sh` is read-only and
 records archive hashes plus executable/data CRCs before any Wine validation.
 Retail validation scripts operate on isolated copies under
 `/home/yann/yann/touhou/formal/retail_extract` and

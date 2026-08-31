@@ -77,6 +77,7 @@ when `enemy->eclDifficultyMaskOverride` is nonzero.
 | ID | Kind | Oracle | Status |
 | --- | --- | --- | --- |
 | `ECL-RAW-STEP-SYMEX-BASELINE` | symbolic execution baseline | profile-driven raw ECL single-step executor enumerates time-gate, difficulty-skip, ordinary-advance, fixed-jump, and VM-error paths, then emits SMT path constraints for Z3 | Lean model, Z3-backed `symex` executable, check-script witnesses |
+| `ECL-RAW-STEP-WITNESS-MATERIALIZATION` | solver-to-fixture bridge | Z3 `get-value` witnesses are encoded into raw ECL bytes by Lean using `HeaderShape.rawInstrShape`, decoded again, and replayed through `rawStep`; accepted fixtures must report `matchesPath=true` | TH08 all-path smoke covers 14 path classes under `activeMask=1`, `overrideMask=2`; single fixed-hex regression for TH08 `jumped-before-buffer` |
 
 Formal value: this is the baseline the project should compare fuzzing against.
 The executor is not given a concrete bug. It enumerates source-backed path
@@ -85,6 +86,11 @@ reachable under a title profile and difficulty environment. Current regression
 witnesses include TH06 ordinary-advance before-buffer, TH07 VM-error, TH08
 fixed-jump before-buffer, TH08 difficulty-skip in-bounds under override, and
 TH08 ordinary-advance non-progress.
+
+The materializer is intentionally not a retail oracle. It proves that a solver
+witness is byte-realizable under the modeled raw instruction shape and that the
+same shared concrete step classifies it consistently. The next validation layer
+must splice these bytes into a real ECL/DAT context and observe the retail game.
 
 ## ANM entry chain
 

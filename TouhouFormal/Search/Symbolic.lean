@@ -99,6 +99,13 @@ private def scalarRange (name : String) : TouhouFormal.ScalarWidth -> String
   | .i16 => signedI16Range name
   | .i32 => signedI32Range name
 
+private def operandMaskSmtLines (rawShape : TouhouFormal.ECL.RawInstrShape) : List String :=
+  match rawShape.operandMaskWidth with
+  | none => ["(define-fun operandMask () Int 0)"]
+  | some width =>
+      [ "(declare-const operandMask Int)"
+      , scalarRange "operandMask" width ]
+
 private def hexDigit : Nat -> String
   | 0 => "0"
   | 1 => "1"
@@ -198,7 +205,11 @@ private def rawStepPathConstraints
       , "(assert difficultyPass)" ] ++
       unimpConstraints
 
-def rawStepQuery
+private def rawStepValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
+
+private def rawStepQueryWith
+    (includeModel includeValues : Bool)
     (title : Title)
     (path : RawStepPath)
     (activeMask overrideMask : Nat) : String :=
@@ -242,11 +253,256 @@ def rawStepQuery
          , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
          , "(assert (and (<= " ++ toString (requiredInstructionBytes rawShape path) ++
              " bufferSize) (<= bufferSize 1048576)))" ] ++
+         operandMaskSmtLines rawShape ++
          rawStepPathConstraints rawShape path ++
-         [ "(check-sat)", "(get-model)" ])
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawStepValueTerms ++ ")"] else []))
+
+def rawStepQuery
+    (title : Title)
+    (path : RawStepPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawStepQueryWith true false title path activeMask overrideMask
+
+def rawStepValuesQuery
+    (title : Title)
+    (path : RawStepPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawStepQueryWith false true title path activeMask overrideMask
 
 def listRawStepPathsText : String :=
   joinLines (allRawStepPaths.map RawStepPath.name)
+
+structure RawStepWitness where
+  currentTime : Int
+  instrTime : Int
+  opcode : Int
+  nextOffset : Int
+  instructionMask : Nat
+  operandMask : Int
+  activeMask : Nat
+  overrideMask : Nat
+  jumpTargetTime : Int
+  jumpDisplacement : Int
+  bufferSize : Nat
+deriving Repr, DecidableEq
+
+structure RawStepMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  jump : Option TouhouFormal.ECL.RawJumpOperands
+  outcome : TouhouFormal.ECL.RawStepOutcome
+  matchesPath : Bool
+deriving Repr, DecidableEq
+
+private partial def writeAt
+    (bytes : TouhouFormal.Bytes)
+    (offset : Nat) :
+    List UInt8 -> Option TouhouFormal.Bytes
+  | [] => some bytes
+  | byte :: rest =>
+      if offset < bytes.size then
+        writeAt (bytes.set! offset byte) (offset + 1) rest
+      else
+        none
+
+private def writeScalar
+    (bytes : TouhouFormal.Bytes)
+    (offset : Nat)
+    (width : TouhouFormal.ScalarWidth)
+    (value : Int)
+    (fieldName : String) : Except String TouhouFormal.Bytes :=
+  match width.encodeLE? value with
+  | none =>
+      .error
+        ("cannot encode " ++ fieldName ++ "=" ++ toString value ++
+          " as " ++ reprStr width)
+  | some encoded =>
+      match writeAt bytes offset encoded with
+      | none =>
+          .error
+            ("field " ++ fieldName ++ " at offset " ++ toString offset ++
+              " does not fit in buffer")
+      | some updated => .ok updated
+
+private def writeOptionalScalar
+    (bytes : TouhouFormal.Bytes)
+    (fieldName : String)
+    (offset? : Option Nat)
+    (width? : Option TouhouFormal.ScalarWidth)
+    (value : Int) : Except String TouhouFormal.Bytes :=
+  match offset?, width? with
+  | some offset, some width => writeScalar bytes offset width value fieldName
+  | none, none => .ok bytes
+  | _, _ => .error ("profile has partial optional field shape for " ++ fieldName)
+
+private def liftFaultToString {α : Type} : Except TouhouFormal.Fault α -> Except String α
+  | .ok value => .ok value
+  | .error faultValue => .error faultValue.describe
+
+def rawStepWitnessBytes
+    (title : Title)
+    (path : RawStepPath)
+    (witness : RawStepWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required raw instruction bytes=" ++ toString requiredBytes)
+      else if 255 < witness.instructionMask then
+        .error "instructionMask must fit in an unsigned byte"
+      else if 255 < witness.activeMask || 255 < witness.overrideMask then
+        .error "activeMask and overrideMask must fit in an unsigned byte"
+      else
+        let initial : TouhouFormal.Bytes := (TouhouFormal.zeroBytes witness.bufferSize).toArray
+        let bytes <- writeScalar initial rawShape.timeOffset rawShape.timeWidth witness.instrTime "time"
+        let bytes <- writeScalar bytes rawShape.opcodeOffset rawShape.opcodeWidth witness.opcode "opcode"
+        let bytes <-
+          writeScalar
+            bytes
+            rawShape.nextOffsetOffset
+            rawShape.nextOffsetWidth
+            witness.nextOffset
+            "nextOffset"
+        let bytes <-
+          writeOptionalScalar
+            bytes
+            "difficultyMask"
+            rawShape.difficultyMaskOffset
+            rawShape.difficultyMaskWidth
+            (Int.ofNat witness.instructionMask)
+        let bytes <-
+          writeOptionalScalar
+            bytes
+            "operandMask"
+            rawShape.operandMaskOffset
+            rawShape.operandMaskWidth
+            witness.operandMask
+        match path, rawShape.fixedJumpShape, rawShape.fixedI32OperandBaseOffset with
+        | .jumped _, some jumpShape, some baseOffset =>
+            let bytes <-
+              writeScalar
+                bytes
+                (baseOffset + rawShape.fixedI32OperandStride * jumpShape.targetTimeOperandIndex)
+                .i32
+                witness.jumpTargetTime
+                "jumpTargetTime"
+            writeScalar
+              bytes
+              (baseOffset + rawShape.fixedI32OperandStride * jumpShape.displacementOperandIndex)
+              .i32
+              witness.jumpDisplacement
+              "jumpDisplacement"
+        | .jumped _, _, _ =>
+            .error ("profile has no fixed jump operand shape for " ++ shape.title)
+        | _, _, _ => .ok bytes
+
+private def decodeJumpForWitness
+    (title : Title)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String (Option TouhouFormal.ECL.RawJumpOperands) :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.fixedJumpShape with
+      | some jumpShape =>
+          if rawPrefix.opcode == jumpShape.opcode then
+            match liftFaultToString (TouhouFormal.ECL.decodeProfileFixedJumpOperands shape bytes rawPrefix) with
+            | .ok jump => .ok (some jump)
+            | .error message => .error message
+          else
+            .ok none
+      | none => .ok none
+
+private def CursorGoal.toCursorClass : CursorGoal -> TouhouFormal.CursorClass
+  | .beforeBuffer => .beforeBuffer
+  | .nonProgress => .nonProgress
+  | .inBounds => .inBounds
+  | .atOrPastEnd => .atOrPastEnd
+
+private def RawStepPath.matchesOutcome
+    (path : RawStepPath)
+    (outcome : TouhouFormal.ECL.RawStepOutcome) : Bool :=
+  match path, outcome.action, outcome.cursorClass with
+  | .yielded, .yielded, _ => true
+  | .skipped cursor, .skipped, some actual => actual == cursor.toCursorClass
+  | .advanced cursor, .advanced, some actual => actual == cursor.toCursorClass
+  | .jumped cursor, .jumped, some actual => actual == cursor.toCursorClass
+  | .vmError, .vmError, _ => true
+  | _, _, _ => false
+
+def rawStepMaterialize
+    (title : Title)
+    (path : RawStepPath)
+    (witness : RawStepWitness) : Except String RawStepMaterialization := do
+  let shape := title.headerShape
+  let bytes <- rawStepWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix shape bytes 0)
+  let jump <- decodeJumpForWitness title bytes rawPrefix
+  let outcome <-
+    liftFaultToString
+      (TouhouFormal.ECL.rawStep
+        shape
+        witness.currentTime
+        witness.activeMask
+        witness.overrideMask
+        8
+        witness.bufferSize
+        rawPrefix
+        jump)
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      jump := jump
+      outcome := outcome
+      matchesPath := path.matchesOutcome outcome }
+
+private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
+  | .yielded => "yielded"
+  | .skipped => "skipped"
+  | .advanced => "advanced"
+  | .jumped => "jumped"
+  | .vmError => "vm-error"
+
+private def optionIntText : Option Int -> String
+  | none => "-"
+  | some value => toString value
+
+private def optionCursorClassText : Option TouhouFormal.CursorClass -> String
+  | none => "-"
+  | some cursorClass => cursorClass.name
+
+private def byteHex (byte : UInt8) : String :=
+  hexDigit ((byte.toNat / 16) % 16) ++ hexDigit (byte.toNat % 16)
+
+private def concatStrings : List String -> String
+  | [] => ""
+  | value :: rest => value ++ concatStrings rest
+
+def bytesHex (bytes : TouhouFormal.Bytes) : String :=
+  concatStrings (bytes.toList.map byteHex)
+
+def RawStepMaterialization.report (materialization : RawStepMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "action=" ++ rawStepActionName materialization.outcome.action
+    , "targetCursor=" ++ optionIntText materialization.outcome.targetCursor
+    , "cursorClass=" ++ optionCursorClassText materialization.outcome.cursorClass
+    , "targetTime=" ++ optionIntText materialization.outcome.targetTime
+    , "matchesPath=" ++ toString materialization.matchesPath ]
 
 def th08ConcreteJumpBeforeBufferStep : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome :=
   TouhouFormal.ECL.rawStep

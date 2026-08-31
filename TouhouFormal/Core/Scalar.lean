@@ -17,6 +17,40 @@ def ScalarWidth.bytes : ScalarWidth -> Nat
   | .i16 => 2
   | .i32 => 4
 
+private def signedBitsToNat (modulus : Nat) (value : Int) : Nat :=
+  if value < 0 then
+    (value + Int.ofNat modulus).toNat
+  else
+    value.toNat
+
+def ScalarWidth.encodeLE? (width : ScalarWidth) (value : Int) : Option (List UInt8) :=
+  match width with
+  | .u8 =>
+      if decide (0 <= value ∧ value <= 255) then
+        some [byteOfNat value.toNat]
+      else
+        none
+  | .u16 =>
+      if decide (0 <= value ∧ value <= 65535) then
+        some (leU16Bytes value.toNat)
+      else
+        none
+  | .u32 =>
+      if decide (0 <= value ∧ value <= 4294967295) then
+        some (leU32Bytes value.toNat)
+      else
+        none
+  | .i16 =>
+      if decide ((-32768 : Int) <= value ∧ value <= 32767) then
+        some (leU16Bytes (signedBitsToNat 0x10000 value))
+      else
+        none
+  | .i32 =>
+      if decide ((-2147483648 : Int) <= value ∧ value <= 2147483647) then
+        some (leU32Bytes (signedBitsToNat 0x100000000 value))
+      else
+        none
+
 def readScalar (title component : String) (bytes : TouhouFormal.Bytes) (offset : Nat)
     (width : ScalarWidth) : Except Fault Int :=
   match width with
