@@ -24,6 +24,20 @@ def rawOneSubArg0256Ecl : TouhouFormal.Bytes :=
     TouhouFormal.zeroBytes 20 ++
     TouhouFormal.zeroBytes 12).toArray
 
+def rawZeroSizeTimelinePrefixBytes : TouhouFormal.Bytes :=
+  (TouhouFormal.leU16Bytes 441 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.zeroBytes 20).toArray
+
+def rawNegativeSizeTimelinePrefixBytes : TouhouFormal.Bytes :=
+  (TouhouFormal.leU16Bytes 441 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU16Bytes 0xffff ++
+    TouhouFormal.zeroBytes 20).toArray
+
 def rawOneSubArg0256Header : Except TouhouFormal.ECL.LoadError TouhouFormal.ECL.LoadedHeader :=
   TouhouFormal.ECL.loadHeaderOffsets headerShape rawOneSubArg0256Ecl
 
@@ -81,6 +95,52 @@ theorem rawOneSubArg0256_prefix_decodes :
 
 theorem rawOneSubArg0256_shared_counterexample :
     rawOneSubArg0256Lookup = .error (.fault arg0_256Fault) := by
+  rfl
+
+theorem rawZeroSizeTimelinePrefix_nonprogresses :
+    TouhouFormal.ECL.decodeTimelinePrefix headerShape rawZeroSizeTimelinePrefixBytes 0 =
+      .ok
+        { fileOffset := 0
+          time := 441
+          opcode := 0
+          size := 0
+          firstArg := some 0 } := by
+  rfl
+
+theorem rawZeroSizeTimelinePrefix_next_cursor_stays :
+    ( { fileOffset := 0
+        time := 441
+        opcode := 0
+        size := 0
+        firstArg := some 0 } : TouhouFormal.ECL.TimelinePrefix ).isNonProgressing = true := by
+  rfl
+
+theorem rawNegativeSizeTimelinePrefix_decodes :
+    TouhouFormal.ECL.decodeTimelinePrefix headerShape rawNegativeSizeTimelinePrefixBytes 0 =
+      .ok
+        { fileOffset := 0
+          time := 441
+          opcode := 0
+          size := -1
+          firstArg := some 0 } := by
+  rfl
+
+theorem rawNegativeSizeTimelinePrefix_after_advance_faults :
+    TouhouFormal.ECL.decodeTimelinePrefixAfterAdvance
+      headerShape
+      rawNegativeSizeTimelinePrefixBytes
+      { fileOffset := 0
+        time := 441
+        opcode := 0
+        size := -1
+        firstArg := some 0 } =
+      .error
+        (Fault.outOfBoundsRead
+          title
+          "EclTimeline.decode.cursor"
+          "timeline cursor moved before the beginning of the ECL buffer"
+          (-1)
+          rawNegativeSizeTimelinePrefixBytes.size) := by
   rfl
 
 end TouhouFormal.TH06

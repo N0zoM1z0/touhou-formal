@@ -19,6 +19,8 @@ relative to `/home/yann/yann/touhou/formal`.
   `timelineInstr->opCode`.
 - `reference/th06/src/EnemyManager.cpp:183`: spawn opcode 0 passes
   `timelineInstr->arg0` to `SpawnEnemy`.
+- `reference/th06/src/EnemyManager.cpp:330`: after handling or skipping a
+  timeline instruction, the pointer advances by `timelineInstr->size`.
 - `reference/th06/src/EnemyManager.cpp:110`: `SpawnEnemy` calls
   `g_EclManager.CallEclSub(&newEnemy->currentContext, eclSubId)`.
 
@@ -30,6 +32,8 @@ relative to `/home/yann/yann/touhou/formal`.
   `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size`, and six argument slots.
 - `reference/th07/src/th07/EclManager.cpp:106`: `CallEclSub` reads
   `this->subTable[subId]` directly.
+- `reference/th07/src/th07/EnemyManager.cpp:364`: timeline pointer advancement
+  also uses `timelineInstr->size`.
 
 ## TH08
 
@@ -45,6 +49,8 @@ relative to `/home/yann/yann/touhou/formal`.
   args; there is no TH06-style top-level `arg0`.
 - `reference/th08/src/EnemyTimeline.cpp:120`: TH08 timeline spawn opcodes pass
   `args.ints[0]` into `SpawnEnemy1`, which then calls `CallEclSub`.
+- `reference/th08/src/EnemyTimeline.cpp:292`: TH08 advances the timeline cursor
+  by `instruction->size`.
 
 ## DanmakuFuzz Boundary
 

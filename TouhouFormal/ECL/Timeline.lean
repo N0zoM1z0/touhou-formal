@@ -11,6 +11,12 @@ structure TimelinePrefix where
   firstArg : Option Int := none
 deriving Repr, DecidableEq
 
+def TimelinePrefix.nextCursor (timelinePrefix : TimelinePrefix) : Int :=
+  Int.ofNat timelinePrefix.fileOffset + timelinePrefix.size
+
+def TimelinePrefix.isNonProgressing (timelinePrefix : TimelinePrefix) : Bool :=
+  timelinePrefix.nextCursor = Int.ofNat timelinePrefix.fileOffset
+
 private def missingTimelineShapeFault (shape : HeaderShape) : Fault :=
   { kind := .invalidInstruction
     title := shape.title
@@ -70,5 +76,25 @@ def decodeTimelinePrefix (shape : HeaderShape) (bytes : TouhouFormal.Bytes) (fil
           opcode := opcode
           size := size
           firstArg := firstArg }
+
+private def negativeCursorFault (shape : HeaderShape) (bytes : TouhouFormal.Bytes)
+    (cursor : Int) : Fault :=
+  Fault.outOfBoundsRead
+    shape.title
+    "EclTimeline.decode.cursor"
+    "timeline cursor moved before the beginning of the ECL buffer"
+    cursor
+    bytes.size
+
+def decodeTimelinePrefixAtCursor (shape : HeaderShape) (bytes : TouhouFormal.Bytes)
+    (cursor : Int) : Except Fault TimelinePrefix :=
+  if cursor < 0 then
+    .error (negativeCursorFault shape bytes cursor)
+  else
+    decodeTimelinePrefix shape bytes cursor.toNat
+
+def decodeTimelinePrefixAfterAdvance (shape : HeaderShape) (bytes : TouhouFormal.Bytes)
+    (timelinePrefix : TimelinePrefix) : Except Fault TimelinePrefix :=
+  decodeTimelinePrefixAtCursor shape bytes timelinePrefix.nextCursor
 
 end TouhouFormal.ECL

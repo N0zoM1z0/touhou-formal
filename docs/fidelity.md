@@ -17,6 +17,11 @@ timeline instructions so the fuzzer can keep mutating valid-enough files. The
 Lean model should not inherit those validations unless the original title source
 performs them before the observed access.
 
+Timeline `size` is modeled as decoded cursor arithmetic. A zero-size instruction
+is non-progressing; a signed negative size can move the next decode cursor before
+the ECL buffer. The model reports the next invalid decode boundary instead of
+pretending the instruction stream is a safe array of records.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

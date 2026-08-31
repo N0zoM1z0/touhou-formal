@@ -19,6 +19,14 @@ private def describeLoadedHeader : Except TouhouFormal.ECL.LoadError TouhouForma
         " subOffsets=" ++ toString header.subOffsets.size
   | .error err => err.describe
 
+private def describeTimelinePrefix : Except Fault TouhouFormal.ECL.TimelinePrefix -> String
+  | .ok timelinePrefix =>
+      "ok time=" ++ toString timelinePrefix.time ++
+        " opcode=" ++ toString timelinePrefix.opcode ++
+        " size=" ++ toString timelinePrefix.size ++
+        " nextCursor=" ++ toString timelinePrefix.nextCursor
+  | .error faultValue => faultValue.describe
+
 def main : IO Unit := do
   let result := runBounded TouhouFormal.TH06.stepTimeline 1 TouhouFormal.TH06.arg0_256State
   IO.println "TH06 timeline/subTable counterexample seed"
@@ -42,3 +50,7 @@ def main : IO Unit := do
   IO.println s!"TH06 zero-count 8 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH06.headerShape TouhouFormal.Search.Bounded.th06ZeroCountMinimalBytes)}"
   IO.println s!"TH08 versioned 71 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH08.headerShape TouhouFormal.Search.Bounded.th08AlmostMinimalBytes)}"
   IO.println s!"TH08 versioned 72 bytes: {describeLoadedHeader (TouhouFormal.ECL.loadHeaderOffsets TouhouFormal.TH08.headerShape TouhouFormal.Search.Bounded.th08ZeroCountMinimalBytes)}"
+  IO.println ""
+  IO.println "Timeline cursor controls"
+  IO.println s!"TH06 size=0 prefix: {describeTimelinePrefix (TouhouFormal.ECL.decodeTimelinePrefix TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawZeroSizeTimelinePrefixBytes 0)}"
+  IO.println s!"TH06 size=-1 after advance: {describeTimelinePrefix (TouhouFormal.ECL.decodeTimelinePrefixAfterAdvance TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawNegativeSizeTimelinePrefixBytes { fileOffset := 0, time := 441, opcode := 0, size := -1, firstArg := some 0 })}"

@@ -15,7 +15,8 @@ or undersized files as first-operation faults.
 Current status: the byte reader and loader are shared ECL code, with TH06 raw
 bytes already flowing through loader, timeline-prefix decoding, and shared
 subTable lookup. Bounded loader checks also record first missing-byte faults for
-undersized files.
+undersized files. Timeline cursor advancement is now shared, with TH06 fixtures
+covering zero-size nonprogress and negative-size before-buffer decode faults.
 
 ## Phase 2: TH07 and TH08 Deltas
 
