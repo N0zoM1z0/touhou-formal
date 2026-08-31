@@ -1,12 +1,32 @@
 # touhou-formal
 
-Formal models for Touhou script VMs, starting with the ECL VM family in TH06,
-TH07, and TH08.
+> OS 都能 formal verification，凭什么 Gensokyo 没有？
+>
+> Gensokyo deserves an executable specification.
 
-The goal is not to replace ZUN's VM with a safer one. The goal is to model the
-original behavior closely enough that formal search can produce counterexamples
-for properties the retail VM does not satisfy, then validate the interesting
-ones against the original games.
+`touhou-formal` is a formal-methods workbench for Touhou script VMs, starting
+with the ECL VM family in TH06, TH07, and TH08.
+
+This is not a “write a safer clone of ZUN’s VM” project. The point is sharper:
+model the original VM, including its oddities, missing checks, historical
+drift, and crashable edges, closely enough that Lean + SMT/symbolic execution
+can produce real counterexamples for properties the retail games do not
+satisfy.
+
+Fuzzing is still useful. But danmaku scripts have tiny weird gates everywhere:
+time checks, difficulty masks, operand flags, subroutine stacks, selector
+fallbacks, host-state-dependent operands, and version-specific dispatch. Random
+mutation can spend a lot of time proving that fairies still shoot bullets. A
+solver can instead ask: “is there any byte-realizable ECL instruction that
+passes the VM’s own gates and reaches this exact bad boundary?”
+
+That is the intended loop:
+
+1. recover the original source-backed semantics;
+2. encode the shared VM core once;
+3. let SMT produce witnesses instead of hand-picking examples;
+4. replay the witness through Lean’s executable model;
+5. validate high-value counterexamples against retail builds in isolation.
 
 ## Current slice
 
