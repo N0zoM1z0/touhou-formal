@@ -10,3 +10,4 @@ or retail validation harnesses.
 import TouhouFormal.Core.Evidence
 import TouhouFormal.Core.Fault
 import TouhouFormal.Core.Transition
+import TouhouFormal.TH06
