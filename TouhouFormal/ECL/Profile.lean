@@ -8,9 +8,18 @@ inductive NegativeSubIdPolicy where
   | noOp
 deriving Repr, DecidableEq
 
+inductive DifficultyMaskPolicy where
+  | intersectsActive
+  | containsActiveAndOverride
+deriving Repr, DecidableEq
+
 def NegativeSubIdPolicy.name : NegativeSubIdPolicy -> String
   | .unchecked => "unchecked"
   | .noOp => "no-op"
+
+def DifficultyMaskPolicy.name : DifficultyMaskPolicy -> String
+  | .intersectsActive => "intersects-active"
+  | .containsActiveAndOverride => "contains-active-and-override"
 
 structure TimelineShape where
   fixedSize : Nat
@@ -40,6 +49,7 @@ structure RawInstrShape where
   nextOffsetWidth : ScalarWidth
   difficultyMaskOffset : Option Nat := none
   difficultyMaskWidth : Option ScalarWidth := none
+  difficultyMaskPolicy : Option DifficultyMaskPolicy := none
   operandMaskOffset : Option Nat := none
   operandMaskWidth : Option ScalarWidth := none
   fixedI32OperandBaseOffset : Option Nat := none

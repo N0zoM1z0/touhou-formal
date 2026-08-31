@@ -60,6 +60,18 @@ widths (`i16` versus `u8`) instead of title-local fixtures. That makes the TH08
 timeline difference a modeled semantic delta rather than a hand-written
 exception.
 
+## Difficulty mask execution
+
+| ID | Kind | Oracle | Status |
+| --- | --- | --- | --- |
+| `ECL-RAW-DIFFICULTY-OVERRIDE-DELTA` | semantic counterexample | `instructionMask = 1`, `activeMask = 1`, `overrideMask = 2` executes under TH06/TH07-style active-bit intersection but is skipped by TH08 raw ECL's contains-`active|override` rule; `instructionMask = 3` is the TH08 positive control | Lean theorem, SMT `sat` witness |
+
+Formal value: this is not an out-of-bounds case. It is a behavioral equivalence
+counterexample between superficially similar difficulty-mask fields. Random
+fuzzing tends to report this as ordinary trace divergence, while the formal
+model names the exact missing bit condition that makes TH08 raw ECL stricter
+when `enemy->eclDifficultyMaskOverride` is nonzero.
+
 ## ANM entry chain
 
 | ID | Kind | Oracle | Status |

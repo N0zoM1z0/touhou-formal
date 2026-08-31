@@ -284,4 +284,21 @@ def th08RawNextOffsetBeforeBufferQuery : String :=
     TouhouFormal.TH08.rawInstrPrefixBytes.size
     .beforeBuffer
 
+def th08RawDifficultyOverrideDeltaQuery : String :=
+  joinLines
+    [ "(set-logic QF_BV)"
+    , "; Find an instruction difficulty mask that old-style active-bit intersection would execute"
+    , "; but TH08 raw ECL override semantics skips."
+    , "; TH08 source requires instructionMask to contain difficultyMask | eclDifficultyMaskOverride."
+    , "(declare-const instructionMask (_ BitVec 8))"
+    , "(define-fun activeMask () (_ BitVec 8) #x01)"
+    , "(define-fun overrideMask () (_ BitVec 8) #x02)"
+    , "(define-fun requiredMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+    , "(define-fun old_intersects_active () Bool (not (= (bvand instructionMask activeMask) #x00)))"
+    , "(define-fun th08_contains_active_and_override () Bool (= (bvand instructionMask requiredMask) requiredMask))"
+    , "(assert old_intersects_active)"
+    , "(assert (not th08_contains_active_and_override))"
+    , "(check-sat)"
+    , "(get-model)" ]
+
 end TouhouFormal.Search.SMT

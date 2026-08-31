@@ -89,6 +89,7 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           nextOffsetWidth := .i16
           difficultyMaskOffset := some 9
           difficultyMaskWidth := some .u8
+          difficultyMaskPolicy := some .containsActiveAndOverride
           operandMaskOffset := some 10
           operandMaskWidth := some .u16
           fixedI32OperandBaseOffset := some 12

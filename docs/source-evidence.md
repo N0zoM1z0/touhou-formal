@@ -22,6 +22,9 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:136`: `ECL_OPCODE_JUMP` sets the context
   time from `args.jump.time` and advances the instruction pointer by
   `args.jump.offset`.
+- `reference/th06/src/EclManager.cpp:120`: raw ECL skips an instruction when
+  `skipForDifficulty & (1 << g_GameManager.difficulty)` is zero, so execution
+  uses active-bit intersection.
 - `reference/th06/src/EnemyManager.cpp:177`: timeline dispatch switches on
   `timelineInstr->opCode`.
 - `reference/th06/src/EnemyManager.cpp:183`: spawn opcode 0 passes
@@ -45,6 +48,9 @@ relative to `/home/yann/yann/touhou/formal`.
   `this->subTable[subId]` directly.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
+- `reference/th07/src/th07/EclManager.cpp:935`: raw ECL skips an instruction
+  when `skipInstrOnDifficulty & g_GameManager.difficultyMask` is zero, so
+  execution uses active-bit intersection.
 - `reference/th07/src/th07/EnemyManager.cpp:364`: timeline pointer advancement
   also uses `timelineInstr->size`.
 
@@ -76,6 +82,13 @@ relative to `/home/yann/yann/touhou/formal`.
   from `RawInt(instruction, 0)` and jumps by `RawInt(instruction, 1)`.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
+- `reference/th08/src/EclRun.cpp:67`: TH08 raw ECL requires
+  `instruction->difficultyMask` to contain every bit in
+  `g_GameManager.difficultyMask | enemy->eclDifficultyMaskOverride`; otherwise
+  it advances without executing the opcode.
+- `reference/th08/src/EnemyTimeline.cpp:131`: TH08 timeline ECL still uses the
+  active difficulty-mask intersection check and does not include the raw ECL
+  override mask.
 
 ## DanmakuFuzz Boundary
 
@@ -107,7 +120,7 @@ relative to `/home/yann/yann/touhou/formal`.
 
 ## Retail Calibration
 
-The TH06 `arg0 = 256` timeline mutation has already been retail-checked in
-`retail-th06-pxWWUS/retail-confirm-stage5-arg0-256-default-probe/report.json`.
-The formal model should reproduce the first unsafe operation that explains this
-failure path before generalizing to larger search spaces.
+The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in
+`retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/result.json`.
+The mutant reaches the formal `CallEclSub` out-of-bounds witness and is
+classified as `retail-frame-stall` against a clean `game-window-live` baseline.

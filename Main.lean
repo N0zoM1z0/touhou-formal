@@ -56,6 +56,14 @@ private def describeJumpOperands : Except Fault TouhouFormal.ECL.RawJumpOperands
         " displacement=" ++ toString jump.displacement
   | .error faultValue => faultValue.describe
 
+private def describeRawDifficultyProbe
+    (probe : TouhouFormal.Search.Difficulty.RawDifficultyProbe) : String :=
+  "title=" ++ probe.title ++
+    " instructionMask=" ++ toString probe.instructionMask ++
+    " activeMask=" ++ toString probe.activeMask ++
+    " overrideMask=" ++ toString probe.overrideMask ++
+    " executes=" ++ toString probe.executes
+
 private def describeAnmEntry : Except Fault TouhouFormal.ANM.EntryHeader -> String
   | .ok entry =>
       "ok sprites=" ++ toString entry.numSprites ++
@@ -106,6 +114,10 @@ def main : IO Unit := do
   IO.println s!"TH06 raw nextOffset sweep: {reprStr TouhouFormal.Search.Cursor.th06RawNextOffsetSweep}"
   IO.println s!"TH07 raw nextOffset sweep: {reprStr TouhouFormal.Search.Cursor.th07RawNextOffsetSweep}"
   IO.println s!"TH08 raw nextOffset sweep: {reprStr TouhouFormal.Search.Cursor.th08RawNextOffsetSweep}"
+  IO.println ""
+  IO.println "Raw difficulty-mask controls"
+  for probe in TouhouFormal.Search.Difficulty.rawDifficultyOverrideDeltaSweep do
+    IO.println s!"{describeRawDifficultyProbe probe}"
   IO.println ""
   IO.println "Relative jump controls"
   IO.println s!"TH06 jump operands: {describeJumpOperands TouhouFormal.TH06.rawJumpMinusOneOperands}"

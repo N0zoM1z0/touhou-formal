@@ -1,7 +1,7 @@
 import TouhouFormal.Search.SMT
 
 def smtUsage : String :=
-  "usage: lake exe smt <th06-sub-oob|th06-find-oob|th07-negative-oob|th08-negative-noop-unsat|th08-positive-oob|th06-jump-minus-one-oob|th07-jump-minus-one-oob|th08-jump-minus-one-oob|th06-timeline-size-before-buffer|th07-timeline-size-before-buffer|th08-timeline-size-before-buffer-unsat|th08-timeline-size-nonprogress|th06-nextoffset-before-buffer|th07-nextoffset-before-buffer|th08-nextoffset-before-buffer>"
+  "usage: lake exe smt <th06-sub-oob|th06-find-oob|th07-negative-oob|th08-negative-noop-unsat|th08-positive-oob|th06-jump-minus-one-oob|th07-jump-minus-one-oob|th08-jump-minus-one-oob|th06-timeline-size-before-buffer|th07-timeline-size-before-buffer|th08-timeline-size-before-buffer-unsat|th08-timeline-size-nonprogress|th06-nextoffset-before-buffer|th07-nextoffset-before-buffer|th08-nextoffset-before-buffer|th08-raw-difficulty-override-delta>"
 
 def main (args : List String) : IO UInt32 := do
   match args with
@@ -49,6 +49,9 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["th08-nextoffset-before-buffer"] =>
       IO.print TouhouFormal.Search.SMT.th08RawNextOffsetBeforeBufferQuery
+      return 0
+  | ["th08-raw-difficulty-override-delta"] =>
+      IO.print TouhouFormal.Search.SMT.th08RawDifficultyOverrideDeltaQuery
       return 0
   | _ =>
       IO.eprintln smtUsage

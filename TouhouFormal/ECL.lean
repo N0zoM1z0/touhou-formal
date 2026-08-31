@@ -1,4 +1,5 @@
 import TouhouFormal.ECL.Profile
+import TouhouFormal.ECL.Difficulty
 import TouhouFormal.ECL.Scalar
 import TouhouFormal.ECL.Loader
 import TouhouFormal.ECL.Call

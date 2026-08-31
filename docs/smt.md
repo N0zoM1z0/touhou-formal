@@ -41,6 +41,7 @@ lake exe smt th08-timeline-size-nonprogress | z3 -in
 lake exe smt th06-nextoffset-before-buffer | z3 -in
 lake exe smt th07-nextoffset-before-buffer | z3 -in
 lake exe smt th08-nextoffset-before-buffer | z3 -in
+lake exe smt th08-raw-difficulty-override-delta | z3 -in
 ```
 
 The important negative control is
@@ -48,6 +49,12 @@ The important negative control is
 `u8`, so a single timeline-size field cannot produce a negative cursor transfer.
 The adjacent `th08-timeline-size-nonprogress` query remains `sat` with
 `size = 0`.
+
+`th08-raw-difficulty-override-delta` is a bit-vector query. It asks Z3 for an
+instruction mask that would pass the TH06/TH07-style active-bit intersection
+test while failing TH08 raw ECL's stronger
+`instructionMask ⊇ difficultyMask | eclDifficultyMaskOverride` test. Z3 returns
+`instructionMask = #x01` for `activeMask = #x01`, `overrideMask = #x02`.
 
 The next step is to generate larger instruction-level SMT queries from shared
 Lean-side transition facts once more of the VM is encoded.

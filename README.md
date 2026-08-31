@@ -21,6 +21,9 @@ The executable model currently covers these source-backed boundaries:
 - Timeline `size` and raw instruction `nextOffset` cursor sweeps are generated
   from shared profile widths, so TH08's unsigned timeline-size delta is recorded
   without title-local search logic.
+- Raw ECL difficulty-mask semantics are modeled as profile policy; TH08's
+  override-mask rule is proven distinct from the TH06/TH07 active-bit
+  intersection rule.
 - Raw ECL instruction prefixes and ANM entry headers are decoded through shared
   profile-driven code across TH06/TH07/TH08.
 
@@ -48,6 +51,7 @@ lake exe check
 lake exe smt th06-sub-oob | z3 -in
 lake exe smt th08-negative-noop-unsat | z3 -in
 lake exe smt th08-timeline-size-before-buffer-unsat | z3 -in
+lake exe smt th08-raw-difficulty-override-delta | z3 -in
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
