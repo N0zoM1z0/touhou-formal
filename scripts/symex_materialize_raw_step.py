@@ -174,7 +174,7 @@ def solve_path(title: str, path: str, active_mask: int, override_mask: int) -> Z
     return Z3Result(status=result.status, values=result.values, stdout=z3.stdout, stderr=z3.stderr)
 
 
-def materialize(title: str, path: str, values: dict[str, Any]) -> dict[str, str]:
+def materialize(title: str, path: str, values: dict[str, Any], *, ecl_file: bool = False) -> dict[str, str]:
     missing = [field for field in WITNESS_FIELDS if field not in values]
     if missing:
         raise SymexError(f"Z3 witness missing fields: {', '.join(missing)}")
@@ -182,7 +182,7 @@ def materialize(title: str, path: str, values: dict[str, Any]) -> dict[str, str]
         "lake",
         "exe",
         "symex",
-        "materialize",
+        "materialize-file" if ecl_file else "materialize",
         title,
         path,
         *[str(values[field]) for field in WITNESS_FIELDS],
@@ -204,7 +204,14 @@ def list_paths() -> list[str]:
     return [line.strip() for line in text.splitlines() if line.strip()]
 
 
-def solve_and_materialize(title: str, path: str, active_mask: int, override_mask: int) -> dict[str, Any]:
+def solve_and_materialize(
+    title: str,
+    path: str,
+    active_mask: int,
+    override_mask: int,
+    *,
+    ecl_file: bool = False,
+) -> dict[str, Any]:
     z3_result = solve_path(title, path, active_mask, override_mask)
     record: dict[str, Any] = {
         "title": title,
@@ -215,7 +222,7 @@ def solve_and_materialize(title: str, path: str, active_mask: int, override_mask
     }
     if z3_result.status == "sat":
         record["witness"] = z3_result.values
-        record["fixture"] = materialize(title, path, z3_result.values)
+        record["fixture"] = materialize(title, path, z3_result.values, ecl_file=ecl_file)
     return record
 
 
@@ -227,6 +234,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("path", help="path name from `lake exe symex list-paths`, or `all`")
     parser.add_argument("active_mask", nargs="?", type=int, default=1)
     parser.add_argument("override_mask", nargs="?", type=int, default=0)
+    parser.add_argument(
+        "--ecl-file",
+        action="store_true",
+        help="materialize a minimal one-sub ECL file instead of only the raw instruction bytes",
+    )
     return parser.parse_args(argv)
 
 
@@ -236,7 +248,13 @@ def main(argv: list[str]) -> int:
         raise SymexError("active_mask and override_mask must fit in an unsigned byte")
     paths = list_paths() if args.path == "all" else [args.path]
     records = [
-        solve_and_materialize(args.title, path, args.active_mask, args.override_mask)
+        solve_and_materialize(
+            args.title,
+            path,
+            args.active_mask,
+            args.override_mask,
+            ecl_file=args.ecl_file,
+        )
         for path in paths
     ]
     payload: Any = records if args.path == "all" else records[0]

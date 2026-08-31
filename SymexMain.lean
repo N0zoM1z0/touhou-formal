@@ -3,7 +3,7 @@ import TouhouFormal.Search.Symbolic
 namespace SymexMain
 
 private def usage : String :=
-  "usage: lake exe symex <list-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|materialize <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>>"
+  "usage: lake exe symex <list-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>>"
 
 private def parseNat? (value : String) : Option Nat :=
   value.toNat?
@@ -41,6 +41,7 @@ private def runQuery
         return 2
 
 private def runMaterialize
+    (asFile : Bool)
     (titleText pathText currentTimeText instrTimeText opcodeText nextOffsetText
       instructionMaskText operandMaskText activeMaskText overrideMaskText jumpTargetTimeText
       jumpDisplacementText bufferSizeText : String) : IO UInt32 := do
@@ -72,13 +73,22 @@ private def runMaterialize
           jumpTargetTime := jumpTargetTime
           jumpDisplacement := jumpDisplacement
           bufferSize := bufferSize }
-      match TouhouFormal.Search.Symbolic.rawStepMaterialize title path witness with
-      | .ok materialization =>
-          IO.print materialization.report
-          return 0
-      | .error message =>
-          IO.eprintln message
-          return 1
+      if asFile then
+        match TouhouFormal.Search.Symbolic.rawStepEclFileMaterialize title path witness with
+        | .ok materialization =>
+            IO.print materialization.report
+            return 0
+        | .error message =>
+            IO.eprintln message
+            return 1
+      else
+        match TouhouFormal.Search.Symbolic.rawStepMaterialize title path witness with
+        | .ok materialization =>
+            IO.print materialization.report
+            return 0
+        | .error message =>
+            IO.eprintln message
+            return 1
   | none, _, _, _, _, _, _, _, _, _, _, _, _ =>
       IO.eprintln s!"unknown title: {titleText}"
       IO.eprintln usage
@@ -121,6 +131,25 @@ def main (args : List String) : IO UInt32 := do
       instructionMask, operandMask, activeMask, overrideMask, jumpTargetTime,
       jumpDisplacement, bufferSize ] =>
       runMaterialize
+        false
+        title
+        path
+        currentTime
+        instrTime
+        opcode
+        nextOffset
+        instructionMask
+        operandMask
+        activeMask
+        overrideMask
+        jumpTargetTime
+        jumpDisplacement
+        bufferSize
+  | [ "materialize-file", title, path, currentTime, instrTime, opcode, nextOffset,
+      instructionMask, operandMask, activeMask, overrideMask, jumpTargetTime,
+      jumpDisplacement, bufferSize ] =>
+      runMaterialize
+        true
         title
         path
         currentTime

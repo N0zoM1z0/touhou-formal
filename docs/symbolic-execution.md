@@ -52,6 +52,12 @@ Solve one path and materialize it into raw ECL bytes:
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ```
 
+Materialize a minimal one-sub ECL file rather than only the raw instruction:
+
+```bash
+./scripts/symex_materialize_raw_step.py th06 jumped-before-buffer 8 0 --ecl-file
+```
+
 Solve and materialize every path class for a title/environment:
 
 ```bash
@@ -115,7 +121,9 @@ The materialization path is deliberately split by responsibility:
 4. Lean encodes the witness into little-endian raw ECL bytes using the same
    `HeaderShape.rawInstrShape` profile, decodes those bytes back into a raw
    prefix/jump operands, and replays `rawStep`.
-5. The script accepts the fixture only when `matchesPath=true`.
+5. Optionally, Lean wraps the raw instruction in a minimal one-sub ECL file
+   using the same title `HeaderShape`.
+6. The script accepts the fixture only when `matchesPath=true`.
 
 For example, the TH08 `jumped-before-buffer` path currently materializes to:
 
@@ -127,6 +135,13 @@ Decoded under the TH08 profile, this is `time = 0`, `opcode = 4`,
 `nextOffset = 0`, `difficultyMask = 1`, `operandFlags = 0`,
 `RawInt(0) = 0`, and `RawInt(1) = -1`; replaying the concrete step yields
 `action=jumped`, `cursorClass=before-buffer`.
+
+The same path under TH06 with a retail Lunatic active mask (`8`) materializes a
+minimal one-sub ECL file:
+
+```text
+010000000000000000000000000000001400000000000000020000000008000000000000ffffffff
+```
 
 ## Baseline interpretation
 

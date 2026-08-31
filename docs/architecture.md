@@ -49,7 +49,9 @@ instead of adding isolated hand-written bug queries.
 Raw ECL witness materialization keeps the same ownership split. Z3 chooses
 values; Python may parse solver output and orchestrate commands; only Lean may
 turn witness fields into title-specific raw bytes, because Lean owns the
-`HeaderShape.rawInstrShape` offsets, widths, and concrete replay check.
+`HeaderShape.rawInstrShape` offsets, widths, and concrete replay check. The same
+rule applies when wrapping a raw instruction in a minimal one-sub ECL file:
+`HeaderShape` owns the header size, version field, counts, and sub offset.
 
 ## Future VMs
 

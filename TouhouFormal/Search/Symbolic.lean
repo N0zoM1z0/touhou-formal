@@ -296,6 +296,12 @@ structure RawStepMaterialization where
   matchesPath : Bool
 deriving Repr, DecidableEq
 
+structure RawStepEclFileMaterialization where
+  rawStep : RawStepMaterialization
+  eclFile : TouhouFormal.Bytes
+  subOffset : Nat
+deriving Repr, DecidableEq
+
 private partial def writeAt
     (bytes : TouhouFormal.Bytes)
     (offset : Nat) :
@@ -503,6 +509,50 @@ def RawStepMaterialization.report (materialization : RawStepMaterialization) : S
     , "cursorClass=" ++ optionCursorClassText materialization.outcome.cursorClass
     , "targetTime=" ++ optionIntText materialization.outcome.targetTime
     , "matchesPath=" ++ toString materialization.matchesPath ]
+
+private def writeOptionalVersion
+    (bytes : TouhouFormal.Bytes)
+    (shape : TouhouFormal.ECL.HeaderShape) : Except String TouhouFormal.Bytes :=
+  match shape.expectedVersion, shape.versionOffset with
+  | some version, some offset => writeScalar bytes offset .u32 (Int.ofNat version) "version"
+  | none, none => .ok bytes
+  | _, _ => .error ("profile has partial version field shape for " ++ shape.title)
+
+def rawStepEclFileMaterialize
+    (title : Title)
+    (path : RawStepPath)
+    (witness : RawStepWitness) : Except String RawStepEclFileMaterialization := do
+  let materialization <- rawStepMaterialize title path witness
+  let shape := title.headerShape
+  let subOffset := shape.fixedHeaderBytes + 4
+  let totalSize := subOffset + materialization.bytes.size
+  let initial : TouhouFormal.Bytes := (TouhouFormal.zeroBytes totalSize).toArray
+  let bytes <- writeOptionalVersion initial shape
+  let bytes <- writeScalar bytes shape.subCountOffset .i16 1 "subCount"
+  let bytes <- writeScalar bytes shape.timelineCountOffset .i16 0 "timelineCount"
+  let bytes <- writeScalar bytes shape.fixedHeaderBytes .u32 (Int.ofNat subOffset) "subOffset[0]"
+  let bytes <-
+    match writeAt bytes subOffset materialization.bytes.toList with
+    | some updated => .ok updated
+    | none => .error "raw instruction bytes did not fit in generated ECL file"
+  .ok
+    { rawStep := materialization
+      eclFile := bytes
+      subOffset := subOffset }
+
+def RawStepEclFileMaterialization.report
+    (materialization : RawStepEclFileMaterialization) : String :=
+  joinLines
+    [ "rawInstructionSize=" ++ toString materialization.rawStep.bytes.size
+    , "rawInstructionHex=" ++ bytesHex materialization.rawStep.bytes
+    , "eclFileSize=" ++ toString materialization.eclFile.size
+    , "eclFileHex=" ++ bytesHex materialization.eclFile
+    , "subOffset=" ++ toString materialization.subOffset
+    , "action=" ++ rawStepActionName materialization.rawStep.outcome.action
+    , "targetCursor=" ++ optionIntText materialization.rawStep.outcome.targetCursor
+    , "cursorClass=" ++ optionCursorClassText materialization.rawStep.outcome.cursorClass
+    , "targetTime=" ++ optionIntText materialization.rawStep.outcome.targetTime
+    , "matchesPath=" ++ toString materialization.rawStep.matchesPath ]
 
 def th08ConcreteJumpBeforeBufferStep : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome :=
   TouhouFormal.ECL.rawStep
