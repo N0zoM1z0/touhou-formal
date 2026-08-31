@@ -82,7 +82,7 @@ theorem raw_instr_prefix_decodes_shared_shape :
 def rawJumpMinusOneOperands : Except TouhouFormal.Fault TouhouFormal.ECL.RawJumpOperands :=
   match TouhouFormal.ECL.decodeRawInstrPrefix headerShape rawJumpMinusOneInstrBytes 0 with
   | .ok rawPrefix =>
-      TouhouFormal.ECL.decodeFixedJumpOperands headerShape rawJumpMinusOneInstrBytes rawPrefix 0 1
+      TouhouFormal.ECL.decodeProfileFixedJumpOperands headerShape rawJumpMinusOneInstrBytes rawPrefix
   | .error faultValue => .error faultValue
 
 theorem raw_jump_minus_one_operands_decode :

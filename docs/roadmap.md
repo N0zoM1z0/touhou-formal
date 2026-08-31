@@ -36,6 +36,8 @@ prefixes are also decoded by one profile-driven decoder across TH06/TH07/TH08.
 The first bounded call-policy sweep is shared across all three title profiles.
 TH08 raw jump operands are now modeled through the same fixed i32 operand-slot
 decoder used for TH06/TH07, while keeping operandFlags as resolver metadata.
+The unconditional jump operand indices now live in the shared raw-instruction
+profile rather than in title-specific proof fixtures.
 
 ## Phase 3: Rich VM Semantics
 

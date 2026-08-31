@@ -40,6 +40,12 @@ private def missingFixedI32OperandShapeFault (shape : HeaderShape) : Fault :=
     component := "EclRun.decode.fixedI32Operand"
     detail := "profile does not define fixed-width i32 raw operands for this title" }
 
+private def missingFixedJumpShapeFault (shape : HeaderShape) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.decode.fixedJump"
+    detail := "profile does not define an unconditional fixed-operand jump shape" }
+
 private def negativeCursorFault (shape : HeaderShape) (bytes : TouhouFormal.Bytes)
     (cursor : Int) : Fault :=
   Fault.outOfBoundsRead
@@ -151,6 +157,24 @@ def decodeFixedJumpOperands
   let targetTime <- readFixedI32Operand shape bytes rawPrefix timeOperandIndex
   let displacement <- readFixedI32Operand shape bytes rawPrefix displacementOperandIndex
   pure { targetTime := targetTime, displacement := displacement }
+
+def decodeProfileFixedJumpOperands
+    (shape : HeaderShape)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : RawInstrPrefix) :
+    Except Fault RawJumpOperands :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      match rawShape.fixedJumpShape with
+      | none => .error (missingFixedJumpShapeFault shape)
+      | some jumpShape =>
+          decodeFixedJumpOperands
+            shape
+            bytes
+            rawPrefix
+            jumpShape.targetTimeOperandIndex
+            jumpShape.displacementOperandIndex
 
 def decodeRawInstrPrefixAfterRelativeJump
     (shape : HeaderShape)

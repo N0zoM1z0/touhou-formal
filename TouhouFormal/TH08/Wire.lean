@@ -92,7 +92,12 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           operandMaskOffset := some 10
           operandMaskWidth := some .u16
           fixedI32OperandBaseOffset := some 12
-          fixedI32OperandStride := 4 }
+          fixedI32OperandStride := 4
+          fixedJumpShape :=
+            some
+              { opcode := eclOpcodeJump
+                targetTimeOperandIndex := 0
+                displacementOperandIndex := 1 } }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

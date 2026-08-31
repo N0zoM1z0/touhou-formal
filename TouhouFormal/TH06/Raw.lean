@@ -207,7 +207,7 @@ theorem rawNegativeNextOffsetInstrPrefix_after_advance_faults :
 def rawJumpMinusOneOperands : Except Fault TouhouFormal.ECL.RawJumpOperands :=
   match TouhouFormal.ECL.decodeRawInstrPrefix headerShape rawJumpMinusOneInstrBytes 0 with
   | .ok rawPrefix =>
-      TouhouFormal.ECL.decodeFixedJumpOperands headerShape rawJumpMinusOneInstrBytes rawPrefix 0 1
+      TouhouFormal.ECL.decodeProfileFixedJumpOperands headerShape rawJumpMinusOneInstrBytes rawPrefix
   | .error faultValue => .error faultValue
 
 theorem rawJumpMinusOneOperands_decode :

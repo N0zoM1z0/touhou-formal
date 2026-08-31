@@ -22,9 +22,9 @@ references, and cursor-transfer classification.
 
 `TouhouFormal/ECL` contains the shared ECL core: scalar byte reads,
 profile-driven header loading, subTable lookup policy, timeline-prefix decoding,
-timeline cursor advancement, and raw instruction-prefix decoding. These
-definitions encode the original unsafe boundary and return a structured `Fault`
-at the first invalid modeled operation.
+timeline cursor advancement, raw instruction-prefix decoding, and profile-driven
+fixed-operand jump decoding. These definitions encode the original unsafe
+boundary and return a structured `Fault` at the first invalid modeled operation.
 
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not

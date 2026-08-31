@@ -24,6 +24,12 @@ structure TimelineShape where
   firstArgWidth : Option ScalarWidth := none
 deriving Repr, DecidableEq
 
+structure RawFixedJumpShape where
+  opcode : Int
+  targetTimeOperandIndex : Nat
+  displacementOperandIndex : Nat
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -38,6 +44,7 @@ structure RawInstrShape where
   operandMaskWidth : Option ScalarWidth := none
   fixedI32OperandBaseOffset : Option Nat := none
   fixedI32OperandStride : Nat := 4
+  fixedJumpShape : Option RawFixedJumpShape := none
 deriving Repr, DecidableEq
 
 structure HeaderShape where
