@@ -52,6 +52,9 @@ lake exe smt th06-sub-oob | z3 -in
 lake exe smt th08-negative-noop-unsat | z3 -in
 lake exe smt th08-timeline-size-before-buffer-unsat | z3 -in
 lake exe smt th08-raw-difficulty-override-delta | z3 -in
+lake exe symex list-paths
+lake exe symex query th08 jumped-before-buffer 1 0 | z3 -in
+./scripts/symex_raw_step.sh th08 1 2
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh

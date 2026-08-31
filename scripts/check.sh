@@ -51,3 +51,18 @@ grep -q '^sat$' "$solver_output"
 
 lake exe smt th08-raw-difficulty-override-delta | z3 -in | tee "$solver_output"
 grep -q '^sat$' "$solver_output"
+
+lake exe symex query th06 advanced-before-buffer 1 0 | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"
+
+lake exe symex query th07 vm-error 1 0 | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"
+
+lake exe symex query th08 jumped-before-buffer 1 0 | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"
+
+lake exe symex query th08 skipped-in-bounds 1 2 | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"
+
+lake exe symex query th08 advanced-non-progress 1 0 | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"

@@ -71,6 +71,7 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           timeWidth := .i32
           opcodeOffset := 4
           opcodeWidth := .i16
+          unimplementedOpcode := some 1
           nextOffsetOffset := 6
           nextOffsetWidth := .i16
           difficultyMaskOffset := some 9

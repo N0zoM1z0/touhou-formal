@@ -45,6 +45,7 @@ structure RawInstrShape where
   timeWidth : ScalarWidth
   opcodeOffset : Nat
   opcodeWidth : ScalarWidth
+  unimplementedOpcode : Option Int := none
   nextOffsetOffset : Nat
   nextOffsetWidth : ScalarWidth
   difficultyMaskOffset : Option Nat := none

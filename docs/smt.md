@@ -1,8 +1,12 @@
 # SMT Seeds
 
-The first SMT bridge is deliberately narrow. Lean owns the executable timeline
+The first SMT bridge was deliberately narrow. Lean owns the executable timeline
 and loader models, while `TouhouFormal.Search.SMT` emits audit-friendly SMT-LIB
 queries for the shared `CallEclSub` sub-table safety relation.
+
+The forward symbolic execution baseline now lives in `lake exe symex`; see
+`docs/symbolic-execution.md`. New instruction-level work should prefer
+extending that executor over adding one-off SMT seeds here.
 
 ```text
 unchecked: safe(subId, subCount) := 0 <= subId && subId < subCount

@@ -12,3 +12,6 @@ lean_exe check where
 
 lean_exe smt where
   root := `SmtMain
+
+lean_exe symex where
+  root := `SymexMain

@@ -19,6 +19,8 @@ relative to `/home/yann/yann/touhou/formal`.
   `ctx->currentInstr = this->subTable[subId]` directly.
 - `reference/th06/src/EclManager.hpp:349`: `ECL_OPCODE_JUMP` is the opcode after
   `NOP` and `UNIMP`, so its numeric value is 2.
+- `reference/th06/src/EclManager.cpp:128`: raw `ECL_OPCODE_UNIMP` returns
+  `ZUN_ERROR`.
 - `reference/th06/src/EclManager.cpp:136`: `ECL_OPCODE_JUMP` sets the context
   time from `args.jump.time` and advances the instruction pointer by
   `args.jump.offset`.
@@ -44,8 +46,11 @@ relative to `/home/yann/yann/touhou/formal`.
   `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size`, and six argument slots.
 - `reference/th07/src/th07/EclManager.hpp:95`: `ECL_JUMP` is explicitly assigned
   opcode 2, while `ECL_DEC_JUMP` is 3.
+- `reference/th07/src/th07/EclManager.hpp:93`: `ECL_UNIMP` is opcode 1.
 - `reference/th07/src/th07/EclManager.cpp:106`: `CallEclSub` reads
   `this->subTable[subId]` directly.
+- `reference/th07/src/th07/EclManager.cpp:941`: raw `ECL_UNIMP` returns
+  `ZUN_ERROR`.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
 - `reference/th07/src/th07/EclManager.cpp:935`: raw ECL skips an instruction
@@ -80,6 +85,8 @@ relative to `/home/yann/yann/touhou/formal`.
   the raw path.
 - `reference/th08/src/EclRunLow.inl:238`: TH08 low opcode 4 sets context time
   from `RawInt(instruction, 0)` and jumps by `RawInt(instruction, 1)`.
+- `reference/th08/src/EclRunLow.inl:223`: TH08 low opcode 1 returns
+  `ZUN_ERROR`.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
 - `reference/th08/src/EclRun.cpp:67`: TH08 raw ECL requires

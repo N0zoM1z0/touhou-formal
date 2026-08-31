@@ -72,6 +72,20 @@ fuzzing tends to report this as ordinary trace divergence, while the formal
 model names the exact missing bit condition that makes TH08 raw ECL stricter
 when `enemy->eclDifficultyMaskOverride` is nonzero.
 
+## Raw ECL symbolic execution baseline
+
+| ID | Kind | Oracle | Status |
+| --- | --- | --- | --- |
+| `ECL-RAW-STEP-SYMEX-BASELINE` | symbolic execution baseline | profile-driven raw ECL single-step executor enumerates time-gate, difficulty-skip, ordinary-advance, fixed-jump, and VM-error paths, then emits SMT path constraints for Z3 | Lean model, Z3-backed `symex` executable, check-script witnesses |
+
+Formal value: this is the baseline the project should compare fuzzing against.
+The executor is not given a concrete bug. It enumerates source-backed path
+classes from the shared raw ECL step skeleton and asks Z3 whether each class is
+reachable under a title profile and difficulty environment. Current regression
+witnesses include TH06 ordinary-advance before-buffer, TH07 VM-error, TH08
+fixed-jump before-buffer, TH08 difficulty-skip in-bounds under override, and
+TH08 ordinary-advance non-progress.
+
 ## ANM entry chain
 
 | ID | Kind | Oracle | Status |

@@ -42,6 +42,10 @@ Finite Lean-side sweeps live here when they are small enough to keep as
 executable regression guards, including cross-title call-policy and
 cursor-transfer searches.
 
+`lake exe symex` is the current path for forward symbolic execution. It starts
+from shared Lean profile/step semantics and emits SMT path constraints for Z3,
+instead of adding isolated hand-written bug queries.
+
 ## Future VMs
 
 Nontraditional bullet-hell VMs should enter through the same boundary: raw
