@@ -89,8 +89,9 @@ when `enemy->eclDifficultyMaskOverride` is nonzero.
 | `ECL-RAW-OPERAND-INT-RESOLVER` | symbolic execution baseline | shared integer rvalue resolver models TH06 always-resolve behavior and TH07/TH08 operand-mask raw/resolve/default-raw branches from title profile selector sets | 8 satisfiable materialized resolver candidates on 2026-08-31; TH06 has 2 feasible branches, TH07/TH08 have 3 each |
 | `ECL-RAW-BODY-INT-COND-JUMP` | symbolic execution baseline | shared body semantics models TH06 compare-register integer jumps and TH07/TH08 operand-resolved integer conditional jumps, split by taken/not-taken and cursor class | 40 satisfiable materialized `int-condjump-*` candidates across five title/difficulty environments |
 | `ECL-RAW-CALLRET-STACK` | symbolic execution baseline | shared CALL/RET semantics models save-before-guard CALL stack writes, title-specific subTable lookup policy, decrement-before-restore RET stack reads, and TH08 child-context RET exits | 41 satisfiable materialized CALL/RET candidates on 2026-08-31; includes TH08-only negative-sub no-op and child-index underflow branches |
+| `ECL-RAW-CONDITIONAL-CALL` | symbolic execution baseline | TH06 conditional CALL opcodes resolve `cmpLhs`, compare raw `cmpRhs`, fall through by `offsetToNext` when false, and reuse the shared CALL stack/subTable body when true | 16 satisfiable materialized conditional-CALL candidates across two TH06 difficulty environments; TH07/TH08 are unsat controls for this opcode family |
 | `ECL-RAW-BODY-INT-DIVISOR-ZERO` | symbolic execution finding | shared body semantics records source-backed integer div/mod opcodes and divisor operand slots, then searches for immediate/raw zero-divisor paths | 5 satisfiable materialized `divide-by-zero` candidates across five title/difficulty environments |
-| `ECL-RAW-STEP-EFFECTIVENESS` | coverage assessment | reruns the raw-step, body, integer resolver, and CALL/RET candidate queues, checks modeled path coverage per environment, counts local source opcode surface still outside the model, and compares the current formal lane against DanmakuFuzz | `docs/effectiveness.md`; raw 70/70 `sat`, body 85/85 `sat`, resolver 8/8 `sat`, CALL/RET 41/41 `sat`, all `matchesPath=true`, all modeled paths per default environment |
+| `ECL-RAW-STEP-EFFECTIVENESS` | coverage assessment | reruns the raw-step, body, integer resolver, CALL/RET, and conditional-CALL candidate queues, checks modeled path coverage per environment, counts local source opcode surface still outside the model, and compares the current formal lane against DanmakuFuzz | `docs/effectiveness.md`; raw 70/70 `sat`, body 85/85 `sat`, resolver 8/8 `sat`, CALL/RET 41/41 `sat`, conditional-CALL 16/16 `sat`, all `matchesPath=true`, all modeled paths per default environment |
 
 Formal value: this is the baseline the project should compare fuzzing against.
 The executor is not given a concrete bug. It enumerates source-backed path
@@ -115,7 +116,8 @@ responsible for discovering that those path classes exist.
 The current effectiveness assessment is deliberately scoped. Lean + SMT is now
 stronger than fuzzing for the implemented raw-step dispatch abstraction, the
 first shared body slice, the integer rvalue resolver slice, and the plain
-CALL/RET stack slice because it exhaustively covers all modeled path classes.
+CALL/RET stack plus TH06 conditional-CALL slices because it exhaustively covers
+all modeled path classes.
 It is not yet stronger than fuzzing for the full ECL/ANM VM because most opcode
 bodies, writes into host state, and multi-context scheduling remain outside the
 formal semantics. See [`docs/effectiveness.md`](effectiveness.md).

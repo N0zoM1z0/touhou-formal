@@ -138,6 +138,13 @@ structure RawIntConditionJumpShape where
   displacementOperandIndex : Nat
 deriving Repr, DecidableEq
 
+structure RawConditionalCallShape where
+  opcode : Int
+  op : RawIntCompareOp
+  lhsOperandIndex : Nat
+  rhsOperandIndex : Nat
+deriving Repr, DecidableEq
+
 inductive RawRetUnderflowPolicy where
   | uncheckedSavedContextRead
   | th08ChildContextExit
@@ -178,6 +185,7 @@ structure RawInstrShape where
   intRValueResolver : Option RawIntOperandResolverShape := none
   intConditionJumps : List RawIntConditionJumpShape := []
   callRetShape : Option RawCallRetShape := none
+  conditionalCallShapes : List RawConditionalCallShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
 
@@ -190,6 +198,11 @@ def RawInstrShape.findIntConditionJump?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawIntConditionJumpShape :=
   rawShape.intConditionJumps.find? (fun jump => jump.opcode == opcode)
+
+def RawInstrShape.findConditionalCall?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawConditionalCallShape :=
+  rawShape.conditionalCallShapes.find? (fun call => call.opcode == opcode)
 
 structure HeaderShape where
   title : String

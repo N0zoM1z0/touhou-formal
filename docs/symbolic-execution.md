@@ -36,6 +36,11 @@ tracks CALL's save-before-guard order, title-specific stack sizes and increment
 guards, `CallEclSub` lookup policy, RET's decrement-before-restore order, and
 TH08's child-context exit path on RET depth underflow.
 
+TH06 conditional CALL opcodes are modeled as a guarded dispatch layer. The
+guard resolves `cmpLhs` through the same integer resolver used elsewhere,
+compares it with raw `cmpRhs`, falls through by `offsetToNext` when false, and
+reuses the same shared CALL stack/subTable body when true.
+
 This intentionally avoids hand-selecting a suspicious bug site. The executor
 enumerates generic path classes and asks Z3 for witnesses.
 
@@ -77,6 +82,13 @@ List and solve CALL/RET stack branches:
 ```bash
 lake exe symex list-callret-paths
 lake exe symex query-callret-values th08 ret-child-index-before-array 1 0 | z3 -in
+```
+
+List and solve TH06 conditional CALL branches:
+
+```bash
+lake exe symex list-condcall-paths
+lake exe symex query-condcall-values th06 condcall-lookup-fault 1 0 | z3 -in
 ```
 
 Run a matrix for one title and difficulty environment:
@@ -128,6 +140,13 @@ Solve/materialize CALL/RET stack paths:
 ```bash
 ./scripts/symex_materialize_callret_step.py th08 all 1 0
 ./scripts/symex_callret_candidate_queue.py
+```
+
+Solve/materialize TH06 conditional CALL paths:
+
+```bash
+./scripts/symex_materialize_condcall_step.py th06 all 1 0
+./scripts/symex_condcall_candidate_queue.py
 ```
 
 Evaluate the current formal-vs-fuzz effectiveness baseline:
@@ -309,3 +328,39 @@ All 41 replayed through Lean with `matchesPath=true`. Two unsat controls are
 now explicit: TH06/TH07 do not have TH08's negative-sub no-op CALL branch, and
 TH08 does not restore from `activeEclCallStack[-1]` on RET depth underflow—it
 routes into child-context selection instead.
+
+## Conditional CALL candidate queue
+
+`scripts/symex_condcall_candidate_queue.py` enumerates the TH06 `CALLLSS`,
+`CALLLEQ`, `CALLEQU`, `CALLGRE`, `CALLGEQ`, and `CALLNEQ` dispatch family.
+The profile records only the opcode and operand slots; the path constraints
+reuse the shared integer resolver, comparison predicates, `CallEclSub` lookup
+policy, and CALL stack body.
+
+The path classes are:
+
+```text
+condcall-false-before-buffer
+condcall-false-non-progress
+condcall-false-in-bounds
+condcall-false-at-or-past-end
+condcall-stack-write-before-stack
+condcall-stack-write-at-or-past-stack
+condcall-lookup-fault
+condcall-entered
+```
+
+A full default run on 2026-08-31 produced 16 satisfiable materialized
+conditional-CALL candidates across two TH06 difficulty environments:
+
+```text
+call-stack-oob-write: 4
+call-subtable-oob-read: 2
+condcall-fallthrough-cursor: 8
+condcall-control: 2
+```
+
+All 16 replayed through Lean with `matchesPath=true`. Explicit unsat controls
+also matter: TH06 has no negative-sub no-op conditional CALL path under the
+current signed-subId abstraction, and TH07/TH08 have no TH06-style conditional
+CALL opcode family in this profile.

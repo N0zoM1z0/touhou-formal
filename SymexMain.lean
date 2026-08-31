@@ -3,7 +3,7 @@ import TouhouFormal.Search.Symbolic
 namespace SymexMain
 
 private def usage : String :=
-  "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|list-callret-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|query-body|query-body-values <th06|th07|th08> <bodyPath> [activeMask] [overrideMask]|query-int-resolver|query-int-resolver-values <th06|th07|th08> <resolverPath> [slot]|query-callret|query-callret-values <th06|th07|th08> <callRetPath> [activeMask] [overrideMask]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>|materialize-body <th06|th07|th08> <bodyPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <counterBefore> <divisorValue> <lhsRaw> <rhsRaw> <lhsHost> <rhsHost> <compareRegister> <bufferSize>|materialize-int-resolver <th06|th07|th08> <resolverPath> <slot> <rawValue> <hostValue> <operandMask>|materialize-callret <th06|th07|th08> <callRetPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <childContextSlot> <bufferSize>>"
+  "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|list-callret-paths|list-condcall-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|query-body|query-body-values <th06|th07|th08> <bodyPath> [activeMask] [overrideMask]|query-int-resolver|query-int-resolver-values <th06|th07|th08> <resolverPath> [slot]|query-callret|query-callret-values <th06|th07|th08> <callRetPath> [activeMask] [overrideMask]|query-condcall|query-condcall-values <th06|th07|th08> <condCallPath> [activeMask] [overrideMask]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>|materialize-body <th06|th07|th08> <bodyPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <counterBefore> <divisorValue> <lhsRaw> <rhsRaw> <lhsHost> <rhsHost> <compareRegister> <bufferSize>|materialize-int-resolver <th06|th07|th08> <resolverPath> <slot> <rawValue> <hostValue> <operandMask>|materialize-callret <th06|th07|th08> <callRetPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <childContextSlot> <bufferSize>|materialize-condcall <th06|th07|th08> <condCallPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <lhsRaw> <lhsHost> <rhsRaw> <bufferSize>>"
 
 private def parseNat? (value : String) : Option Nat :=
   value.toNat?
@@ -126,6 +126,35 @@ private def runCallRetQuery
         return 2
     | _, none =>
         IO.eprintln s!"unknown CALL/RET path: {pathText}"
+        IO.eprintln usage
+        return 2
+
+private def runConditionalCallQuery
+    (valuesOnly : Bool)
+    (titleText pathText : String)
+    (activeMask overrideMask : Nat) :
+    IO UInt32 := do
+  if 255 < activeMask || 255 < overrideMask then
+    IO.eprintln "activeMask and overrideMask must fit in an unsigned byte"
+    IO.eprintln usage
+    return 2
+  else
+    match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+          TouhouFormal.Search.Symbolic.RawConditionalCallPath.parse? pathText with
+    | some title, some path =>
+        if valuesOnly then
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawConditionalCallValuesQuery title path activeMask overrideMask)
+        else
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawConditionalCallQuery title path activeMask overrideMask)
+        return 0
+    | none, _ =>
+        IO.eprintln s!"unknown title: {titleText}"
+        IO.eprintln usage
+        return 2
+    | _, none =>
+        IO.eprintln s!"unknown conditional CALL path: {pathText}"
         IO.eprintln usage
         return 2
 
@@ -357,6 +386,73 @@ private def runCallRetMaterialize
       IO.eprintln usage
       return 2
 
+private def runConditionalCallMaterialize
+    (titleText pathText currentTimeText instrTimeText opcodeText nextOffsetText
+      instructionMaskText operandMaskText activeMaskText overrideMaskText subIdText
+      stackDepthText stackDisabledText subCountText lhsRawText lhsHostText rhsRawText
+      bufferSizeText : String) :
+    IO UInt32 := do
+  match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+        TouhouFormal.Search.Symbolic.RawConditionalCallPath.parse? pathText,
+        parseInt? currentTimeText,
+        parseInt? instrTimeText,
+        parseInt? opcodeText,
+        parseInt? nextOffsetText,
+        parseNat? instructionMaskText,
+        parseInt? operandMaskText,
+        parseNat? activeMaskText,
+        parseNat? overrideMaskText,
+        parseInt? subIdText,
+        parseInt? stackDepthText,
+        parseBool? stackDisabledText,
+        parseNat? subCountText,
+        parseInt? lhsRawText,
+        parseInt? lhsHostText,
+        parseInt? rhsRawText,
+        parseNat? bufferSizeText with
+  | some title, some path, some currentTime, some instrTime, some opcode, some nextOffset,
+      some instructionMask, some operandMask, some activeMask, some overrideMask,
+      some subId, some stackDepth, some stackDisabled, some subCount, some lhsRaw,
+      some lhsHost, some rhsRaw, some bufferSize =>
+      let witness : TouhouFormal.Search.Symbolic.RawConditionalCallWitness :=
+        { currentTime := currentTime
+          instrTime := instrTime
+          opcode := opcode
+          nextOffset := nextOffset
+          instructionMask := instructionMask
+          operandMask := operandMask
+          activeMask := activeMask
+          overrideMask := overrideMask
+          jumpTargetTime := 0
+          jumpDisplacement := 0
+          bufferSize := bufferSize
+          subId := subId
+          stackDepth := stackDepth
+          stackDisabled := stackDisabled
+          subCount := subCount
+          lhsRaw := lhsRaw
+          lhsHost := lhsHost
+          rhsRaw := rhsRaw }
+      match TouhouFormal.Search.Symbolic.rawConditionalCallMaterialize title path witness with
+      | .ok materialization =>
+          IO.print materialization.report
+          return 0
+      | .error message =>
+          IO.eprintln message
+          return 1
+  | none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown title: {titleText}"
+      IO.eprintln usage
+      return 2
+  | _, none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown conditional CALL path: {pathText}"
+      IO.eprintln usage
+      return 2
+  | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln "invalid materialize-condcall witness field"
+      IO.eprintln usage
+      return 2
+
 def main (args : List String) : IO UInt32 := do
   match args with
   | ["list-paths"] =>
@@ -370,6 +466,9 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["list-callret-paths"] =>
       IO.print TouhouFormal.Search.Symbolic.listRawCallRetPathsText
+      return 0
+  | ["list-condcall-paths"] =>
+      IO.print TouhouFormal.Search.Symbolic.listRawConditionalCallPathsText
       return 0
   | ["query", title, path] =>
       runQuery false title path 1 0
@@ -387,6 +486,10 @@ def main (args : List String) : IO UInt32 := do
       runCallRetQuery false title path 1 0
   | ["query-callret-values", title, path] =>
       runCallRetQuery true title path 1 0
+  | ["query-condcall", title, path] =>
+      runConditionalCallQuery false title path 1 0
+  | ["query-condcall-values", title, path] =>
+      runConditionalCallQuery true title path 1 0
   | ["query", title, path, activeMaskText, overrideMaskText] =>
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
@@ -431,6 +534,22 @@ def main (args : List String) : IO UInt32 := do
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
           runCallRetQuery true title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-condcall", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runConditionalCallQuery false title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-condcall-values", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runConditionalCallQuery true title path activeMask overrideMask
       | _, _ =>
           IO.eprintln "activeMask and overrideMask must be natural numbers"
           IO.eprintln usage
@@ -531,6 +650,28 @@ def main (args : List String) : IO UInt32 := do
         stackDisabled
         subCount
         childContextSlot
+        bufferSize
+  | [ "materialize-condcall", title, path, currentTime, instrTime, opcode, nextOffset,
+      instructionMask, operandMask, activeMask, overrideMask, subId, stackDepth,
+      stackDisabled, subCount, lhsRaw, lhsHost, rhsRaw, bufferSize ] =>
+      runConditionalCallMaterialize
+        title
+        path
+        currentTime
+        instrTime
+        opcode
+        nextOffset
+        instructionMask
+        operandMask
+        activeMask
+        overrideMask
+        subId
+        stackDepth
+        stackDisabled
+        subCount
+        lhsRaw
+        lhsHost
+        rhsRaw
         bufferSize
   | _ =>
       IO.eprintln usage

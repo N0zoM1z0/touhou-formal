@@ -123,3 +123,20 @@ python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 
 python3 scripts/symex_callret_candidate_queue.py > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 41; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"])' "$solver_output"
+
+lake exe symex query-condcall th06 condcall-no-op 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-condcall th07 condcall-entered 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-condcall th08 condcall-entered 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+python3 scripts/symex_materialize_condcall_step.py th06 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 8; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert {r["path"] for r in xs} == {"condcall-false-before-buffer", "condcall-false-non-progress", "condcall-false-in-bounds", "condcall-false-at-or-past-end", "condcall-stack-write-before-stack", "condcall-stack-write-at-or-past-stack", "condcall-lookup-fault", "condcall-entered"}' "$solver_output"
+
+python3 scripts/symex_condcall_candidate_queue.py > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 16; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {c["risk"]["class"] for c in data["candidates"]} == {"call-stack-oob-write", "call-subtable-oob-read", "condcall-fallthrough-cursor", "condcall-control"}' "$solver_output"

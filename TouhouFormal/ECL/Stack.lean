@@ -1,5 +1,6 @@
 import TouhouFormal.ECL.Call
 import TouhouFormal.ECL.Instruction
+import TouhouFormal.ECL.Operand
 import TouhouFormal.ECL.Step
 
 namespace TouhouFormal.ECL
@@ -9,6 +10,7 @@ inductive RawCallRetAction where
   | skipped
   | callEntered
   | callNoOp
+  | callConditionFalse
   | retRestored
   | retExitedChild
 deriving Repr, DecidableEq
@@ -24,6 +26,12 @@ structure RawRetOperands where
   stackDepth : Int
   stackDisabled : Bool
   childContextSlot : Int := 0
+deriving Repr, DecidableEq
+
+structure RawConditionalCallOperands extends RawCallOperands where
+  lhsRaw : Int
+  lhsHost : Int
+  rhsRaw : Int
 deriving Repr, DecidableEq
 
 structure RawCallRetOutcome where
@@ -108,12 +116,11 @@ private def callReturnCursorOutcome
           bufferSize)
     targetSubOffset := targetSubOffset }
 
-private def rawCallRetGate
+private def rawCallRetEnvelope
     (shape : HeaderShape)
     (currentTime : Int)
     (activeMask overrideMask maxBits bufferSize : Nat)
     (rawPrefix : RawInstrPrefix)
-    (expectedOpcode : RawCallRetShape -> Int)
     (body : RawInstrShape -> RawCallRetShape -> Except Fault RawCallRetOutcome) :
     Except Fault RawCallRetOutcome :=
   match shape.rawInstrShape with
@@ -136,10 +143,72 @@ private def rawCallRetGate
                         rawPrefix.fileOffset
                         rawPrefix.nextCursor
                         bufferSize) }
-            else if rawPrefix.opcode != expectedOpcode callRet then
-              .error (unexpectedOpcodeFault shape rawPrefix.opcode (expectedOpcode callRet))
             else
               body rawShape callRet
+
+private def rawCallRetGate
+    (shape : HeaderShape)
+    (currentTime : Int)
+    (activeMask overrideMask maxBits bufferSize : Nat)
+    (rawPrefix : RawInstrPrefix)
+    (expectedOpcode : RawCallRetShape -> Int)
+    (body : RawInstrShape -> RawCallRetShape -> Except Fault RawCallRetOutcome) :
+    Except Fault RawCallRetOutcome :=
+  rawCallRetEnvelope
+    shape
+    currentTime
+    activeMask
+    overrideMask
+    maxBits
+    bufferSize
+    rawPrefix
+    (fun rawShape callRet =>
+      if rawPrefix.opcode != expectedOpcode callRet then
+        .error (unexpectedOpcodeFault shape rawPrefix.opcode (expectedOpcode callRet))
+      else
+        body rawShape callRet)
+
+private def missingConditionalCallShapeFault (shape : HeaderShape) (opcode : Int) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.stack.conditionalCall"
+    detail := "profile does not define source-backed conditional CALL semantics for opcode"
+    index := some opcode }
+
+private def rawCallBody
+    (shape : HeaderShape)
+    (bufferSize : Nat)
+    (rawPrefix : RawInstrPrefix)
+    (callRet : RawCallRetShape)
+    (operands : RawCallOperands) : Except Fault RawCallRetOutcome := do
+  if !operands.stackDisabled &&
+      !stackIndexInBounds callRet.stackEntryCount operands.stackDepth then
+    .error (callStackWriteFault shape callRet operands.stackDepth)
+  else
+    let lookup <- lookupSubOffset shape operands.subOffsets operands.subId
+    let stackDepthAfter :=
+      if !operands.stackDisabled &&
+          operands.stackDepth < Int.ofNat callRet.stackIncrementGuardExclusive then
+        operands.stackDepth + 1
+      else
+        operands.stackDepth
+    match lookup with
+    | some subOffset =>
+        .ok
+          (callReturnCursorOutcome
+            rawPrefix
+            bufferSize
+            .callEntered
+            stackDepthAfter
+            (some subOffset))
+    | none =>
+        .ok
+          (callReturnCursorOutcome
+            rawPrefix
+            bufferSize
+            .callNoOp
+            stackDepthAfter
+            none)
 
 def rawCallStep
     (shape : HeaderShape)
@@ -156,35 +225,51 @@ def rawCallStep
     bufferSize
     rawPrefix
     (fun callRet => callRet.callOpcode)
-    (fun _rawShape callRet => do
-      if !operands.stackDisabled &&
-          !stackIndexInBounds callRet.stackEntryCount operands.stackDepth then
-        .error (callStackWriteFault shape callRet operands.stackDepth)
-      else
-        let lookup <- lookupSubOffset shape operands.subOffsets operands.subId
-        let stackDepthAfter :=
-          if !operands.stackDisabled &&
-              operands.stackDepth < Int.ofNat callRet.stackIncrementGuardExclusive then
-            operands.stackDepth + 1
+    (fun _rawShape callRet =>
+      rawCallBody shape bufferSize rawPrefix callRet operands)
+
+def rawConditionalCallStep
+    (shape : HeaderShape)
+    (currentTime : Int)
+    (activeMask overrideMask maxBits bufferSize : Nat)
+    (rawPrefix : RawInstrPrefix)
+    (operands : RawConditionalCallOperands) : Except Fault RawCallRetOutcome :=
+  rawCallRetEnvelope
+    shape
+    currentTime
+    activeMask
+    overrideMask
+    maxBits
+    bufferSize
+    rawPrefix
+    (fun rawShape callRet => do
+      match rawShape.findConditionalCall? rawPrefix.opcode with
+      | none => .error (missingConditionalCallShapeFault shape rawPrefix.opcode)
+      | some condCall =>
+          let lhs <-
+            resolveIntRValue
+              shape
+              rawPrefix
+              condCall.lhsOperandIndex
+              operands.lhsRaw
+              operands.lhsHost
+          if condCall.op.holds lhs.value operands.rhsRaw then
+            rawCallBody
+              shape
+              bufferSize
+              rawPrefix
+              callRet
+              { subId := operands.subId
+                stackDepth := operands.stackDepth
+                stackDisabled := operands.stackDisabled
+                subOffsets := operands.subOffsets }
           else
-            operands.stackDepth
-        match lookup with
-        | some subOffset =>
             .ok
               (callReturnCursorOutcome
                 rawPrefix
                 bufferSize
-                .callEntered
-                stackDepthAfter
-                (some subOffset))
-        | none =>
-            .ok
-              (callReturnCursorOutcome
-                rawPrefix
-                bufferSize
-                .callNoOp
-                stackDepthAfter
-                none))
+                .callConditionFalse
+                operands.stackDepth))
 
 def rawRetStep
     (shape : HeaderShape)

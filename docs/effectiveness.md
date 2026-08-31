@@ -6,7 +6,7 @@ already better than the previous fuzzing lane?
 
 Short answer: it is already better than fuzzing for the modeled VM-core
 dispatch skeleton, the first shared opcode-body slice, and the integer rvalue
-resolver/CALL/RET slices. It is not yet better than fuzzing for the full
+resolver/CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the full
 ECL/ANM VM, because most opcode bodies and host-game side effects are not
 modeled yet.
 
@@ -27,7 +27,8 @@ python3 scripts/evaluate_symex_effectiveness.py --run-check
 The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_body_candidate_queue.py` and
 `scripts/symex_int_resolver_queue.py` and
-`scripts/symex_callret_candidate_queue.py`, summarizes path coverage, reads
+`scripts/symex_callret_candidate_queue.py` and
+`scripts/symex_condcall_candidate_queue.py`, summarizes path coverage, reads
 the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
 summaries from `../retail_validation` when present.
@@ -39,7 +40,8 @@ The manual verification run on 2026-08-31 executed:
 python3 scripts/evaluate_symex_effectiveness.py > /tmp/touhou_symex_effectiveness_full.json
 ```
 
-Both completed successfully on the current raw-step plus raw-body model. When a
+Both completed successfully on the current raw-step, raw-body, resolver,
+CALL/RET, and conditional-CALL model. When a
 previous queue result should be reused instead of recomputed, the equivalent
 assessment is:
 
@@ -48,7 +50,8 @@ python3 scripts/evaluate_symex_effectiveness.py \
   --queue-json /tmp/raw_queue.json \
   --body-queue-json /tmp/body_queue.json \
   --resolver-queue-json /tmp/resolver_queue.json \
-  --callret-queue-json /tmp/callret_queue.json
+  --callret-queue-json /tmp/callret_queue.json \
+  --condcall-queue-json /tmp/condcall_queue.json
 ```
 
 The cost is mostly process startup: the current queues launch
@@ -282,30 +285,66 @@ execution. Its value is that the edge semantics and title deltas are now
 explicit, source-backed, and solver-enumerated instead of being found by a
 manual crash hunt.
 
+## Conditional CALL coverage
+
+The TH06 conditional CALL model covers the `CALLLSS`, `CALLLEQ`, `CALLEQU`,
+`CALLGRE`, `CALLGEQ`, and `CALLNEQ` opcode family:
+
+- the guard resolves `cmpLhs` with the shared integer rvalue resolver;
+- the guard compares that value against raw `cmpRhs`;
+- false guards fall through by `offsetToNext`;
+- true guards reuse the same modeled CALL stack write and `CallEclSub` lookup
+  body as plain CALL.
+
+Observed result:
+
+| Metric | Result |
+| --- | --- |
+| environments | 2 TH06 difficulty environments |
+| modeled TH06 path classes | 8 |
+| candidates | 16 |
+| solver status | 16 `sat` |
+| Lean byte materialization/replay | 16 `matchesPath=true` |
+| all modeled TH06 conditional-CALL paths covered per environment | yes |
+
+Risk split:
+
+| Conditional-CALL branch | Count | Interpretation |
+| --- | ---: | --- |
+| `call-stack-oob-write` | 4 | true guard reaches CALL stack write at invalid `stackDepth` |
+| `call-subtable-oob-read` | 2 | true guard reaches unchecked `CallEclSub` lookup |
+| `condcall-fallthrough-cursor` | 8 | false guard falls through to before-buffer/non-progress/in-bounds/at-past cursor classes |
+| `condcall-control` | 2 | ordinary true-guard entered controls |
+
+TH07 and TH08 have no TH06-style conditional-CALL opcode family in this
+profile, so their corresponding guarded-CALL queries are explicit unsat
+controls rather than missing queue entries.
+
 ## What this does not cover yet
 
 The current executor still does not cover the full game semantics of each
 instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
-jumps, integer rvalue resolver branches, plain CALL/RET stack behavior, and
-immediate integer div/mod divisor hazards, but not most body internals.
+jumps, TH06 conditional CALLs, integer rvalue resolver branches, plain CALL/RET
+stack behavior, and immediate integer div/mod divisor hazards, but not most
+body internals.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, `MATHINTDIV`, `MATHINTMOD` | 123 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTDIV`, `MATHINTMOD` | 117 |
 | TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `DIV`, `MOD` | 146 |
 | TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, `case 13`, `case 14`, `case 23`, `case 24`, integer condition cases `40/42/44/46/48/50`, and CALL/RET cases `52/53` | 76 |
 
 The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
-jumps, integer resolver branches, plain CALL/RET stack edges, and integer
-div/mod zero-divisor hazards are now modeled; "ordinary advance" for the
-remaining opcodes still does not prove their internal branches.
+jumps, TH06 conditional CALLs, integer resolver branches, plain CALL/RET stack
+edges, and integer div/mod zero-divisor hazards are now modeled; "ordinary
+advance" for the remaining opcodes still does not prove their internal
+branches.
 
 Not covered:
 
-- conditional TH06 CALLs, interrupts, callback stacks, and TH08 high-opcode
-  pending-sub dispatch;
+- interrupts, callback stacks, and TH08 high-opcode pending-sub dispatch;
 - integer lvalue writes and non-integer operand-mask branches into variable
   reads/writes;
 - resolver-driven integer divide/modulo by zero, float division/fmod edge cases,
@@ -374,6 +413,8 @@ Concrete advantages already demonstrated:
 - every title-specific integer rvalue resolver branch is solved and replayed;
 - every title/environment-specific plain CALL/RET branch is solved and
   replayed;
+- every TH06 conditional-CALL branch in the current guard abstraction is solved
+  and replayed;
 - solver witnesses are materialized into bytes by Lean using shared profile
   offsets, then replay-checked;
 - the body queue finds immediate integer div/mod zero-divisor paths for all
@@ -396,7 +437,8 @@ Fuzz is still better outside the current formal model:
 ## Current verdict
 
 For the implemented VM-core skeleton, first shared body slice, integer resolver
-slice, and plain CALL/RET stack slice, Lean + SMT is already better than
+slice, plain CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT
+is already better than
 fuzzing: it gives exhaustive path-class coverage, satisfiable/unsatisfiable
 controls, concrete counterexample bytes, and shared TH06/TH07/TH08 semantics.
 
@@ -407,8 +449,8 @@ formal is finding classes that DanmakuFuzz cannot find in practice.
 The next technically useful targets are:
 
 1. add integer lvalue writes and resolver-driven arithmetic hazards;
-2. add bounded multi-step reachability for nested `CALL`, `RET`, callbacks, and
-   stacked jumps;
+2. add bounded multi-step reachability for nested `CALL`, `RET`, conditional
+   `CALL`, callbacks, and stacked jumps;
 3. extend arithmetic hazards beyond immediate integer div/mod zero;
 4. lower the top raw-step queue entries into TH06 retail batches;
 5. add TH07/TH08 archive adapters so the same shared witnesses can be validated

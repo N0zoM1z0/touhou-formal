@@ -41,6 +41,13 @@ relative to `/home/yann/yann/touhou/formal`.
   restoring `savedContextStack[stackDepth]`.
 - `reference/th06/src/Enemy.hpp:195`: TH06 stores `savedContextStack[8]` and
   signed `stackDepth`.
+- `reference/th06/src/EclManager.hpp:108`: `EclRawInstrCallArgs` stores
+  `eclSub`, `var0`, `float0`, `cmpLhs`, and `cmpRhs` as the call-argument
+  layout used by both plain and conditional CALL opcodes.
+- `reference/th06/src/EclManager.cpp:274`: `CALLLSS`, `CALLLEQ`, `CALLEQU`,
+  `CALLGRE`, `CALLGEQ`, and `CALLNEQ` resolve `cmpLhs` with `GetVar`, compare
+  it against raw `cmpRhs`, and jump to the same `HANDLE_CALL` body only when
+  the condition holds.
 - `reference/th06/src/EnemyEclInstr.cpp:100`: `GetVar` resolves known negative
   `EclVarId` selectors and falls through to the operand-cell pointer for
   unknown operands, which reads back as the raw integer in rvalue positions.

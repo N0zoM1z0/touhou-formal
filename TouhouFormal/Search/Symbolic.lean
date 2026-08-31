@@ -211,6 +211,47 @@ def RawCallRetPath.isCall : RawCallRetPath -> Bool
 def RawCallRetPath.isRet (path : RawCallRetPath) : Bool :=
   !path.isCall
 
+inductive RawConditionalCallPath where
+  | conditionFalse (cursor : CursorGoal)
+  | callStackWriteBeforeStack
+  | callStackWriteAtOrPastStack
+  | callLookupFault
+  | callEntered
+  | callNoOp
+deriving Repr, DecidableEq
+
+def RawConditionalCallPath.name : RawConditionalCallPath -> String
+  | .conditionFalse cursor => "condcall-false-" ++ cursor.name
+  | .callStackWriteBeforeStack => "condcall-stack-write-before-stack"
+  | .callStackWriteAtOrPastStack => "condcall-stack-write-at-or-past-stack"
+  | .callLookupFault => "condcall-lookup-fault"
+  | .callEntered => "condcall-entered"
+  | .callNoOp => "condcall-no-op"
+
+def RawConditionalCallPath.parse? : String -> Option RawConditionalCallPath
+  | "condcall-false-before-buffer" => some (.conditionFalse .beforeBuffer)
+  | "condcall-false-non-progress" => some (.conditionFalse .nonProgress)
+  | "condcall-false-in-bounds" => some (.conditionFalse .inBounds)
+  | "condcall-false-at-or-past-end" => some (.conditionFalse .atOrPastEnd)
+  | "condcall-stack-write-before-stack" => some .callStackWriteBeforeStack
+  | "condcall-stack-write-at-or-past-stack" => some .callStackWriteAtOrPastStack
+  | "condcall-lookup-fault" => some .callLookupFault
+  | "condcall-entered" => some .callEntered
+  | "condcall-no-op" => some .callNoOp
+  | _ => none
+
+def allRawConditionalCallPaths : List RawConditionalCallPath :=
+  allCursorGoals.map RawConditionalCallPath.conditionFalse ++
+    [ .callStackWriteBeforeStack
+    , .callStackWriteAtOrPastStack
+    , .callLookupFault
+    , .callEntered
+    , .callNoOp ]
+
+def RawConditionalCallPath.isTakenCall : RawConditionalCallPath -> Bool
+  | .conditionFalse _ => false
+  | _ => true
+
 private def joinLines : List String -> String
   | [] => ""
   | line :: rest => line ++ "\n" ++ joinLines rest
@@ -289,6 +330,13 @@ private def maxIntConditionJumpOperandIndex
     (Nat.max condShape.lhsOperandIndex condShape.rhsOperandIndex)
     (Nat.max condShape.targetTimeOperandIndex condShape.displacementOperandIndex)
 
+private def maxConditionalCallOperandIndex
+    (callRet : TouhouFormal.ECL.RawCallRetShape)
+    (condCall : TouhouFormal.ECL.RawConditionalCallShape) : Nat :=
+  Nat.max
+    (Nat.max condCall.lhsOperandIndex condCall.rhsOperandIndex)
+    callRet.subIdOperandIndex
+
 private def maxNatList (values : List Nat) : Nat :=
   values.foldl (fun acc value => Nat.max acc value) 0
 
@@ -330,14 +378,20 @@ private def intResolverSwitchPredicate
   | .noMaskAlwaysResolve => "true"
   | .bitSetMeansResolve => intMaskBitSetPredicate maskName slot
 
+private def rawIntResolvedValueExpr
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (slot : Nat)
+    (rawName hostName : String) : String :=
+  "(ite (and " ++ intResolverSwitchPredicate resolver slot "operandMask" ++
+    " " ++ intSelectorSetPredicate rawName resolver.knownRValueSelectors ++
+    ") " ++ hostName ++ " " ++ rawName ++ ")"
+
 private def rawIntResolvedValueAssertions
     (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
     (slot : Nat)
     (rawName hostName resolvedName : String) : List String :=
-  let switchPredicate := intResolverSwitchPredicate resolver slot "operandMask"
-  let knownPredicate := intSelectorSetPredicate rawName resolver.knownRValueSelectors
-  [ "(define-fun " ++ resolvedName ++ " () Int (ite (and " ++ switchPredicate ++
-      " " ++ knownPredicate ++ ") " ++ hostName ++ " " ++ rawName ++ "))" ]
+  [ "(define-fun " ++ resolvedName ++ " () Int " ++
+      rawIntResolvedValueExpr resolver slot rawName hostName ++ ")" ]
 
 private def rawIntComparePredicate
     (op : TouhouFormal.ECL.RawIntCompareOp)
@@ -401,6 +455,19 @@ private def requiredCallRetInstructionBytes
     | _, _ => rawShape.fixedPrefixBytes
   else
     rawShape.fixedPrefixBytes
+
+private def requiredConditionalCallInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (_path : RawConditionalCallPath) : Nat :=
+  match rawShape.callRetShape, rawShape.fixedI32OperandBaseOffset with
+  | some callRet, some baseOffset =>
+      let maxOperand :=
+        maxNatList (rawShape.conditionalCallShapes.map (maxConditionalCallOperandIndex callRet))
+      if rawShape.conditionalCallShapes.isEmpty then
+        rawShape.fixedPrefixBytes
+      else
+        baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
+  | _, _ => rawShape.fixedPrefixBytes
 
 private def opcodeExclusions (rawShape : TouhouFormal.ECL.RawInstrShape) : List Int :=
   let excludeJump :=
@@ -667,6 +734,81 @@ private def rawCallRetPathConstraints
                 , "(assert (<= " ++ toString callRet.childContextSlotCount ++
                     " childContextIndex))" ]
 
+private def conditionalCallConditionPredicate
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (condCall : TouhouFormal.ECL.RawConditionalCallShape) : String :=
+  match rawShape.intRValueResolver with
+  | none => "false"
+  | some resolver =>
+      rawIntComparePredicate
+        condCall.op
+        (rawIntResolvedValueExpr resolver condCall.lhsOperandIndex "lhsRaw" "lhsHost")
+        "rhsRaw"
+
+private def conditionalCallCasePredicate
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (condCall : TouhouFormal.ECL.RawConditionalCallShape)
+    (taken : Bool) : String :=
+  let condition := conditionalCallConditionPredicate rawShape condCall
+  "(and (= opcode " ++ toString condCall.opcode ++ ") " ++
+    (if taken then condition else "(not " ++ condition ++ ")") ++
+    ")"
+
+private def conditionalCallOpcodeAndGuardAssertion
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (taken : Bool) : String :=
+  match rawShape.conditionalCallShapes with
+  | [] => "(assert false) ; profile has no conditional CALL opcodes"
+  | [condCall] =>
+      "(assert " ++ conditionalCallCasePredicate rawShape condCall taken ++ ")"
+  | condCalls =>
+      "(assert (or " ++
+        joinWith " " (condCalls.map fun condCall =>
+          conditionalCallCasePredicate rawShape condCall taken) ++
+        "))"
+
+private def rawConditionalCallPathConstraints
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawConditionalCallPath) : List String :=
+  match rawShape.callRetShape with
+  | none => ["(assert false) ; profile has no source-backed CALL/RET semantics"]
+  | some callRet =>
+      let common :=
+        [ "(assert (= currentTime instrTime))"
+        , "(assert difficultyPass)"
+        , "(assert (and (<= (- 1) stackDepth) (<= stackDepth " ++
+            toString (callRet.stackEntryCount + 1) ++ ")))"
+        , "(assert (and (<= 0 subCount) (<= subCount 256)))"
+        , "(define-fun returnCursor () Int (+ fileOffset nextOffset))" ]
+      let takenPrefix := common ++
+        [ conditionalCallOpcodeAndGuardAssertion rawShape true ]
+      match path with
+      | .conditionFalse cursor =>
+          common ++
+            [ conditionalCallOpcodeAndGuardAssertion rawShape false
+            , cursorGoalAssertion "returnCursor" cursor ]
+      | .callStackWriteBeforeStack =>
+          takenPrefix ++
+            [ "(assert (not stackDisabled))"
+            , "(assert (< stackDepth 0))" ]
+      | .callStackWriteAtOrPastStack =>
+          takenPrefix ++
+            [ "(assert (not stackDisabled))"
+            , "(assert (<= " ++ toString callRet.stackEntryCount ++ " stackDepth))" ]
+      | .callLookupFault =>
+          takenPrefix ++
+            [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
+            , "(assert " ++ subLookupFaultPredicate shape "subId" "subCount" ++ ")" ]
+      | .callEntered =>
+          takenPrefix ++
+            [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
+            , "(assert " ++ subLookupOkOffsetPredicate "subId" "subCount" ++ ")" ]
+      | .callNoOp =>
+          takenPrefix ++
+            [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
+            , "(assert " ++ subLookupNoOpPredicate shape "subId" ++ ")" ]
+
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
 
@@ -675,6 +817,9 @@ private def rawBodyValueTerms : String :=
 
 private def rawCallRetValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask subId stackDepth stackDisabled subCount childContextSlot bufferSize difficultyPass)"
+
+private def rawConditionalCallValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask subId stackDepth stackDisabled subCount lhsRaw lhsHost rhsRaw bufferSize difficultyPass)"
 
 private def rawStepQueryWith
     (includeModel includeValues : Bool)
@@ -939,6 +1084,79 @@ def rawCallRetValuesQuery
 def listRawCallRetPathsText : String :=
   joinLines (allRawCallRetPaths.map RawCallRetPath.name)
 
+private def rawConditionalCallQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawConditionalCallPath)
+    (activeMask overrideMask : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL conditional CALL query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      let difficultyExpr :=
+        match rawShape.difficultyMaskPolicy with
+        | none => "true"
+        | some policy => difficultyPassExpr policy
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared guarded-CALL semantics."
+         , "; Title: " ++ shape.title
+         , "; Conditional CALL path: " ++ path.name
+         , "(declare-const currentTime Int)"
+         , "(declare-const instrTime Int)"
+         , "(declare-const opcode Int)"
+         , "(declare-const nextOffset Int)"
+         , "(declare-const subId Int)"
+         , "(declare-const stackDepth Int)"
+         , "(declare-const stackDisabled Bool)"
+         , "(declare-const subCount Int)"
+         , "(declare-const lhsRaw Int)"
+         , "(declare-const lhsHost Int)"
+         , "(declare-const rhsRaw Int)"
+         , "(declare-const bufferSize Int)"
+         , "(define-fun fileOffset () Int 0)"
+         , "(declare-const instructionMask (_ BitVec 8))"
+         , "(define-fun activeMask () (_ BitVec 8) " ++ bv8 activeMask ++ ")"
+         , "(define-fun overrideMask () (_ BitVec 8) " ++ bv8 overrideMask ++ ")"
+         , "(define-fun requiredDifficultyMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+         , "(define-fun difficultyPass () Bool " ++ difficultyExpr ++ ")"
+         , scalarRange "instrTime" rawShape.timeWidth
+         , scalarRange "opcode" rawShape.opcodeWidth
+         , scalarRange "nextOffset" rawShape.nextOffsetWidth
+         , signedI16Range "subId"
+         , signedI32Range "lhsRaw"
+         , signedI32Range "lhsHost"
+         , signedI32Range "rhsRaw"
+         , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
+         , "(assert (and (<= " ++ toString (requiredConditionalCallInstructionBytes rawShape path) ++
+             " bufferSize) (<= bufferSize 1048576)))" ] ++
+         operandMaskSmtLines rawShape ++
+         rawConditionalCallPathConstraints shape rawShape path ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawConditionalCallValueTerms ++ ")"] else []))
+
+def rawConditionalCallQuery
+    (title : Title)
+    (path : RawConditionalCallPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawConditionalCallQueryWith false false title path activeMask overrideMask
+
+def rawConditionalCallValuesQuery
+    (title : Title)
+    (path : RawConditionalCallPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawConditionalCallQueryWith false true title path activeMask overrideMask
+
+def listRawConditionalCallPathsText : String :=
+  joinLines (allRawConditionalCallPaths.map RawConditionalCallPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -993,6 +1211,16 @@ structure RawCallRetWitness extends RawStepWitness where
   childContextSlot : Int
 deriving Repr, DecidableEq
 
+structure RawConditionalCallWitness extends RawStepWitness where
+  subId : Int
+  stackDepth : Int
+  stackDisabled : Bool
+  subCount : Nat
+  lhsRaw : Int
+  lhsHost : Int
+  rhsRaw : Int
+deriving Repr, DecidableEq
+
 structure RawIntResolverMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
@@ -1002,6 +1230,13 @@ structure RawIntResolverMaterialization where
 deriving Repr, DecidableEq
 
 structure RawCallRetMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome
+  matchesPath : Bool
+deriving Repr
+
+structure RawConditionalCallMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
   result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome
@@ -1304,6 +1539,102 @@ private def runRawCallRetResult
           stackDisabled := witness.stackDisabled
           childContextSlot := witness.childContextSlot })
 
+private def findConditionalCall
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (opcode : Int) :
+    Except String TouhouFormal.ECL.RawConditionalCallShape :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.findConditionalCall? opcode with
+      | none =>
+          .error
+            ("opcode " ++ toString opcode ++
+              " is not a source-backed conditional CALL for " ++ shape.title)
+      | some condCall => .ok condCall
+
+private def rawConditionalCallWitnessBaseBytes
+    (title : Title)
+    (path : RawConditionalCallPath)
+    (witness : RawConditionalCallWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredConditionalCallInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required conditional CALL bytes=" ++ toString requiredBytes)
+      else
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := witness.currentTime
+            instrTime := witness.instrTime
+            opcode := witness.opcode
+            nextOffset := witness.nextOffset
+            instructionMask := witness.instructionMask
+            operandMask := witness.operandMask
+            activeMask := witness.activeMask
+            overrideMask := witness.overrideMask
+            jumpTargetTime := witness.jumpTargetTime
+            jumpDisplacement := witness.jumpDisplacement
+            bufferSize := witness.bufferSize }
+
+private def rawConditionalCallWitnessBytes
+    (title : Title)
+    (path : RawConditionalCallPath)
+    (witness : RawConditionalCallWitness) : Except String TouhouFormal.Bytes := do
+  let shape := title.headerShape
+  let condCall <- findConditionalCall shape witness.opcode
+  let callRet <- findCallRetShape shape
+  let bytes <- rawConditionalCallWitnessBaseBytes title path witness
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      callRet.subIdOperandIndex
+      witness.subId
+      "conditionalCallSubId"
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      condCall.lhsOperandIndex
+      witness.lhsRaw
+      "conditionalCallLhsRaw"
+  writeFixedI32OperandValue
+    bytes
+    shape
+    condCall.rhsOperandIndex
+    witness.rhsRaw
+    "conditionalCallRhsRaw"
+
+private def runRawConditionalCallResult
+    (title : Title)
+    (_path : RawConditionalCallPath)
+    (witness : RawConditionalCallWitness)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String (Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) :=
+  let shape := title.headerShape
+  .ok
+    (TouhouFormal.ECL.rawConditionalCallStep
+      shape
+      witness.currentTime
+      witness.activeMask
+      witness.overrideMask
+      8
+      witness.bufferSize
+      rawPrefix
+      { subId := witness.subId
+        stackDepth := witness.stackDepth
+        stackDisabled := witness.stackDisabled
+        subOffsets := symbolicSubOffsetsOfCount witness.subCount
+        lhsRaw := witness.lhsRaw
+        lhsHost := witness.lhsHost
+        rhsRaw := witness.rhsRaw })
+
 private def rawBodyWitnessBaseBytes
     (title : Title)
     (path : RawBodyPath)
@@ -1550,6 +1881,32 @@ private def RawCallRetPath.matchesResult
         faultIndexAtOrPastBound faultValue
   | _, _ => false
 
+private def RawConditionalCallPath.matchesResult
+    (path : RawConditionalCallPath)
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome) : Bool :=
+  match path, result with
+  | .conditionFalse cursor, .ok outcome =>
+      outcome.action == .callConditionFalse &&
+        match outcome.returnCursorClass with
+        | some actual => actual == cursor.toCursorClass
+        | none => false
+  | .callStackWriteBeforeStack, .error faultValue =>
+      faultValue.kind == .outOfBoundsWrite &&
+        faultValue.component == "EclRun.stack.call" &&
+        faultIndexBeforeZero faultValue
+  | .callStackWriteAtOrPastStack, .error faultValue =>
+      faultValue.kind == .outOfBoundsWrite &&
+        faultValue.component == "EclRun.stack.call" &&
+        faultIndexAtOrPastBound faultValue
+  | .callLookupFault, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclManager.CallEclSub"
+  | .callEntered, .ok outcome =>
+      outcome.action == .callEntered
+  | .callNoOp, .ok outcome =>
+      outcome.action == .callNoOp
+  | _, _ => false
+
 def rawStepMaterialize
     (title : Title)
     (path : RawStepPath)
@@ -1723,6 +2080,19 @@ def rawCallRetMaterialize
       result := result
       matchesPath := path.matchesResult result }
 
+def rawConditionalCallMaterialize
+    (title : Title)
+    (path : RawConditionalCallPath)
+    (witness : RawConditionalCallWitness) : Except String RawConditionalCallMaterialization := do
+  let bytes <- rawConditionalCallWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix title.headerShape bytes 0)
+  let result <- runRawConditionalCallResult title path witness rawPrefix
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      result := result
+      matchesPath := path.matchesResult result }
+
 private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .yielded => "yielded"
   | .skipped => "skipped"
@@ -1735,6 +2105,7 @@ private def rawCallRetActionName : TouhouFormal.ECL.RawCallRetAction -> String
   | .skipped => "skipped"
   | .callEntered => "call-entered"
   | .callNoOp => "call-no-op"
+  | .callConditionFalse => "call-condition-false"
   | .retRestored => "ret-restored"
   | .retExitedChild => "ret-exited-child"
 
@@ -1880,6 +2251,26 @@ private def callRetResultFaultDetail
 
 def RawCallRetMaterialization.report
     (materialization : RawCallRetMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "action=" ++ callRetResultActionText materialization.result
+    , "stackDepthAfter=" ++ optionIntText (callRetResultStackDepthAfter materialization.result)
+    , "returnCursor=" ++ optionIntText (callRetResultReturnCursor materialization.result)
+    , "returnCursorClass=" ++ optionCursorClassText (callRetResultReturnCursorClass materialization.result)
+    , "targetSubOffset=" ++ optionNatText (callRetResultTargetSubOffset materialization.result)
+    , "childContextIndex=" ++ optionIntText (callRetResultChildContextIndex materialization.result)
+    , "faultKind=" ++ callRetResultFaultKind materialization.result
+    , "faultDetail=" ++ callRetResultFaultDetail materialization.result
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+def RawConditionalCallMaterialization.report
+    (materialization : RawConditionalCallMaterialization) : String :=
   joinLines
     [ "size=" ++ toString materialization.bytes.size
     , "hex=" ++ bytesHex materialization.bytes
