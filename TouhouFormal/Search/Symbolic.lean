@@ -1,4 +1,5 @@
 import TouhouFormal.ECL.Body
+import TouhouFormal.ECL.Arithmetic
 import TouhouFormal.ECL.Stack
 import TouhouFormal.ECL.Step
 import TouhouFormal.TH06.Wire
@@ -252,6 +253,44 @@ def RawConditionalCallPath.isTakenCall : RawConditionalCallPath -> Bool
   | .conditionFalse _ => false
   | _ => true
 
+inductive RawIntBinaryPath where
+  | outputRawCell
+  | outputResolvedHost
+  | outputDefaultRawCell
+  | nonIntOutput
+  | divisorZero (rhs : RawIntResolverPath)
+  | divideOverflow (rhs : RawIntResolverPath)
+deriving Repr, DecidableEq
+
+def RawIntBinaryPath.name : RawIntBinaryPath -> String
+  | .outputRawCell => "int-binary-output-raw-cell"
+  | .outputResolvedHost => "int-binary-output-resolved-host"
+  | .outputDefaultRawCell => "int-binary-output-default-raw-cell"
+  | .nonIntOutput => "int-binary-non-int-output"
+  | .divisorZero rhs => "int-binary-divisor-zero-" ++ rhs.name
+  | .divideOverflow rhs => "int-binary-divide-overflow-" ++ rhs.name
+
+def RawIntBinaryPath.parse? : String -> Option RawIntBinaryPath
+  | "int-binary-output-raw-cell" => some .outputRawCell
+  | "int-binary-output-resolved-host" => some .outputResolvedHost
+  | "int-binary-output-default-raw-cell" => some .outputDefaultRawCell
+  | "int-binary-non-int-output" => some .nonIntOutput
+  | "int-binary-divisor-zero-raw-immediate" => some (.divisorZero .rawImmediate)
+  | "int-binary-divisor-zero-resolved-host" => some (.divisorZero .resolvedHost)
+  | "int-binary-divisor-zero-resolved-default-raw" => some (.divisorZero .resolvedDefaultRaw)
+  | "int-binary-divide-overflow-raw-immediate" => some (.divideOverflow .rawImmediate)
+  | "int-binary-divide-overflow-resolved-host" => some (.divideOverflow .resolvedHost)
+  | "int-binary-divide-overflow-resolved-default-raw" => some (.divideOverflow .resolvedDefaultRaw)
+  | _ => none
+
+def allRawIntBinaryPaths : List RawIntBinaryPath :=
+  [ .outputRawCell
+  , .outputResolvedHost
+  , .outputDefaultRawCell
+  , .nonIntOutput ] ++
+    allRawIntResolverPaths.map RawIntBinaryPath.divisorZero ++
+    allRawIntResolverPaths.map RawIntBinaryPath.divideOverflow
+
 private def joinLines : List String -> String
   | [] => ""
   | line :: rest => line ++ "\n" ++ joinLines rest
@@ -337,6 +376,12 @@ private def maxConditionalCallOperandIndex
     (Nat.max condCall.lhsOperandIndex condCall.rhsOperandIndex)
     callRet.subIdOperandIndex
 
+private def maxIntBinaryOpOperandIndex
+    (op : TouhouFormal.ECL.RawIntBinaryOpShape) : Nat :=
+  Nat.max
+    (Nat.max op.outputOperandIndex op.lhsOperandIndex)
+    op.rhsOperandIndex
+
 private def maxNatList (values : List Nat) : Nat :=
   values.foldl (fun acc value => Nat.max acc value) 0
 
@@ -392,6 +437,72 @@ private def rawIntResolvedValueAssertions
     (rawName hostName resolvedName : String) : List String :=
   [ "(define-fun " ++ resolvedName ++ " () Int " ++
       rawIntResolvedValueExpr resolver slot rawName hostName ++ ")" ]
+
+private def rawIntRValuePathPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (slot : Nat)
+    (rawName : String)
+    (path : RawIntResolverPath) : String :=
+  let switchPredicate := intResolverSwitchPredicate resolver slot "operandMask"
+  let knownPredicate := intSelectorSetPredicate rawName resolver.knownRValueSelectors
+  match path with
+  | .rawImmediate =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "false"
+      | .bitSetMeansResolve => "(not " ++ switchPredicate ++ ")"
+  | .resolvedHost =>
+      "(and " ++ switchPredicate ++ " " ++ knownPredicate ++ ")"
+  | .resolvedDefaultRaw =>
+      "(and " ++ switchPredicate ++ " (not " ++ knownPredicate ++ "))"
+
+private def rawIntLValuePathPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (slot : Nat)
+    (rawName : String)
+    (kind : TouhouFormal.ECL.RawIntLValueResolutionKind) : String :=
+  let switchPredicate := intResolverSwitchPredicate resolver slot "operandMask"
+  let knownPredicate := intSelectorSetPredicate rawName resolver.knownLValueSelectors
+  match kind with
+  | .rawOperandCell =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "false"
+      | .bitSetMeansResolve => "(not " ++ switchPredicate ++ ")"
+  | .resolvedHost =>
+      "(and " ++ switchPredicate ++ " " ++ knownPredicate ++ ")"
+  | .resolvedDefaultRawCell =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "false"
+      | .bitSetMeansResolve => "(and " ++ switchPredicate ++ " (not " ++ knownPredicate ++ "))"
+  | .nonIntOutput =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "(not " ++ knownPredicate ++ ")"
+      | .bitSetMeansResolve => "false"
+
+private def rawIntLValueWritablePredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (_slot : Nat)
+    (rawName : String) : String :=
+  let knownPredicate := intSelectorSetPredicate rawName resolver.knownLValueSelectors
+  match resolver.maskPolicy with
+  | .noMaskAlwaysResolve => knownPredicate
+  | .bitSetMeansResolve => "true"
+
+private def rawIntLValueValueExpr
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (slot : Nat)
+    (rawName hostBeforeName : String) : String :=
+  "(ite (and " ++ intResolverSwitchPredicate resolver slot "operandMask" ++
+    " " ++ intSelectorSetPredicate rawName resolver.knownLValueSelectors ++
+    ") " ++ hostBeforeName ++ " " ++ rawName ++ ")"
+
+private def rawIntBinaryLhsValueExpr
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (op : TouhouFormal.ECL.RawIntBinaryOpShape) : String :=
+  match op.mode with
+  | .assign =>
+      rawIntResolvedValueExpr resolver op.lhsOperandIndex "lhsRaw" "lhsHost"
+  | .updateInPlace =>
+      rawIntLValueValueExpr resolver op.outputOperandIndex "outputRaw" "outputHostBefore"
 
 private def rawIntComparePredicate
     (op : TouhouFormal.ECL.RawIntCompareOp)
@@ -468,6 +579,18 @@ private def requiredConditionalCallInstructionBytes
       else
         baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
   | _, _ => rawShape.fixedPrefixBytes
+
+private def requiredIntBinaryInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (_path : RawIntBinaryPath) : Nat :=
+  match rawShape.fixedI32OperandBaseOffset with
+  | none => rawShape.fixedPrefixBytes
+  | some baseOffset =>
+      let maxOperand := maxNatList (rawShape.intBinaryOps.map maxIntBinaryOpOperandIndex)
+      if rawShape.intBinaryOps.isEmpty then
+        rawShape.fixedPrefixBytes
+      else
+        baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
 
 private def opcodeExclusions (rawShape : TouhouFormal.ECL.RawInstrShape) : List Int :=
   let excludeJump :=
@@ -611,21 +734,7 @@ private def rawIntResolverPathConstraints
   match rawShape.intRValueResolver with
   | none => ["(assert false) ; profile has no integer rvalue resolver"]
   | some resolver =>
-      let switchPredicate := intResolverSwitchPredicate resolver slot "operandMask"
-      let knownPredicate := intSelectorSetPredicate "rawValue" resolver.knownRValueSelectors
-      match path with
-      | .rawImmediate =>
-          match resolver.maskPolicy with
-          | .noMaskAlwaysResolve =>
-              ["(assert false) ; this title has no mask-clear immediate branch"]
-          | .bitSetMeansResolve =>
-              [ "(assert (not " ++ switchPredicate ++ "))" ]
-      | .resolvedHost =>
-          [ "(assert " ++ switchPredicate ++ ")"
-          , "(assert " ++ knownPredicate ++ ")" ]
-      | .resolvedDefaultRaw =>
-          [ "(assert " ++ switchPredicate ++ ")"
-          , "(assert (not " ++ knownPredicate ++ "))" ]
+      [ "(assert " ++ rawIntRValuePathPredicate resolver slot "rawValue" path ++ ")" ]
 
 private def subLookupFaultPredicate
     (shape : TouhouFormal.ECL.HeaderShape)
@@ -809,6 +918,77 @@ private def rawConditionalCallPathConstraints
             [ "(assert " ++ callStackSafeOrDisabledPredicate callRet ++ ")"
             , "(assert " ++ subLookupNoOpPredicate shape "subId" ++ ")" ]
 
+private def intBinaryOpSetAssertion
+    (ops : List TouhouFormal.ECL.RawIntBinaryOpShape)
+    (extraPredicate : TouhouFormal.ECL.RawIntBinaryOpShape -> String) : String :=
+  match ops with
+  | [] => "(assert false) ; profile has no source-backed integer binary opcodes for this path"
+  | [op] =>
+      "(assert (and (= opcode " ++ toString op.opcode ++ ") " ++ extraPredicate op ++ "))"
+  | ops =>
+      "(assert (or " ++
+        joinWith " " (ops.map fun op =>
+          "(and (= opcode " ++ toString op.opcode ++ ") " ++ extraPredicate op ++ ")") ++
+        "))"
+
+private def intBinaryOutputPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (op : TouhouFormal.ECL.RawIntBinaryOpShape)
+    (kind : TouhouFormal.ECL.RawIntLValueResolutionKind) : String :=
+  rawIntLValuePathPredicate resolver op.outputOperandIndex "outputRaw" kind
+
+private def intBinaryDivisorPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (op : TouhouFormal.ECL.RawIntBinaryOpShape)
+    (rhsPath : RawIntResolverPath)
+    (overflow : Bool) : String :=
+  let rhsExpr := rawIntResolvedValueExpr resolver op.rhsOperandIndex "rhsRaw" "rhsHost"
+  let lhsExpr := rawIntBinaryLhsValueExpr resolver op
+  "(and " ++
+    rawIntLValueWritablePredicate resolver op.outputOperandIndex "outputRaw" ++
+    " " ++ rawIntRValuePathPredicate resolver op.rhsOperandIndex "rhsRaw" rhsPath ++
+    " " ++
+    (if overflow then
+      "(and (= " ++ lhsExpr ++ " " ++ toString TouhouFormal.ECL.int32Min ++
+        ") (= " ++ rhsExpr ++ " (- 1)))"
+    else
+      "(= " ++ rhsExpr ++ " 0)") ++
+    ")"
+
+private def rawIntBinaryPathConstraints
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawIntBinaryPath) : List String :=
+  let dispatchPrefix :=
+    [ "(assert (= currentTime instrTime))"
+    , "(assert difficultyPass)" ]
+  match rawShape.intRValueResolver with
+  | none => dispatchPrefix ++ ["(assert false) ; profile has no integer resolver"]
+  | some resolver =>
+      let nonHazardOps :=
+        rawShape.intBinaryOps.filter fun op => !op.kind.isDivisorHazard
+      let hazardOps :=
+        rawShape.intBinaryOps.filter fun op => op.kind.isDivisorHazard
+      dispatchPrefix ++
+        match path with
+        | .outputRawCell =>
+            [ intBinaryOpSetAssertion nonHazardOps fun op =>
+                intBinaryOutputPredicate resolver op .rawOperandCell ]
+        | .outputResolvedHost =>
+            [ intBinaryOpSetAssertion nonHazardOps fun op =>
+                intBinaryOutputPredicate resolver op .resolvedHost ]
+        | .outputDefaultRawCell =>
+            [ intBinaryOpSetAssertion nonHazardOps fun op =>
+                intBinaryOutputPredicate resolver op .resolvedDefaultRawCell ]
+        | .nonIntOutput =>
+            [ intBinaryOpSetAssertion rawShape.intBinaryOps fun op =>
+                intBinaryOutputPredicate resolver op .nonIntOutput ]
+        | .divisorZero rhsPath =>
+            [ intBinaryOpSetAssertion hazardOps fun op =>
+                intBinaryDivisorPredicate resolver op rhsPath false ]
+        | .divideOverflow rhsPath =>
+            [ intBinaryOpSetAssertion hazardOps fun op =>
+                intBinaryDivisorPredicate resolver op rhsPath true ]
+
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
 
@@ -820,6 +1000,9 @@ private def rawCallRetValueTerms : String :=
 
 private def rawConditionalCallValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask subId stackDepth stackDisabled subCount lhsRaw lhsHost rhsRaw bufferSize difficultyPass)"
+
+private def rawIntBinaryValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask outputRaw outputHostBefore lhsRaw rhsRaw lhsHost rhsHost bufferSize difficultyPass)"
 
 private def rawStepQueryWith
     (includeModel includeValues : Bool)
@@ -1157,6 +1340,81 @@ def rawConditionalCallValuesQuery
 def listRawConditionalCallPathsText : String :=
   joinLines (allRawConditionalCallPaths.map RawConditionalCallPath.name)
 
+private def rawIntBinaryQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawIntBinaryPath)
+    (activeMask overrideMask : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL integer binary-op query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      let difficultyExpr :=
+        match rawShape.difficultyMaskPolicy with
+        | none => "true"
+        | some policy => difficultyPassExpr policy
+      let requiredBytes := requiredIntBinaryInstructionBytes rawShape path
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared integer binary-op semantics."
+         , "; Title: " ++ shape.title
+         , "; Integer binary path: " ++ path.name
+         , "(declare-const currentTime Int)"
+         , "(declare-const instrTime Int)"
+         , "(declare-const opcode Int)"
+         , "(declare-const nextOffset Int)"
+         , "(declare-const outputRaw Int)"
+         , "(declare-const outputHostBefore Int)"
+         , "(declare-const lhsRaw Int)"
+         , "(declare-const rhsRaw Int)"
+         , "(declare-const lhsHost Int)"
+         , "(declare-const rhsHost Int)"
+         , "(declare-const bufferSize Int)"
+         , "(define-fun fileOffset () Int 0)"
+         , "(declare-const instructionMask (_ BitVec 8))"
+         , "(define-fun activeMask () (_ BitVec 8) " ++ bv8 activeMask ++ ")"
+         , "(define-fun overrideMask () (_ BitVec 8) " ++ bv8 overrideMask ++ ")"
+         , "(define-fun requiredDifficultyMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+         , "(define-fun difficultyPass () Bool " ++ difficultyExpr ++ ")"
+         , scalarRange "instrTime" rawShape.timeWidth
+         , scalarRange "opcode" rawShape.opcodeWidth
+         , scalarRange "nextOffset" rawShape.nextOffsetWidth
+         , signedI32Range "outputRaw"
+         , signedI32Range "outputHostBefore"
+         , signedI32Range "lhsRaw"
+         , signedI32Range "rhsRaw"
+         , signedI32Range "lhsHost"
+         , signedI32Range "rhsHost"
+         , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
+         , "(assert (= nextOffset " ++ toString requiredBytes ++ "))"
+         , "(assert (= bufferSize " ++ toString requiredBytes ++ "))" ] ++
+         operandMaskSmtLines rawShape ++
+         rawIntBinaryPathConstraints rawShape path ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawIntBinaryValueTerms ++ ")"] else []))
+
+def rawIntBinaryQuery
+    (title : Title)
+    (path : RawIntBinaryPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawIntBinaryQueryWith false false title path activeMask overrideMask
+
+def rawIntBinaryValuesQuery
+    (title : Title)
+    (path : RawIntBinaryPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawIntBinaryQueryWith false true title path activeMask overrideMask
+
+def listRawIntBinaryPathsText : String :=
+  joinLines (allRawIntBinaryPaths.map RawIntBinaryPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -1221,6 +1479,15 @@ structure RawConditionalCallWitness extends RawStepWitness where
   rhsRaw : Int
 deriving Repr, DecidableEq
 
+structure RawIntBinaryWitness extends RawStepWitness where
+  outputRaw : Int
+  outputHostBefore : Int
+  lhsRaw : Int
+  rhsRaw : Int
+  lhsHost : Int
+  rhsHost : Int
+deriving Repr, DecidableEq
+
 structure RawIntResolverMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
@@ -1240,6 +1507,14 @@ structure RawConditionalCallMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
   result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallRetOutcome
+  matchesPath : Bool
+deriving Repr
+
+structure RawIntBinaryMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared
+  result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome
   matchesPath : Bool
 deriving Repr
 
@@ -1635,6 +1910,137 @@ private def runRawConditionalCallResult
         lhsHost := witness.lhsHost
         rhsRaw := witness.rhsRaw })
 
+private def findIntBinaryOp
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (opcode : Int) :
+    Except String TouhouFormal.ECL.RawIntBinaryOpShape :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.findIntBinaryOp? opcode with
+      | none =>
+          .error
+            ("opcode " ++ toString opcode ++
+              " is not a source-backed integer binary opcode for " ++ shape.title)
+      | some op => .ok op
+
+private def rawIntBinaryWitnessBaseBytes
+    (title : Title)
+    (path : RawIntBinaryPath)
+    (witness : RawIntBinaryWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredIntBinaryInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required integer-binary bytes=" ++ toString requiredBytes)
+      else
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := witness.currentTime
+            instrTime := witness.instrTime
+            opcode := witness.opcode
+            nextOffset := witness.nextOffset
+            instructionMask := witness.instructionMask
+            operandMask := witness.operandMask
+            activeMask := witness.activeMask
+            overrideMask := witness.overrideMask
+            jumpTargetTime := witness.jumpTargetTime
+            jumpDisplacement := witness.jumpDisplacement
+            bufferSize := witness.bufferSize }
+
+private def rawIntBinaryWitnessBytes
+    (title : Title)
+    (path : RawIntBinaryPath)
+    (witness : RawIntBinaryWitness) : Except String TouhouFormal.Bytes := do
+  let shape := title.headerShape
+  let op <- findIntBinaryOp shape witness.opcode
+  let bytes <- rawIntBinaryWitnessBaseBytes title path witness
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      op.outputOperandIndex
+      witness.outputRaw
+      "intBinaryOutputRaw"
+  let bytes <-
+    if op.mode == .assign then
+      writeFixedI32OperandValue
+        bytes
+        shape
+        op.lhsOperandIndex
+        witness.lhsRaw
+        "intBinaryLhsRaw"
+    else
+      .ok bytes
+  writeFixedI32OperandValue
+    bytes
+    shape
+    op.rhsOperandIndex
+    witness.rhsRaw
+    "intBinaryRhsRaw"
+
+private def decodeRawIntBinaryOperands
+    (title : Title)
+    (witness : RawIntBinaryWitness)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String
+      (TouhouFormal.ECL.RawIntBinaryOpShape × TouhouFormal.ECL.RawIntBinaryOpOperands) := do
+  let shape := title.headerShape
+  let op <- findIntBinaryOp shape rawPrefix.opcode
+  let outputRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        op.outputOperandIndex)
+  let lhsRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        op.lhsOperandIndex)
+  let rhsRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        op.rhsOperandIndex)
+  .ok
+    ( op
+    , { outputRaw := outputRaw
+        outputHostBefore := witness.outputHostBefore
+        lhsRaw := lhsRaw
+        rhsRaw := rhsRaw
+        lhsHost := witness.lhsHost
+        rhsHost := witness.rhsHost } )
+
+private def runRawIntBinaryResult
+    (title : Title)
+    (witness : RawIntBinaryWitness)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix)
+    (operands : TouhouFormal.ECL.RawIntBinaryOpOperands) :
+    Except String (Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome) :=
+  let shape := title.headerShape
+  .ok
+    (TouhouFormal.ECL.rawIntBinaryStep
+      shape
+      witness.currentTime
+      witness.activeMask
+      witness.overrideMask
+      8
+      witness.bufferSize
+      rawPrefix
+      operands)
+
 private def rawBodyWitnessBaseBytes
     (title : Title)
     (path : RawBodyPath)
@@ -1907,6 +2313,54 @@ private def RawConditionalCallPath.matchesResult
       outcome.action == .callNoOp
   | _, _ => false
 
+private def preparedOutputKind?
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) :
+    Option TouhouFormal.ECL.RawIntLValueResolutionKind :=
+  match prepared with
+  | .ok value => some value.output.kind
+  | .error _ => none
+
+private def preparedRhsPath?
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) :
+    Option RawIntResolverPath :=
+  match prepared with
+  | .ok value =>
+      match value.rhsResolution with
+      | none => none
+      | some rhs =>
+          match rhs.kind with
+          | .rawImmediate => some .rawImmediate
+          | .resolvedHost => some .resolvedHost
+          | .resolvedDefaultRaw => some .resolvedDefaultRaw
+  | .error _ => none
+
+private def RawIntBinaryPath.matchesMaterialization
+    (path : RawIntBinaryPath)
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared)
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome) : Bool :=
+  match path, result with
+  | .outputRawCell, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedOutputKind? prepared == some .rawOperandCell
+  | .outputResolvedHost, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedOutputKind? prepared == some .resolvedHost
+  | .outputDefaultRawCell, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedOutputKind? prepared == some .resolvedDefaultRawCell
+  | .nonIntOutput, .ok outcome =>
+      outcome.action == .nonIntOutput &&
+        preparedOutputKind? prepared == some .nonIntOutput
+  | .divisorZero rhsPath, .error faultValue =>
+      faultValue.kind == .divideByZero &&
+        (preparedOutputKind? prepared).isSome &&
+        preparedRhsPath? prepared == some rhsPath
+  | .divideOverflow rhsPath, .error faultValue =>
+      faultValue.kind == .arithmeticOverflow &&
+        (preparedOutputKind? prepared).isSome &&
+        preparedRhsPath? prepared == some rhsPath
+  | _, _ => false
+
 def rawStepMaterialize
     (title : Title)
     (path : RawStepPath)
@@ -2093,6 +2547,28 @@ def rawConditionalCallMaterialize
       result := result
       matchesPath := path.matchesResult result }
 
+def rawIntBinaryMaterialize
+    (title : Title)
+    (path : RawIntBinaryPath)
+    (witness : RawIntBinaryWitness) : Except String RawIntBinaryMaterialization := do
+  let bytes <- rawIntBinaryWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix title.headerShape bytes 0)
+  let (_, operands) <- decodeRawIntBinaryOperands title witness bytes rawPrefix
+  let op <- findIntBinaryOp title.headerShape rawPrefix.opcode
+  let prepared :=
+    TouhouFormal.ECL.rawIntBinaryPrepare
+      title.headerShape
+      rawPrefix
+      op
+      operands
+  let result <- runRawIntBinaryResult title witness rawPrefix operands
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      prepared := prepared
+      result := result
+      matchesPath := path.matchesMaterialization prepared result }
+
 private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .yielded => "yielded"
   | .skipped => "skipped"
@@ -2108,6 +2584,13 @@ private def rawCallRetActionName : TouhouFormal.ECL.RawCallRetAction -> String
   | .callConditionFalse => "call-condition-false"
   | .retRestored => "ret-restored"
   | .retExitedChild => "ret-exited-child"
+
+private def rawIntBinaryActionName : TouhouFormal.ECL.RawIntBinaryOpAction -> String
+  | .yielded => "yielded"
+  | .skipped => "skipped"
+  | .advanced => "advanced"
+  | .nonIntOutput => "non-int-output"
+  | .vmError => "vm-error"
 
 private def optionIntText : Option Int -> String
   | none => "-"
@@ -2287,6 +2770,108 @@ def RawConditionalCallMaterialization.report
     , "childContextIndex=" ++ optionIntText (callRetResultChildContextIndex materialization.result)
     , "faultKind=" ++ callRetResultFaultKind materialization.result
     , "faultDetail=" ++ callRetResultFaultDetail materialization.result
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+private def intBinaryResultActionText
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome) : String :=
+  match result with
+  | .ok outcome => rawIntBinaryActionName outcome.action
+  | .error faultValue => "fault:" ++ faultValue.kind.name
+
+private def intBinaryResultFaultKind
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.kind.name
+
+private def intBinaryResultFaultDetail
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.detail
+
+private def intBinaryResultValue
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.result
+  | .error _ => none
+
+private def preparedOutputKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value => value.output.kind.name
+  | .error _ => "-"
+
+private def preparedOutputKnownText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value => toString value.output.selectorKnown
+  | .error _ => "-"
+
+private def preparedOutputFlagText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value => toString value.output.flagEnabled
+  | .error _ => "-"
+
+private def preparedLhsKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value =>
+      match value.lhsResolution with
+      | none => "output-before"
+      | some lhs => lhs.kind.name
+  | .error _ => "-"
+
+private def preparedRhsKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value =>
+      match value.rhsResolution with
+      | none => "-"
+      | some rhs => rhs.kind.name
+  | .error _ => "-"
+
+private def preparedLhsValueText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value => optionIntText value.lhsValue
+  | .error _ => "-"
+
+private def preparedRhsValueText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value => optionIntText value.rhsValue
+  | .error _ => "-"
+
+private def preparedOpText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntBinaryOpPrepared) : String :=
+  match prepared with
+  | .ok value => value.op.kind.name ++ "/" ++ value.op.mode.name
+  | .error _ => "-"
+
+def RawIntBinaryMaterialization.report
+    (materialization : RawIntBinaryMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "op=" ++ preparedOpText materialization.prepared
+    , "outputKind=" ++ preparedOutputKindText materialization.prepared
+    , "outputSelectorKnown=" ++ preparedOutputKnownText materialization.prepared
+    , "outputFlagEnabled=" ++ preparedOutputFlagText materialization.prepared
+    , "lhsKind=" ++ preparedLhsKindText materialization.prepared
+    , "rhsKind=" ++ preparedRhsKindText materialization.prepared
+    , "lhsValue=" ++ preparedLhsValueText materialization.prepared
+    , "rhsValue=" ++ preparedRhsValueText materialization.prepared
+    , "action=" ++ intBinaryResultActionText materialization.result
+    , "result=" ++ optionIntText (intBinaryResultValue materialization.result)
+    , "faultKind=" ++ intBinaryResultFaultKind materialization.result
+    , "faultDetail=" ++ intBinaryResultFaultDetail materialization.result
     , "matchesPath=" ++ toString materialization.matchesPath ]
 
 def RawIntResolverMaterialization.report

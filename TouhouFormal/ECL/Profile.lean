@@ -61,6 +61,43 @@ structure RawIntDivisorHazard where
   divisorOperandIndex : Nat
 deriving Repr, DecidableEq
 
+inductive RawIntBinaryOpKind where
+  | add
+  | sub
+  | mul
+  | div
+  | mod
+deriving Repr, DecidableEq
+
+def RawIntBinaryOpKind.name : RawIntBinaryOpKind -> String
+  | .add => "add"
+  | .sub => "sub"
+  | .mul => "mul"
+  | .div => "div"
+  | .mod => "mod"
+
+def RawIntBinaryOpKind.isDivisorHazard : RawIntBinaryOpKind -> Bool
+  | .div | .mod => true
+  | _ => false
+
+inductive RawIntBinaryOpMode where
+  | assign
+  | updateInPlace
+deriving Repr, DecidableEq
+
+def RawIntBinaryOpMode.name : RawIntBinaryOpMode -> String
+  | .assign => "assign"
+  | .updateInPlace => "update-in-place"
+
+structure RawIntBinaryOpShape where
+  opcode : Int
+  kind : RawIntBinaryOpKind
+  mode : RawIntBinaryOpMode
+  outputOperandIndex : Nat
+  lhsOperandIndex : Nat
+  rhsOperandIndex : Nat
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -186,8 +223,14 @@ structure RawInstrShape where
   intConditionJumps : List RawIntConditionJumpShape := []
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
+  intBinaryOps : List RawIntBinaryOpShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
+
+def RawInstrShape.findIntBinaryOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawIntBinaryOpShape :=
+  rawShape.intBinaryOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

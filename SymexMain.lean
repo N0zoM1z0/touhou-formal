@@ -3,7 +3,7 @@ import TouhouFormal.Search.Symbolic
 namespace SymexMain
 
 private def usage : String :=
-  "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|list-callret-paths|list-condcall-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|query-body|query-body-values <th06|th07|th08> <bodyPath> [activeMask] [overrideMask]|query-int-resolver|query-int-resolver-values <th06|th07|th08> <resolverPath> [slot]|query-callret|query-callret-values <th06|th07|th08> <callRetPath> [activeMask] [overrideMask]|query-condcall|query-condcall-values <th06|th07|th08> <condCallPath> [activeMask] [overrideMask]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>|materialize-body <th06|th07|th08> <bodyPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <counterBefore> <divisorValue> <lhsRaw> <rhsRaw> <lhsHost> <rhsHost> <compareRegister> <bufferSize>|materialize-int-resolver <th06|th07|th08> <resolverPath> <slot> <rawValue> <hostValue> <operandMask>|materialize-callret <th06|th07|th08> <callRetPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <childContextSlot> <bufferSize>|materialize-condcall <th06|th07|th08> <condCallPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <lhsRaw> <lhsHost> <rhsRaw> <bufferSize>>"
+  "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|list-callret-paths|list-condcall-paths|list-int-binary-paths|query|query-values <th06|th07|th08> <path> [activeMask] [overrideMask]|query-body|query-body-values <th06|th07|th08> <bodyPath> [activeMask] [overrideMask]|query-int-resolver|query-int-resolver-values <th06|th07|th08> <resolverPath> [slot]|query-callret|query-callret-values <th06|th07|th08> <callRetPath> [activeMask] [overrideMask]|query-condcall|query-condcall-values <th06|th07|th08> <condCallPath> [activeMask] [overrideMask]|query-int-binary|query-int-binary-values <th06|th07|th08> <intBinaryPath> [activeMask] [overrideMask]|materialize|materialize-file <th06|th07|th08> <path> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <bufferSize>|materialize-body <th06|th07|th08> <bodyPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <jumpTargetTime> <jumpDisplacement> <counterBefore> <divisorValue> <lhsRaw> <rhsRaw> <lhsHost> <rhsHost> <compareRegister> <bufferSize>|materialize-int-resolver <th06|th07|th08> <resolverPath> <slot> <rawValue> <hostValue> <operandMask>|materialize-callret <th06|th07|th08> <callRetPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <childContextSlot> <bufferSize>|materialize-condcall <th06|th07|th08> <condCallPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <subId> <stackDepth> <stackDisabled> <subCount> <lhsRaw> <lhsHost> <rhsRaw> <bufferSize>|materialize-int-binary <th06|th07|th08> <intBinaryPath> <currentTime> <instrTime> <opcode> <nextOffset> <instructionMask> <operandMask> <activeMask> <overrideMask> <outputRaw> <outputHostBefore> <lhsRaw> <rhsRaw> <lhsHost> <rhsHost> <bufferSize>>"
 
 private def parseNat? (value : String) : Option Nat :=
   value.toNat?
@@ -155,6 +155,35 @@ private def runConditionalCallQuery
         return 2
     | _, none =>
         IO.eprintln s!"unknown conditional CALL path: {pathText}"
+        IO.eprintln usage
+        return 2
+
+private def runIntBinaryQuery
+    (valuesOnly : Bool)
+    (titleText pathText : String)
+    (activeMask overrideMask : Nat) :
+    IO UInt32 := do
+  if 255 < activeMask || 255 < overrideMask then
+    IO.eprintln "activeMask and overrideMask must fit in an unsigned byte"
+    IO.eprintln usage
+    return 2
+  else
+    match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+          TouhouFormal.Search.Symbolic.RawIntBinaryPath.parse? pathText with
+    | some title, some path =>
+        if valuesOnly then
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawIntBinaryValuesQuery title path activeMask overrideMask)
+        else
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawIntBinaryQuery title path activeMask overrideMask)
+        return 0
+    | none, _ =>
+        IO.eprintln s!"unknown title: {titleText}"
+        IO.eprintln usage
+        return 2
+    | _, none =>
+        IO.eprintln s!"unknown integer binary path: {pathText}"
         IO.eprintln usage
         return 2
 
@@ -453,6 +482,70 @@ private def runConditionalCallMaterialize
       IO.eprintln usage
       return 2
 
+private def runIntBinaryMaterialize
+    (titleText pathText currentTimeText instrTimeText opcodeText nextOffsetText
+      instructionMaskText operandMaskText activeMaskText overrideMaskText outputRawText
+      outputHostBeforeText lhsRawText rhsRawText lhsHostText rhsHostText bufferSizeText : String) :
+    IO UInt32 := do
+  match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+        TouhouFormal.Search.Symbolic.RawIntBinaryPath.parse? pathText,
+        parseInt? currentTimeText,
+        parseInt? instrTimeText,
+        parseInt? opcodeText,
+        parseInt? nextOffsetText,
+        parseNat? instructionMaskText,
+        parseInt? operandMaskText,
+        parseNat? activeMaskText,
+        parseNat? overrideMaskText,
+        parseInt? outputRawText,
+        parseInt? outputHostBeforeText,
+        parseInt? lhsRawText,
+        parseInt? rhsRawText,
+        parseInt? lhsHostText,
+        parseInt? rhsHostText,
+        parseNat? bufferSizeText with
+  | some title, some path, some currentTime, some instrTime, some opcode, some nextOffset,
+      some instructionMask, some operandMask, some activeMask, some overrideMask,
+      some outputRaw, some outputHostBefore, some lhsRaw, some rhsRaw, some lhsHost,
+      some rhsHost, some bufferSize =>
+      let witness : TouhouFormal.Search.Symbolic.RawIntBinaryWitness :=
+        { currentTime := currentTime
+          instrTime := instrTime
+          opcode := opcode
+          nextOffset := nextOffset
+          instructionMask := instructionMask
+          operandMask := operandMask
+          activeMask := activeMask
+          overrideMask := overrideMask
+          jumpTargetTime := 0
+          jumpDisplacement := 0
+          bufferSize := bufferSize
+          outputRaw := outputRaw
+          outputHostBefore := outputHostBefore
+          lhsRaw := lhsRaw
+          rhsRaw := rhsRaw
+          lhsHost := lhsHost
+          rhsHost := rhsHost }
+      match TouhouFormal.Search.Symbolic.rawIntBinaryMaterialize title path witness with
+      | .ok materialization =>
+          IO.print materialization.report
+          return 0
+      | .error message =>
+          IO.eprintln message
+          return 1
+  | none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown title: {titleText}"
+      IO.eprintln usage
+      return 2
+  | _, none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown integer binary path: {pathText}"
+      IO.eprintln usage
+      return 2
+  | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln "invalid materialize-int-binary witness field"
+      IO.eprintln usage
+      return 2
+
 def main (args : List String) : IO UInt32 := do
   match args with
   | ["list-paths"] =>
@@ -469,6 +562,9 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["list-condcall-paths"] =>
       IO.print TouhouFormal.Search.Symbolic.listRawConditionalCallPathsText
+      return 0
+  | ["list-int-binary-paths"] =>
+      IO.print TouhouFormal.Search.Symbolic.listRawIntBinaryPathsText
       return 0
   | ["query", title, path] =>
       runQuery false title path 1 0
@@ -490,6 +586,10 @@ def main (args : List String) : IO UInt32 := do
       runConditionalCallQuery false title path 1 0
   | ["query-condcall-values", title, path] =>
       runConditionalCallQuery true title path 1 0
+  | ["query-int-binary", title, path] =>
+      runIntBinaryQuery false title path 1 0
+  | ["query-int-binary-values", title, path] =>
+      runIntBinaryQuery true title path 1 0
   | ["query", title, path, activeMaskText, overrideMaskText] =>
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
@@ -550,6 +650,22 @@ def main (args : List String) : IO UInt32 := do
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
           runConditionalCallQuery true title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-int-binary", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runIntBinaryQuery false title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-int-binary-values", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runIntBinaryQuery true title path activeMask overrideMask
       | _, _ =>
           IO.eprintln "activeMask and overrideMask must be natural numbers"
           IO.eprintln usage
@@ -672,6 +788,27 @@ def main (args : List String) : IO UInt32 := do
         lhsRaw
         lhsHost
         rhsRaw
+        bufferSize
+  | [ "materialize-int-binary", title, path, currentTime, instrTime, opcode, nextOffset,
+      instructionMask, operandMask, activeMask, overrideMask, outputRaw, outputHostBefore,
+      lhsRaw, rhsRaw, lhsHost, rhsHost, bufferSize ] =>
+      runIntBinaryMaterialize
+        title
+        path
+        currentTime
+        instrTime
+        opcode
+        nextOffset
+        instructionMask
+        operandMask
+        activeMask
+        overrideMask
+        outputRaw
+        outputHostBefore
+        lhsRaw
+        rhsRaw
+        lhsHost
+        rhsHost
         bufferSize
   | _ =>
       IO.eprintln usage

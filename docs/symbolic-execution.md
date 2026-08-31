@@ -31,6 +31,11 @@ calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
 or selector resolution. Known selector ranges, source-backed exclusions, and
 default-to-raw fallthrough are title-profile facts.
 
+Integer binary arithmetic is modeled as a shared lvalue/rvalue layer for
+ADD/SUB/MUL/DIV/MOD. TH06 uses helper-style assign operations with typed output
+classification, TH07 uses assign-to-slot-0 arithmetic, and TH08 has both
+in-place opcodes `10..14` and assign opcodes `20..24`.
+
 Plain CALL/RET stack behavior is also modeled as a shared layer. The model
 tracks CALL's save-before-guard order, title-specific stack sizes and increment
 guards, `CallEclSub` lookup policy, RET's decrement-before-restore order, and
@@ -75,6 +80,13 @@ List and solve integer resolver branches:
 ```bash
 lake exe symex list-int-resolver-paths
 lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
+```
+
+List and solve integer binary arithmetic/lvalue branches:
+
+```bash
+lake exe symex list-int-binary-paths
+lake exe symex query-int-binary-values th08 int-binary-divide-overflow-resolved-host 1 0 | z3 -in
 ```
 
 List and solve CALL/RET stack branches:
@@ -133,6 +145,13 @@ Solve/materialize integer resolver paths:
 ```bash
 ./scripts/symex_materialize_int_resolver.py th07 all 0
 ./scripts/symex_int_resolver_queue.py
+```
+
+Solve/materialize integer binary arithmetic paths:
+
+```bash
+./scripts/symex_materialize_int_binary.py th08 all 1 0
+./scripts/symex_int_binary_candidate_queue.py
 ```
 
 Solve/materialize CALL/RET stack paths:
@@ -300,6 +319,36 @@ non-fuzzing distinction: an operand-mask bit can be set while the selector still
 falls through to raw-value behavior. That branch is easy for random testing to
 miss or misclassify because the raw bytes look like a variable reference, but
 the source resolver returns the operand unchanged.
+
+## Integer binary candidate queue
+
+`scripts/symex_int_binary_candidate_queue.py` enumerates title-specific
+ADD/SUB/MUL/DIV/MOD path classes:
+
+- output lvalue resolves to a raw operand cell;
+- output lvalue resolves to host state;
+- output lvalue defaults back to a raw operand cell;
+- TH06 typed output classification skips the integer arithmetic path;
+- div/mod RHS is zero through raw, host-resolved, or default-raw resolution;
+- div/mod RHS is `-1` while LHS is `INT_MIN`, the signed i32 idiv overflow
+  case.
+
+A full default run on 2026-08-31 produced 39 satisfiable materialized
+candidates:
+
+```text
+arithmetic-overflow: 13
+arithmetic-fault: 13
+silent-no-op: 2
+default-raw-self-write: 3
+raw-operand-self-write: 3
+host-lvalue-write: 5
+```
+
+All 39 replayed through Lean with `matchesPath=true`. This is the first current
+slice where the solver is no longer just proving cursor classes: it is
+constructing semantic arithmetic witnesses from resolver predicates and
+title-profiled operand layouts.
 
 ## CALL/RET candidate queue
 

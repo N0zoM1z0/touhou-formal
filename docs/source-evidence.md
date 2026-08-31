@@ -54,6 +54,18 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:120`: raw ECL skips an instruction when
   `skipForDifficulty & (1 << g_GameManager.difficulty)` is zero, so execution
   uses active-bit intersection.
+- `reference/th06/src/EclManager.cpp:183`: `MATHINTADD` dispatches into the
+  shared `MathAdd` helper with output slot 0 and operand slots 1 and 2.
+- `reference/th06/src/EclManager.cpp:195`: `MATHINTSUB` dispatches into
+  `MathSub` with the same output/lhs/rhs slot layout.
+- `reference/th06/src/EclManager.cpp:199`: `MATHINTMUL` dispatches into
+  `MathMul`; the helper performs extra initial lhs/rhs reads before output
+  classification, which is a known future precision target.
+- `reference/th06/src/EnemyEclInstr.cpp:252`: `SetVar` only writes when the
+  resolved output is classified as int or float.
+- `reference/th06/src/EnemyEclInstr.cpp:272`: integer `MathAdd`, `MathSub`, and
+  `MathMul` classify the output, then read lhs/rhs through `GetVar` before
+  writing the resolved output.
 - `reference/th06/src/EnemyEclInstr.cpp:348`: integer division assigns
   `*outPtr = *lhsPtr / *rhsPtr` without a zero-divisor guard.
 - `reference/th06/src/EnemyEclInstr.cpp:372`: integer modulo assigns
@@ -94,6 +106,11 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th07/src/th07/EclManager.cpp:268`: `GetVar` records the writable
   lvalue selector subset; unknown selectors fall through to raw-pointer
   behavior in the original C++.
+- `reference/th07/src/th07/EclManager.cpp:1011`: `ECL_ADD`, `ECL_SUB`,
+  `ECL_MUL`, `ECL_DIV`, and `ECL_MOD` write `GET_INT_PTR(enemy, 0)` and read
+  `GET_INT_VALUE(enemy, 1)`/`GET_INT_VALUE(enemy, 2)`.
+- `reference/th07/src/th07/EclManager.hpp:114`: the integer binary arithmetic
+  opcodes are numbered `ECL_ADD = 12` through `ECL_MOD = 16`.
 - `reference/th07/src/th07/EclManager.cpp:1092`: `ECL_JUMP_IF_EQUAL`,
   `ECL_JUMP_IF_NOT_EQUAL`, `ECL_JUMP_IF_LOWER_THAN`, `ECL_JUMP_IF_LEQ_THAN`,
   `ECL_JUMP_IF_GREATER_THAN`, and `ECL_JUMP_IF_GEQ_THAN` compare resolved
@@ -160,6 +177,11 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclRunLow.inl:315`: TH08 low opcodes 23 and 24 perform
   integer division/modulo with operand slot 2 as divisor and no zero-divisor
   guard.
+- `reference/th08/src/EclRunLow.inl:264`: TH08 low opcodes 10 through 14 update
+  `WriteInt(enemy, instruction, 0)` in place using `ReadInt(..., 1)`.
+- `reference/th08/src/EclRunLow.inl:291`: TH08 low opcodes 20 through 24 assign
+  to `WriteInt(enemy, instruction, 0)` using `ReadInt(..., 1)` and
+  `ReadInt(..., 2)`.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
 - `reference/th08/src/EclRunLow.inl:415`: low opcodes 52 and 53 call

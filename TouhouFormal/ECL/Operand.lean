@@ -10,16 +10,38 @@ inductive RawIntOperandResolutionKind where
   | resolvedDefaultRaw
 deriving Repr, DecidableEq
 
+inductive RawIntLValueResolutionKind where
+  | rawOperandCell
+  | resolvedHost
+  | resolvedDefaultRawCell
+  | nonIntOutput
+deriving Repr, DecidableEq
+
 def RawIntOperandResolutionKind.name : RawIntOperandResolutionKind -> String
   | .rawImmediate => "raw-immediate"
   | .resolvedHost => "resolved-host"
   | .resolvedDefaultRaw => "resolved-default-raw"
+
+def RawIntLValueResolutionKind.name : RawIntLValueResolutionKind -> String
+  | .rawOperandCell => "raw-operand-cell"
+  | .resolvedHost => "resolved-host"
+  | .resolvedDefaultRawCell => "resolved-default-raw-cell"
+  | .nonIntOutput => "non-int-output"
 
 structure RawIntOperandResolution where
   kind : RawIntOperandResolutionKind
   value : Int
   rawValue : Int
   hostValue : Option Int := none
+  selectorKnown : Bool
+  flagEnabled : Bool
+deriving Repr, DecidableEq
+
+structure RawIntLValueResolution where
+  kind : RawIntLValueResolutionKind
+  valueBefore : Option Int
+  rawValue : Int
+  hostValueBefore : Option Int := none
   selectorKnown : Bool
   flagEnabled : Bool
 deriving Repr, DecidableEq
@@ -35,6 +57,12 @@ private def missingIntResolverFault (shape : HeaderShape) : Fault :=
     title := shape.title
     component := "EclOperand.intRValue"
     detail := "profile does not define integer rvalue resolver semantics" }
+
+private def missingIntLValueResolverFault (shape : HeaderShape) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclOperand.intLValue"
+    detail := "profile does not define integer lvalue resolver semantics" }
 
 private def missingOperandMaskFault (shape : HeaderShape) : Fault :=
   { kind := .invalidInstruction
@@ -103,5 +131,63 @@ def resolveIntRValue
                 hostValue := none
                 selectorKnown := selectorKnown
                 flagEnabled := flagEnabled }
+
+def resolveIntLValue
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (slot : Nat)
+    (rawValue : Int)
+    (hostValueBefore : Int) : Except Fault RawIntLValueResolution :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      match rawShape.intRValueResolver with
+      | none => .error (missingIntLValueResolverFault shape)
+      | some resolver => do
+          let flagEnabled <- rawIntOperandFlagEnabled shape rawPrefix slot resolver
+          let selectorKnown := resolver.knownLValueSelectors.contains rawValue
+          match resolver.maskPolicy with
+          | .noMaskAlwaysResolve =>
+              if selectorKnown then
+                .ok
+                  { kind := .resolvedHost
+                    valueBefore := some hostValueBefore
+                    rawValue := rawValue
+                    hostValueBefore := some hostValueBefore
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+              else
+                .ok
+                  { kind := .nonIntOutput
+                    valueBefore := none
+                    rawValue := rawValue
+                    hostValueBefore := none
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+          | .bitSetMeansResolve =>
+              if !flagEnabled then
+                .ok
+                  { kind := .rawOperandCell
+                    valueBefore := some rawValue
+                    rawValue := rawValue
+                    hostValueBefore := none
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+              else if selectorKnown then
+                .ok
+                  { kind := .resolvedHost
+                    valueBefore := some hostValueBefore
+                    rawValue := rawValue
+                    hostValueBefore := some hostValueBefore
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+              else
+                .ok
+                  { kind := .resolvedDefaultRawCell
+                    valueBefore := some rawValue
+                    rawValue := rawValue
+                    hostValueBefore := none
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
 
 end TouhouFormal.ECL

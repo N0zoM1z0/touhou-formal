@@ -5,10 +5,10 @@ symbolic execution baseline cover, where does it fail to cover, and is it
 already better than the previous fuzzing lane?
 
 Short answer: it is already better than fuzzing for the modeled VM-core
-dispatch skeleton, the first shared opcode-body slice, and the integer rvalue
-resolver/CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the full
-ECL/ANM VM, because most opcode bodies and host-game side effects are not
-modeled yet.
+dispatch skeleton, the first shared opcode-body slice, the integer resolver,
+the integer binary-op slice, and the CALL/RET/conditional-CALL slices. It is
+not yet better than fuzzing for the full ECL/ANM VM, because most gameplay host
+effects, callbacks, and multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -27,6 +27,7 @@ python3 scripts/evaluate_symex_effectiveness.py --run-check
 The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_body_candidate_queue.py` and
 `scripts/symex_int_resolver_queue.py` and
+`scripts/symex_int_binary_candidate_queue.py` and
 `scripts/symex_callret_candidate_queue.py` and
 `scripts/symex_condcall_candidate_queue.py`, summarizes path coverage, reads
 the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
@@ -41,7 +42,7 @@ python3 scripts/evaluate_symex_effectiveness.py > /tmp/touhou_symex_effectivenes
 ```
 
 Both completed successfully on the current raw-step, raw-body, resolver,
-CALL/RET, and conditional-CALL model. When a
+integer-binary, CALL/RET, and conditional-CALL model. When a
 previous queue result should be reused instead of recomputed, the equivalent
 assessment is:
 
@@ -50,6 +51,7 @@ python3 scripts/evaluate_symex_effectiveness.py \
   --queue-json /tmp/raw_queue.json \
   --body-queue-json /tmp/body_queue.json \
   --resolver-queue-json /tmp/resolver_queue.json \
+  --int-binary-queue-json /tmp/int_binary_queue.json \
   --callret-queue-json /tmp/callret_queue.json \
   --condcall-queue-json /tmp/condcall_queue.json
 ```
@@ -244,6 +246,78 @@ mask-set/default-raw branch is semantically distinct from both ordinary
 immediate operands and real variable reads, but it can be hard to classify from
 runtime traces alone without source-backed path predicates.
 
+## Integer binary arithmetic and lvalue coverage
+
+The integer binary-op model is the first arithmetic slice that combines:
+
+- rvalue resolution;
+- lvalue resolution;
+- opcode-specific operand layouts;
+- arithmetic fault predicates;
+- Lean materialization back into concrete raw ECL bytes.
+
+It covers `ADD`, `SUB`, `MUL`, `DIV`, and `MOD` families through one shared
+`RawIntBinaryOpShape` profile:
+
+- TH06 `MATHINTADD/SUB/MUL/DIV/MOD`: assign to output slot 0, read slots 1 and
+  2, with TH06's typed output classification.
+- TH07 `ECL_ADD/SUB/MUL/DIV/MOD`: assign to `GET_INT_PTR(0)`, read
+  `GET_INT_VALUE(1)` and `GET_INT_VALUE(2)`.
+- TH08 low opcodes `10..14`: in-place arithmetic through `WriteInt(0)` and
+  `ReadInt(1)`.
+- TH08 low opcodes `20..24`: assign arithmetic through `WriteInt(0)`,
+  `ReadInt(1)`, and `ReadInt(2)`.
+
+The symbolic path families are:
+
+```text
+int-binary-output-raw-cell
+int-binary-output-resolved-host
+int-binary-output-default-raw-cell
+int-binary-non-int-output
+int-binary-divisor-zero-raw-immediate
+int-binary-divisor-zero-resolved-host
+int-binary-divisor-zero-resolved-default-raw
+int-binary-divide-overflow-raw-immediate
+int-binary-divide-overflow-resolved-host
+int-binary-divide-overflow-resolved-default-raw
+```
+
+Feasibility is title-specific:
+
+- TH06 has no raw-cell output path in this integer-output abstraction, but it
+  has a `non-int-output` no-op path from typed output classification.
+- TH07/TH08 have raw-cell/default-raw output paths through operand masks, but no
+  TH06-style non-int-output path.
+
+Observed result:
+
+| Metric | Result |
+| --- | --- |
+| environments | 5 |
+| conceptual path families | 10 |
+| title-specific candidates | 39 |
+| solver status | 39 `sat` |
+| Lean byte materialization/replay | 39 `matchesPath=true` |
+| all modeled title-specific paths covered per environment | yes |
+
+Risk split:
+
+| Risk class | Count | Interpretation |
+| --- | ---: | --- |
+| `arithmetic-overflow` | 13 | signed i32 `INT_MIN / -1` idiv overflow |
+| `arithmetic-fault` | 13 | integer div/mod reaches a zero divisor |
+| `silent-no-op` | 2 | TH06 typed output classification skips arithmetic |
+| `default-raw-self-write` | 3 | unknown lvalue selector writes back into the raw operand cell |
+| `raw-operand-self-write` | 3 | masked-off lvalue writes back into the raw operand cell |
+| `host-lvalue-write` | 5 | ordinary resolved host-lvalue arithmetic writes |
+
+This is the clearest current example of formal finding paths that fuzzing is
+unlikely to enumerate systematically. The solver can ask for "a byte-realizable
+instruction where the RHS is not zero in raw bytes but resolves to a host zero,"
+or "a div/mod instruction where the resolved operands are exactly
+`INT_MIN / -1`." Those are semantic path predicates, not mutation recipes.
+
 ## CALL/RET stack coverage
 
 The shared CALL/RET model covers the plain subroutine control-transfer stack
@@ -324,31 +398,32 @@ controls rather than missing queue entries.
 
 The current executor still does not cover the full game semantics of each
 instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
-jumps, TH06 conditional CALLs, integer rvalue resolver branches, plain CALL/RET
-stack behavior, and immediate integer div/mod divisor hazards, but not most
-body internals.
+jumps, TH06 conditional CALLs, integer rvalue/lvalue resolver branches,
+integer ADD/SUB/MUL/DIV/MOD single-step behavior, plain CALL/RET stack
+behavior, zero divisors, and signed idiv overflow, but not most gameplay host
+effects.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTDIV`, `MATHINTMOD` | 117 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `DIV`, `MOD` | 146 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, `case 13`, `case 14`, `case 23`, `case 24`, integer condition cases `40/42/44/46/48/50`, and CALL/RET cases `52/53` | 76 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD` | 114 |
+| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD` | 143 |
+| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, integer arithmetic cases `10..14` and `20..24`, integer condition cases `40/42/44/46/48/50`, and CALL/RET cases `52/53` | 70 |
 
 The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
-jumps, TH06 conditional CALLs, integer resolver branches, plain CALL/RET stack
-edges, and integer div/mod zero-divisor hazards are now modeled; "ordinary
-advance" for the remaining opcodes still does not prove their internal
-branches.
+jumps, TH06 conditional CALLs, integer resolver branches, integer binary
+arithmetic, plain CALL/RET stack edges, and integer div/mod fault hazards are
+now modeled; "ordinary advance" for the remaining opcodes still does not prove
+their internal branches.
 
 Not covered:
 
 - interrupts, callback stacks, and TH08 high-opcode pending-sub dispatch;
-- integer lvalue writes and non-integer operand-mask branches into variable
-  reads/writes;
-- resolver-driven integer divide/modulo by zero, float division/fmod edge cases,
-  overflow, and other C/C++ arithmetic hazards;
+- persistent host-state mutation, aliasing across multiple instructions, and
+  non-integer operand-mask branches into variable reads/writes;
+- exact signed add/sub/mul overflow behavior, float division/fmod edge cases,
+  and other C/C++ arithmetic hazards;
 - bullet, laser, enemy, item, ANM, sound, and callback side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
@@ -372,7 +447,9 @@ So the current coverage claim is strong but scoped:
 complete for the implemented raw-step abstraction;
 complete for the first implemented raw-body abstraction;
 complete for the implemented integer rvalue resolver abstraction;
+complete for the implemented integer binary-op/lvalue abstraction;
 complete for the implemented plain CALL/RET stack abstraction;
+complete for the implemented TH06 conditional-CALL abstraction;
 incomplete for full ECL/ANM VM opcode semantics.
 ```
 
@@ -411,6 +488,8 @@ Concrete advantages already demonstrated:
 - every default TH06/TH07/TH08 environment covers all 17 modeled body path
   classes;
 - every title-specific integer rvalue resolver branch is solved and replayed;
+- every title/environment-specific integer binary arithmetic path is solved and
+  replayed, including resolver-driven zero divisors and signed idiv overflow;
 - every title/environment-specific plain CALL/RET branch is solved and
   replayed;
 - every TH06 conditional-CALL branch in the current guard abstraction is solved
@@ -419,6 +498,8 @@ Concrete advantages already demonstrated:
   offsets, then replay-checked;
 - the body queue finds immediate integer div/mod zero-divisor paths for all
   default environments;
+- the integer-binary queue adds 39 non-manual arithmetic/lvalue candidates,
+  including 13 `arithmetic-overflow` and 13 `arithmetic-fault` records;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a
@@ -437,10 +518,10 @@ Fuzz is still better outside the current formal model:
 ## Current verdict
 
 For the implemented VM-core skeleton, first shared body slice, integer resolver
-slice, plain CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT
-is already better than
-fuzzing: it gives exhaustive path-class coverage, satisfiable/unsatisfiable
-controls, concrete counterexample bytes, and shared TH06/TH07/TH08 semantics.
+slice, integer binary-op slice, plain CALL/RET stack slice, and TH06
+conditional-CALL slice, Lean + SMT is already better than fuzzing: it gives
+exhaustive path-class coverage, satisfiable/unsatisfiable controls, concrete
+counterexample bytes, and shared TH06/TH07/TH08 semantics.
 
 For the whole VM, it is not yet better. The model has to move down one layer
 into opcode bodies and bounded multi-step execution before we can honestly say
@@ -448,10 +529,12 @@ formal is finding classes that DanmakuFuzz cannot find in practice.
 
 The next technically useful targets are:
 
-1. add integer lvalue writes and resolver-driven arithmetic hazards;
+1. compose integer lvalue writes with bounded multi-step execution so raw-cell
+   and default-raw self-writes can feed later VM transitions;
 2. add bounded multi-step reachability for nested `CALL`, `RET`, conditional
    `CALL`, callbacks, and stacked jumps;
-3. extend arithmetic hazards beyond immediate integer div/mod zero;
+3. refine arithmetic to exact machine behavior for signed add/sub/mul overflow
+   and float divide/fmod edge cases;
 4. lower the top raw-step queue entries into TH06 retail batches;
 5. add TH07/TH08 archive adapters so the same shared witnesses can be validated
    without TH06-specific mutation code.

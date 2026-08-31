@@ -106,6 +106,20 @@ python3 scripts/symex_int_resolver_queue.py > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 8; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {(c["title"], c["path"]) for c in data["candidates"]} == {("th06", "resolved-host"), ("th06", "resolved-default-raw"), ("th07", "raw-immediate"), ("th07", "resolved-host"), ("th07", "resolved-default-raw"), ("th08", "raw-immediate"), ("th08", "resolved-host"), ("th08", "resolved-default-raw")}' "$solver_output"
 
+lake exe symex query-int-binary th06 int-binary-output-raw-cell 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-int-binary th08 int-binary-non-int-output 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+python3 scripts/symex_materialize_int_binary.py th08 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 10; sat=[r for r in xs if r["status"] == "sat"]; unsat=[r for r in xs if r["status"] == "unsat"]; assert len(sat) == 9 and len(unsat) == 1; assert all(r["fixture"]["matchesPath"] == "true" for r in sat); assert any(r["path"] == "int-binary-divide-overflow-resolved-host" and r["fixture"]["faultKind"] == "arithmetic-overflow" for r in sat)' "$solver_output"
+
+python3 scripts/symex_int_binary_candidate_queue.py --path int-binary-divide-overflow-resolved-host > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 5; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {c["risk"]["class"] for c in data["candidates"]} == {"arithmetic-overflow"}' "$solver_output"
+
 lake exe symex query-callret th06 call-no-op 1 0 | z3 -in | tee "$solver_output"
 grep -q '^unsat$' "$solver_output"
 

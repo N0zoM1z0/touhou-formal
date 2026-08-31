@@ -48,8 +48,13 @@ The executable model currently covers these source-backed boundaries:
 - Shared integer operand resolution covers TH06's always-`GetVar` behavior and
   TH07/TH08 `operandFlags` mask branches, including known selector fallthrough
   to raw immediates.
-- The first opcode-body slice includes `JUMPDEC`, integer conditional jumps,
-  and immediate/raw integer div/mod zero-divisor hazards.
+- Shared integer binary-op semantics cover ADD/SUB/MUL/DIV/MOD over
+  title-profiled operand layouts, including output lvalue resolution,
+  TH08 in-place arithmetic, resolver-driven zero divisors, and signed
+  `INT_MIN / -1` idiv overflow.
+- The first control-flow body slice includes `JUMPDEC` and integer conditional
+  jumps; the older immediate/raw div/mod check is kept as a small regression
+  beside the fuller integer-binary model.
 - Plain CALL/RET stack behavior is modeled with shared semantics for stack
   saves/restores, depth guards, subTable lookup, and TH08 child-context RET
   exits.
@@ -90,6 +95,8 @@ lake exe symex list-body-paths
 lake exe symex query-body-values th08 int-divisor-zero 1 2 | z3 -in
 lake exe symex list-int-resolver-paths
 lake exe symex query-int-resolver-values th07 resolved-default-raw 0 | z3 -in
+lake exe symex list-int-binary-paths
+lake exe symex query-int-binary-values th08 int-binary-divide-overflow-resolved-host 1 0 | z3 -in
 lake exe symex list-callret-paths
 lake exe symex query-callret-values th08 ret-child-index-before-array 1 0 | z3 -in
 lake exe symex list-condcall-paths
@@ -102,6 +109,8 @@ lake exe symex query-condcall-values th06 condcall-lookup-fault 1 0 | z3 -in
 ./scripts/symex_body_candidate_queue.py
 ./scripts/symex_materialize_int_resolver.py th07 all 0
 ./scripts/symex_int_resolver_queue.py
+./scripts/symex_materialize_int_binary.py th08 all 1 0
+./scripts/symex_int_binary_candidate_queue.py
 ./scripts/symex_materialize_callret_step.py th08 all 1 0
 ./scripts/symex_callret_candidate_queue.py
 ./scripts/symex_materialize_condcall_step.py th06 all 1 0
@@ -121,7 +130,10 @@ shared title profile, decodes it again, and checks that the concrete step lands
 back in the requested path class. The body materializer does the same for the
 first opcode-body layer: `JUMPDEC`, integer conditional jumps, and immediate/raw
 integer div/mod zero-divisor faults. The resolver materializer covers integer
-rvalue `operandFlags` branches separately from opcode-body effects. The CALL/RET
+rvalue `operandFlags` branches separately from opcode-body effects. The
+integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
+output lvalue resolution, resolver-driven divisor faults, and signed idiv
+overflow. The CALL/RET
 materializer covers stack write/read faults, subTable lookup faults, and TH08
 child-context RET exits. The conditional-CALL materializer covers TH06
 guard-false fallthrough and guard-true reuse of the same CALL stack/subTable

@@ -6,6 +6,7 @@ inductive FaultKind where
   | stackUnderflow
   | stackOverflow
   | divideByZero
+  | arithmeticOverflow
   | invalidInstruction
   | invalidHostIndex
   | malformedFile
@@ -17,6 +18,7 @@ def FaultKind.name : FaultKind -> String
   | .stackUnderflow => "stack-underflow"
   | .stackOverflow => "stack-overflow"
   | .divideByZero => "divide-by-zero"
+  | .arithmeticOverflow => "arithmetic-overflow"
   | .invalidInstruction => "invalid-instruction"
   | .invalidHostIndex => "invalid-host-index"
   | .malformedFile => "malformed-file"

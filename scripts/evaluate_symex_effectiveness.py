@@ -3,7 +3,8 @@
 
 The report is intentionally about the implemented model, not about an imagined
 full ECL VM.  It reruns the profile-driven raw-step, body-step, integer
-resolver, CALL/RET, and conditional-CALL candidate queues, summarizes which modeled path classes
+resolver, integer-binary arithmetic, CALL/RET, and conditional-CALL candidate queues,
+summarizes which modeled path classes
 are covered, records source-level opcode surface that is still outside the
 current semantics, and folds in retained retail validation evidence when those
 artifacts are present beside the repository.
@@ -83,6 +84,45 @@ MODELED_INT_RESOLVER_PATHS_BY_TITLE = {
 MODELED_INT_RESOLVER_PATHS = sorted({
     path
     for paths in MODELED_INT_RESOLVER_PATHS_BY_TITLE.values()
+    for path in paths
+})
+
+MODELED_INT_BINARY_PATHS_BY_TITLE = {
+    "th06": [
+        "int-binary-output-resolved-host",
+        "int-binary-non-int-output",
+        "int-binary-divisor-zero-resolved-host",
+        "int-binary-divisor-zero-resolved-default-raw",
+        "int-binary-divide-overflow-resolved-host",
+        "int-binary-divide-overflow-resolved-default-raw",
+    ],
+    "th07": [
+        "int-binary-output-raw-cell",
+        "int-binary-output-resolved-host",
+        "int-binary-output-default-raw-cell",
+        "int-binary-divisor-zero-raw-immediate",
+        "int-binary-divisor-zero-resolved-host",
+        "int-binary-divisor-zero-resolved-default-raw",
+        "int-binary-divide-overflow-raw-immediate",
+        "int-binary-divide-overflow-resolved-host",
+        "int-binary-divide-overflow-resolved-default-raw",
+    ],
+    "th08": [
+        "int-binary-output-raw-cell",
+        "int-binary-output-resolved-host",
+        "int-binary-output-default-raw-cell",
+        "int-binary-divisor-zero-raw-immediate",
+        "int-binary-divisor-zero-resolved-host",
+        "int-binary-divisor-zero-resolved-default-raw",
+        "int-binary-divide-overflow-raw-immediate",
+        "int-binary-divide-overflow-resolved-host",
+        "int-binary-divide-overflow-resolved-default-raw",
+    ],
+}
+
+MODELED_INT_BINARY_PATHS = sorted({
+    path
+    for paths in MODELED_INT_BINARY_PATHS_BY_TITLE.values()
     for path in paths
 })
 
@@ -175,12 +215,17 @@ SOURCE_COVERAGE = [
     {
         "area": "integer div/mod immediate divisor hazards",
         "status": "covered-by-symbolic-execution",
-        "reason": "shared profile records source-backed integer div/mod opcodes and divisor operand slots; SMT finds zero-divisor body faults",
+        "reason": "legacy body-slice check still records source-backed integer div/mod opcodes and immediate divisor operand slots; the fuller integer-binary slice supersedes this for resolver-driven arithmetic",
     },
     {
         "area": "integer operandFlags / rvalue resolver",
         "status": "covered-by-symbolic-execution",
         "reason": "shared resolver profile distinguishes TH06 always-resolve from TH07/TH08 bit-set operand masks, known selector ranges, exclusions, and default-to-raw fallthrough",
+    },
+    {
+        "area": "integer lvalue writes and binary arithmetic",
+        "status": "covered-by-symbolic-execution",
+        "reason": "shared RawIntBinaryOpShape models ADD/SUB/MUL/DIV/MOD, title-specific assign versus in-place operand layouts, output lvalue resolution, RHS resolution, zero divisors, and signed i32 idiv overflow",
     },
     {
         "area": "integer conditional jumps",
@@ -210,12 +255,7 @@ SOURCE_COVERAGE = [
     {
         "area": "full raw ECL opcode bodies",
         "status": "partially-covered",
-        "reason": "UNIMP, fixed JUMP, JUMPDEC, integer conditional jumps, TH06 conditional CALLs, and integer div/mod divisor hazards are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
-    },
-    {
-        "area": "integer lvalue writes and resolver-driven arithmetic",
-        "status": "partially-covered",
-        "reason": "writable selector sets are profiled, but assignment, arithmetic writes, resolver-driven divisors, and aliasing into host state are not executed yet",
+        "reason": "UNIMP, fixed JUMP, JUMPDEC, integer conditional jumps, TH06 conditional CALLs, and integer ADD/SUB/MUL/DIV/MOD families are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
     },
     {
         "area": "interrupts, callbacks, pending-sub dispatch",
@@ -225,7 +265,7 @@ SOURCE_COVERAGE = [
     {
         "area": "remaining arithmetic body faults",
         "status": "not-yet-modeled",
-        "reason": "immediate integer div/mod zero is modeled; resolver-driven divisors, float divide/fmod zero, overflow, and numeric non-finite behavior still require operand resolution plus C/C++-faithful arithmetic semantics",
+        "reason": "integer div/mod zero and signed idiv overflow are modeled; exact signed add/sub/mul overflow behavior, float divide/fmod edge cases, and numeric non-finite behavior still require C/C++/x87/SSE-faithful arithmetic semantics",
     },
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
@@ -333,6 +373,20 @@ def load_int_resolver_queue(args: argparse.Namespace) -> tuple[dict[str, Any], d
     return payload, command
 
 
+def load_int_binary_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
+    if args.int_binary_queue_json:
+        path = Path(args.int_binary_queue_json)
+        return json.loads(path.read_text()), {
+            "argv": ["read-existing-json", str(path)],
+            "returncode": 0,
+            "elapsedSeconds": 0.0,
+        }
+    payload, command = run_json_command([sys.executable, "scripts/symex_int_binary_candidate_queue.py"])
+    if not isinstance(payload, dict):
+        raise EvaluationError("integer-binary candidate queue did not return an object")
+    return payload, command
+
+
 def load_callret_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
     if args.callret_queue_json:
         path = Path(args.callret_queue_json)
@@ -410,6 +464,16 @@ def callret_action_from_path(path: str) -> str:
         return "ret-stack-read"
     if path.startswith("ret-child-index-"):
         return "ret-child-index"
+    return path
+
+
+def int_binary_action_from_path(path: str) -> str:
+    if path.startswith("int-binary-output-"):
+        return "int-binary-output"
+    if path.startswith("int-binary-divisor-zero-"):
+        return "int-binary-divisor-zero"
+    if path.startswith("int-binary-divide-overflow-"):
+        return "int-binary-divide-overflow"
     return path
 
 
@@ -656,6 +720,100 @@ def summarize_int_resolver_queue(queue: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def summarize_int_binary_queue(queue: dict[str, Any]) -> dict[str, Any]:
+    candidates = queue.get("candidates", [])
+    if not isinstance(candidates, list):
+        raise EvaluationError("integer-binary candidate queue has no candidate list")
+
+    statuses = Counter(str(candidate.get("status")) for candidate in candidates)
+    risks = Counter(str(candidate.get("risk", {}).get("class")) for candidate in candidates)
+    priorities = Counter(str(candidate.get("risk", {}).get("priority")) for candidate in candidates)
+    actions = Counter(int_binary_action_from_path(str(candidate.get("path"))) for candidate in candidates)
+    fixture_actions = Counter(str(candidate.get("fixture", {}).get("action")) for candidate in candidates)
+    fault_kinds = Counter(str(candidate.get("fixture", {}).get("faultKind", "-")) for candidate in candidates)
+    output_kinds = Counter(str(candidate.get("fixture", {}).get("outputKind", "-")) for candidate in candidates)
+    lhs_kinds = Counter(str(candidate.get("fixture", {}).get("lhsKind", "-")) for candidate in candidates)
+    rhs_kinds = Counter(str(candidate.get("fixture", {}).get("rhsKind", "-")) for candidate in candidates)
+    op_kinds = Counter(str(candidate.get("fixture", {}).get("op", "-")) for candidate in candidates)
+    matches = Counter(str(candidate.get("fixture", {}).get("matchesPath")) for candidate in candidates)
+
+    by_title = Counter(str(candidate.get("title")) for candidate in candidates)
+    by_environment: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for candidate in candidates:
+        key = (
+            f"{candidate.get('title')}:{candidate.get('environment')}:"
+            f"active={candidate.get('activeMask')}:override={candidate.get('overrideMask')}"
+        )
+        by_environment[key].append(candidate)
+
+    env_reports = {}
+    for env, env_candidates in sorted(by_environment.items()):
+        title = str(env_candidates[0].get("title"))
+        expected_paths = set(MODELED_INT_BINARY_PATHS_BY_TITLE.get(title, MODELED_INT_BINARY_PATHS))
+        observed_paths = {str(candidate.get("path")) for candidate in env_candidates}
+        env_reports[env] = {
+            "title": title,
+            "pathCount": len(observed_paths),
+            "candidateCount": len(env_candidates),
+            "satCount": sum(1 for candidate in env_candidates if candidate.get("status") == "sat"),
+            "matchesPathCount": sum(
+                1 for candidate in env_candidates
+                if candidate.get("fixture", {}).get("matchesPath") == "true"
+            ),
+            "modeledPathsForTitle": sorted(expected_paths),
+            "missingModeledPaths": sorted(expected_paths - observed_paths),
+            "extraPaths": sorted(observed_paths - expected_paths),
+        }
+
+    top_candidates = [
+        {
+            "id": candidate.get("id"),
+            "risk": candidate.get("risk", {}).get("class"),
+            "priority": candidate.get("risk", {}).get("priority"),
+            "hex": candidate.get("fixture", {}).get("hex"),
+            "op": candidate.get("fixture", {}).get("op"),
+            "outputKind": candidate.get("fixture", {}).get("outputKind"),
+            "lhsKind": candidate.get("fixture", {}).get("lhsKind"),
+            "rhsKind": candidate.get("fixture", {}).get("rhsKind"),
+            "lhsValue": candidate.get("fixture", {}).get("lhsValue"),
+            "rhsValue": candidate.get("fixture", {}).get("rhsValue"),
+            "action": candidate.get("fixture", {}).get("action"),
+            "faultKind": candidate.get("fixture", {}).get("faultKind"),
+            "faultDetail": candidate.get("fixture", {}).get("faultDetail"),
+        }
+        for candidate in candidates[:10]
+    ]
+
+    return {
+        "schema": queue.get("schema"),
+        "environmentCount": queue.get("environmentCount"),
+        "candidateCount": queue.get("candidateCount"),
+        "uniquePathCount": len({str(candidate.get("path")) for candidate in candidates}),
+        "modeledPathFamilies": MODELED_INT_BINARY_PATHS,
+        "modeledPathsByTitle": MODELED_INT_BINARY_PATHS_BY_TITLE,
+        "statuses": dict(statuses),
+        "matchesPath": dict(matches),
+        "riskCounts": dict(risks),
+        "priorityCounts": dict(priorities),
+        "pathActionCounts": dict(actions),
+        "fixtureActionCounts": dict(fixture_actions),
+        "faultKindCounts": dict(fault_kinds),
+        "outputKindCounts": dict(output_kinds),
+        "lhsKindCounts": dict(lhs_kinds),
+        "rhsKindCounts": dict(rhs_kinds),
+        "opCounts": dict(op_kinds),
+        "candidateCountsByTitle": dict(by_title),
+        "allModeledPathsCoveredPerEnvironment": all(
+            not report["missingModeledPaths"] and not report["extraPaths"]
+            for report in env_reports.values()
+        ),
+        "allSat": statuses == Counter({"sat": len(candidates)}),
+        "allMaterializedAndReplayMatched": matches == Counter({"true": len(candidates)}),
+        "byEnvironment": env_reports,
+        "topCandidates": top_candidates,
+    }
+
+
 def summarize_callret_queue(queue: dict[str, Any]) -> dict[str, Any]:
     candidates = queue.get("candidates", [])
     if not isinstance(candidates, list):
@@ -871,10 +1029,13 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "ECL_OPCODE_CALLGRE",
                 "ECL_OPCODE_CALLGEQ",
                 "ECL_OPCODE_CALLNEQ",
+                "ECL_OPCODE_MATHINTADD",
+                "ECL_OPCODE_MATHINTSUB",
+                "ECL_OPCODE_MATHINTMUL",
                 "ECL_OPCODE_MATHINTDIV",
                 "ECL_OPCODE_MATHINTMOD",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 19),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 22),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -902,10 +1063,13 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "ECL_JUMP_IF_GEQ_THAN",
                 "ECL_SUB_CALL",
                 "ECL_SUB_RET",
+                "ECL_ADD",
+                "ECL_SUB",
+                "ECL_MUL",
                 "ECL_DIV",
                 "ECL_MOD",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 13),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 16),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -921,8 +1085,14 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "case 1",
                 "case 4",
                 "case 5",
+                "case 10",
+                "case 11",
+                "case 12",
                 "case 13",
                 "case 14",
+                "case 20",
+                "case 21",
+                "case 22",
                 "case 23",
                 "case 24",
                 "case 40",
@@ -934,7 +1104,7 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "case 52",
                 "case 53",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 15),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 21),
             "firstCaseLabels": case_labels[:12],
             "lastCaseLabels": case_labels[-12:],
         }
@@ -1051,6 +1221,7 @@ def fuzz_comparison() -> dict[str, Any]:
             "exhaustively enumerating the implemented raw-step path classes instead of waiting for random mutation to hit each class",
             "exhaustively enumerating the implemented JUMPDEC and integer conditional jump taken/not-taken cursor classes plus immediate integer div/mod zero-divisor faults",
             "separating operandFlags resolver branches, including TH06's no-mask behavior and TH07/TH08's mask-clear/mask-set selector behavior",
+            "enumerating title-specific integer lvalue/binary arithmetic paths, including resolver-driven zero divisors and signed idiv overflow",
             "separating CALL/RET stack write/read hazards from subTable lookup faults and TH08 child-context RET exits",
             "separating TH06 conditional CALL guard-false fallthrough from guard-true CALL stack/subTable hazards",
             "returning satisfiable/unsatisfiable path facts with concrete byte-realizable witnesses",
@@ -1066,12 +1237,13 @@ def fuzz_comparison() -> dict[str, Any]:
         "currentVerdict": (
             "The current Lean+SMT baseline is stronger than prior fuzzing on the modeled VM-core skeleton, "
             "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
-            "plus all 41 title/environment-specific CALL/RET candidates and all 16 TH06 conditional-CALL candidates are solved and materialized for the default environments. "
+            "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
+            "are solved and materialized for the default environments. "
             "It is not yet stronger than fuzzing for the full ECL/ANM VM, because most opcode bodies and host-state branches "
             "remain outside the semantics."
         ),
         "nextHighValueFormalWork": [
-            "add lvalue writes and resolver-driven arithmetic hazards on top of the shared integer resolver",
+            "compose integer arithmetic writes with bounded multi-step execution to see which self-writes and host writes become later control/state hazards",
             "add bounded multi-step raw ECL contexts for nested CALL/RET reachability, callbacks, and stacked jumps",
             "model float division/fmod preconditions and C/C++-faithful non-finite behavior",
             "reuse the existing materializer queue to lower top-ranked TH07/TH08 witnesses once retail archive adapters exist",
@@ -1094,6 +1266,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--resolver-queue-json",
         help="reuse an existing symex_int_resolver_queue.py JSON payload instead of rerunning the resolver solver",
+    )
+    parser.add_argument(
+        "--int-binary-queue-json",
+        help="reuse an existing symex_int_binary_candidate_queue.py JSON payload instead of rerunning the integer-binary solver",
     )
     parser.add_argument(
         "--callret-queue-json",
@@ -1138,6 +1314,9 @@ def main(argv: list[str]) -> int:
     resolver_queue, resolver_command = load_int_resolver_queue(args)
     commands["intResolverQueue"] = resolver_command
     resolver_queue_summary = summarize_int_resolver_queue(resolver_queue)
+    int_binary_queue, int_binary_command = load_int_binary_queue(args)
+    commands["intBinaryCandidateQueue"] = int_binary_command
+    int_binary_queue_summary = summarize_int_binary_queue(int_binary_queue)
     callret_queue, callret_command = load_callret_queue(args)
     commands["callRetCandidateQueue"] = callret_command
     callret_queue_summary = summarize_callret_queue(callret_queue)
@@ -1152,6 +1331,7 @@ def main(argv: list[str]) -> int:
         "rawStepSymbolicCoverage": queue_summary,
         "rawBodySymbolicCoverage": body_queue_summary,
         "rawIntResolverCoverage": resolver_queue_summary,
+        "rawIntBinaryCoverage": int_binary_queue_summary,
         "rawCallRetCoverage": callret_queue_summary,
         "rawConditionalCallCoverage": condcall_queue_summary,
         "sourceOpcodeSurface": source_opcode_surface(args.reference_root),
