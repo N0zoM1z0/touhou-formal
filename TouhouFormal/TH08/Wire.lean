@@ -29,6 +29,18 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 238
       endLine := 242
       claim := "Low opcode 4 sets context time from RawInt(0) and jumps by RawInt(1)." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 233
+      endLine := 241
+      claim := "Low opcode 5 decrements operand slot 2 and falls through to opcode 4 jump only while the decremented value is positive." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 276
+      endLine := 280
+      claim := "Low opcodes 13 and 14 perform integer division/modulo by operand slot 1 without a zero-divisor guard." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 315
+      endLine := 323
+      claim := "Low opcodes 23 and 24 perform integer division/modulo by operand slot 2 without a zero-divisor guard." },
     { path := "reference/th08/src/EclManager.hpp"
       startLine := 181
       endLine := 187
@@ -99,7 +111,26 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
             some
               { opcode := eclOpcodeJump
                 targetTimeOperandIndex := 0
-                displacementOperandIndex := 1 } }
+                displacementOperandIndex := 1 }
+          fixedDecJumpShape :=
+            some
+              { opcode := eclOpcodeDecJump
+                targetTimeOperandIndex := 0
+                displacementOperandIndex := 1
+                counterOperandIndex := 2 }
+          intDivisorHazards :=
+            [ { opcode := 13
+                kind := .div
+                divisorOperandIndex := 1 },
+              { opcode := 14
+                kind := .mod
+                divisorOperandIndex := 1 },
+              { opcode := 23
+                kind := .div
+                divisorOperandIndex := 2 },
+              { opcode := 24
+                kind := .mod
+                divisorOperandIndex := 2 } ] }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

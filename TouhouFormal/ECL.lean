@@ -6,3 +6,4 @@ import TouhouFormal.ECL.Call
 import TouhouFormal.ECL.Timeline
 import TouhouFormal.ECL.Instruction
 import TouhouFormal.ECL.Step
+import TouhouFormal.ECL.Body

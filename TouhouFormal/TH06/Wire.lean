@@ -31,6 +31,18 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 78
       endLine := 84
       claim := "CallEclSub reads this->subTable[subId] without checking subId." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 130
+      endLine := 139
+      claim := "JUMPDEC decrements the counter slot and falls through to JUMP only while the decremented counter is positive." },
+    { path := "reference/th06/src/EnemyEclInstr.cpp"
+      startLine := 348
+      endLine := 360
+      claim := "MathDiv performs integer division by the resolved RHS pointer without a zero-divisor guard." },
+    { path := "reference/th06/src/EnemyEclInstr.cpp"
+      startLine := 372
+      endLine := 384
+      claim := "MathMod performs integer modulo by the resolved RHS pointer without a zero-divisor guard." },
     { path := "reference/th06/src/EnemyManager.cpp"
       startLine := 177
       endLine := 292
@@ -85,7 +97,20 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
             some
               { opcode := eclOpcodeJump
                 targetTimeOperandIndex := 0
-                displacementOperandIndex := 1 } }
+                displacementOperandIndex := 1 }
+          fixedDecJumpShape :=
+            some
+              { opcode := eclOpcodeJumpDec
+                targetTimeOperandIndex := 0
+                displacementOperandIndex := 1
+                counterOperandIndex := 2 }
+          intDivisorHazards :=
+            [ { opcode := 16
+                kind := .div
+                divisorOperandIndex := 2 },
+              { opcode := 17
+                kind := .mod
+                divisorOperandIndex := 2 } ] }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

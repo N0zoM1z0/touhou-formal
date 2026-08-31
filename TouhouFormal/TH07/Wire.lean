@@ -31,7 +31,19 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th07/src/th07/EclManager.cpp"
       startLine := 106
       endLine := 114
-      claim := "CallEclSub reads this->subTable[subId] without checking subId." } ]
+      claim := "CallEclSub reads this->subTable[subId] without checking subId." },
+    { path := "reference/th07/src/th07/EclManager.cpp"
+      startLine := 946
+      endLine := 954
+      claim := "DEC_JUMP decrements operand slot 2 and falls through to JUMP only while the decremented value is positive." },
+    { path := "reference/th07/src/th07/EclManager.cpp"
+      startLine := 1035
+      endLine := 1037
+      claim := "DIV performs integer division by operand slot 2 without a zero-divisor guard." },
+    { path := "reference/th07/src/th07/EclManager.cpp"
+      startLine := 1043
+      endLine := 1045
+      claim := "MOD performs integer modulo by operand slot 2 without a zero-divisor guard." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -78,7 +90,20 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
             some
               { opcode := eclOpcodeJump
                 targetTimeOperandIndex := 0
-                displacementOperandIndex := 1 } }
+                displacementOperandIndex := 1 }
+          fixedDecJumpShape :=
+            some
+              { opcode := eclOpcodeDecJump
+                targetTimeOperandIndex := 0
+                displacementOperandIndex := 1
+                counterOperandIndex := 2 }
+          intDivisorHazards :=
+            [ { opcode := 15
+                kind := .div
+                divisorOperandIndex := 2 },
+              { opcode := 16
+                kind := .mod
+                divisorOperandIndex := 2 } ] }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

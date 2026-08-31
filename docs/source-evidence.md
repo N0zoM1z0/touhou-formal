@@ -21,12 +21,21 @@ relative to `/home/yann/yann/touhou/formal`.
   `NOP` and `UNIMP`, so its numeric value is 2.
 - `reference/th06/src/EclManager.cpp:128`: raw `ECL_OPCODE_UNIMP` returns
   `ZUN_ERROR`.
+- `reference/th06/src/EclManager.cpp:130`: raw `ECL_OPCODE_JUMPDEC` decrements
+  its counter slot before deciding whether to jump.
 - `reference/th06/src/EclManager.cpp:136`: `ECL_OPCODE_JUMP` sets the context
   time from `args.jump.time` and advances the instruction pointer by
   `args.jump.offset`.
+- `reference/th06/src/EclManager.cpp:134`: `ECL_OPCODE_JUMPDEC` falls through to
+  the `ECL_OPCODE_JUMP` implementation when the decremented counter remains
+  positive; otherwise it only advances normally.
 - `reference/th06/src/EclManager.cpp:120`: raw ECL skips an instruction when
   `skipForDifficulty & (1 << g_GameManager.difficulty)` is zero, so execution
   uses active-bit intersection.
+- `reference/th06/src/EnemyEclInstr.cpp:348`: integer division assigns
+  `*outPtr = *lhsPtr / *rhsPtr` without a zero-divisor guard.
+- `reference/th06/src/EnemyEclInstr.cpp:372`: integer modulo assigns
+  `*outPtr = *lhsPtr % *rhsPtr` without a zero-divisor guard.
 - `reference/th06/src/EnemyManager.cpp:177`: timeline dispatch switches on
   `timelineInstr->opCode`.
 - `reference/th06/src/EnemyManager.cpp:183`: spawn opcode 0 passes
@@ -51,8 +60,15 @@ relative to `/home/yann/yann/touhou/formal`.
   `this->subTable[subId]` directly.
 - `reference/th07/src/th07/EclManager.cpp:941`: raw `ECL_UNIMP` returns
   `ZUN_ERROR`.
+- `reference/th07/src/th07/EclManager.cpp:946`: raw `ECL_DEC_JUMP` decrements
+  operand slot 2 and only falls through into `ECL_JUMP` when the decremented
+  value remains positive.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
+- `reference/th07/src/th07/EclManager.cpp:1035`: raw `ECL_DIV` divides by
+  `GET_INT_VALUE(enemy, 2)` without a zero-divisor guard.
+- `reference/th07/src/th07/EclManager.cpp:1043`: raw `ECL_MOD` computes modulo
+  by `GET_INT_VALUE(enemy, 2)` without a zero-divisor guard.
 - `reference/th07/src/th07/EclManager.cpp:935`: raw ECL skips an instruction
   when `skipInstrOnDifficulty & g_GameManager.difficultyMask` is zero, so
   execution uses active-bit intersection.
@@ -83,10 +99,19 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclRunLow.inl:194`: TH08 low-opcode dispatch keeps both
   raw operand access and `operandFlags`-resolved reads; jump operands below use
   the raw path.
+- `reference/th08/src/EclRunLow.inl:233`: TH08 low opcode 5 decrements operand
+  slot 2 and only falls through into opcode 4 jump semantics when the
+  decremented value remains positive.
 - `reference/th08/src/EclRunLow.inl:238`: TH08 low opcode 4 sets context time
   from `RawInt(instruction, 0)` and jumps by `RawInt(instruction, 1)`.
 - `reference/th08/src/EclRunLow.inl:223`: TH08 low opcode 1 returns
   `ZUN_ERROR`.
+- `reference/th08/src/EclRunLow.inl:276`: TH08 low opcodes 13 and 14 perform
+  integer division/modulo with operand slot 1 as divisor and no zero-divisor
+  guard.
+- `reference/th08/src/EclRunLow.inl:315`: TH08 low opcodes 23 and 24 perform
+  integer division/modulo with operand slot 2 as divisor and no zero-divisor
+  guard.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
 - `reference/th08/src/EclRun.cpp:67`: TH08 raw ECL requires

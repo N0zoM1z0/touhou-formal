@@ -45,7 +45,7 @@ private def missingJumpOperandsFault (shape : HeaderShape) : Fault :=
     component := "EclRun.step.jump"
     detail := "profile fixed-jump opcode reached but jump operands are unavailable" }
 
-private def cursorOutcome
+def cursorOutcome
     (action : RawStepAction)
     (sourceOffset : Nat)
     (targetCursor : Int)
@@ -56,7 +56,7 @@ private def cursorOutcome
     cursorClass := some (TouhouFormal.classifyCursorTransfer sourceOffset targetCursor bufferSize)
     targetTime := targetTime }
 
-private def rawDifficultyPass
+def rawDifficultyPass
     (shape : HeaderShape)
     (rawShape : RawInstrShape)
     (rawPrefix : RawInstrPrefix)

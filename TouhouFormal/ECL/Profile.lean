@@ -39,6 +39,28 @@ structure RawFixedJumpShape where
   displacementOperandIndex : Nat
 deriving Repr, DecidableEq
 
+structure RawDecJumpShape where
+  opcode : Int
+  targetTimeOperandIndex : Nat
+  displacementOperandIndex : Nat
+  counterOperandIndex : Nat
+deriving Repr, DecidableEq
+
+inductive RawIntDivisorHazardKind where
+  | div
+  | mod
+deriving Repr, DecidableEq
+
+def RawIntDivisorHazardKind.name : RawIntDivisorHazardKind -> String
+  | .div => "div"
+  | .mod => "mod"
+
+structure RawIntDivisorHazard where
+  opcode : Int
+  kind : RawIntDivisorHazardKind
+  divisorOperandIndex : Nat
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -56,7 +78,14 @@ structure RawInstrShape where
   fixedI32OperandBaseOffset : Option Nat := none
   fixedI32OperandStride : Nat := 4
   fixedJumpShape : Option RawFixedJumpShape := none
+  fixedDecJumpShape : Option RawDecJumpShape := none
+  intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
+
+def RawInstrShape.findIntDivisorHazard?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawIntDivisorHazard :=
+  rawShape.intDivisorHazards.find? (fun hazard => hazard.opcode == opcode)
 
 structure HeaderShape where
   title : String

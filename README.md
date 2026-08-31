@@ -55,10 +55,14 @@ lake exe smt th08-raw-difficulty-override-delta | z3 -in
 lake exe symex list-paths
 lake exe symex query th08 jumped-before-buffer 1 0 | z3 -in
 lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
+lake exe symex list-body-paths
+lake exe symex query-body-values th08 int-divisor-zero 1 2 | z3 -in
 ./scripts/symex_raw_step.sh th08 1 2
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ./scripts/symex_materialize_raw_step.py th06 jumped-before-buffer 8 0 --ecl-file
 ./scripts/symex_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path jumped-before-buffer
+./scripts/symex_materialize_body_step.py th08 all 1 2
+./scripts/symex_body_candidate_queue.py
 python3 scripts/evaluate_symex_effectiveness.py
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
@@ -71,8 +75,10 @@ python3 scripts/retail_confirm_th06_raw_symex.py --symex-path jumped-before-buff
 controls, and the current raw-ECL symbolic witness materializer. The
 materializer solves a path, asks Lean to encode the witness into bytes from the
 shared title profile, decodes it again, and checks that the concrete step lands
-back in the requested path class. `scripts/evaluate_symex_effectiveness.py`
-reruns the symbolic candidate queue and reports which modeled branches are
+back in the requested path class. The body materializer does the same for the
+first opcode-body layer: `JUMPDEC` taken/not-taken paths and immediate/raw
+integer div/mod zero-divisor faults. `scripts/evaluate_symex_effectiveness.py`
+reruns the symbolic candidate queues and reports which modeled branches are
 covered versus which source opcode/body branches remain outside the current
 semantics. `scripts/retail_inventory.sh` is read-only and records archive
 hashes plus executable/data CRCs before any Wine validation. Retail validation

@@ -82,3 +82,11 @@ python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 
 python3 scripts/symex_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path jumped-before-buffer > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 1; c=data["candidates"][0]; assert c["risk"]["class"] == "cursor-underflow"; assert c["nextAction"].startswith("retained Wine confirmation exists")' "$solver_output"
+
+python3 scripts/symex_materialize_body_step.py th08 all 1 2 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 9; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert any(r["path"] == "int-divisor-zero" and r["fixture"]["faultKind"] == "divide-by-zero" for r in xs)' "$solver_output"
+
+python3 scripts/symex_body_candidate_queue.py --env th06:8:0:retail-lunatic-bit3 --path int-divisor-zero > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 1; c=data["candidates"][0]; assert c["risk"]["class"] == "arithmetic-fault"; assert c["fixture"]["faultKind"] == "divide-by-zero"' "$solver_output"

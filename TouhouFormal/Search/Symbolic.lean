@@ -1,3 +1,4 @@
+import TouhouFormal.ECL.Body
 import TouhouFormal.ECL.Step
 import TouhouFormal.TH06.Wire
 import TouhouFormal.TH07.Wire
@@ -82,9 +83,42 @@ def allRawStepPaths : List RawStepPath :=
     allCursorGoals.map RawStepPath.jumped ++
     [ .vmError ]
 
+inductive RawBodyPath where
+  | decJumpTaken (cursor : CursorGoal)
+  | decJumpNotTaken (cursor : CursorGoal)
+  | intDivisorZero
+deriving Repr, DecidableEq
+
+def RawBodyPath.name : RawBodyPath -> String
+  | .decJumpTaken cursor => "decjump-taken-" ++ cursor.name
+  | .decJumpNotTaken cursor => "decjump-not-taken-" ++ cursor.name
+  | .intDivisorZero => "int-divisor-zero"
+
+def RawBodyPath.parse? : String -> Option RawBodyPath
+  | "decjump-taken-before-buffer" => some (.decJumpTaken .beforeBuffer)
+  | "decjump-taken-non-progress" => some (.decJumpTaken .nonProgress)
+  | "decjump-taken-in-bounds" => some (.decJumpTaken .inBounds)
+  | "decjump-taken-at-or-past-end" => some (.decJumpTaken .atOrPastEnd)
+  | "decjump-not-taken-before-buffer" => some (.decJumpNotTaken .beforeBuffer)
+  | "decjump-not-taken-non-progress" => some (.decJumpNotTaken .nonProgress)
+  | "decjump-not-taken-in-bounds" => some (.decJumpNotTaken .inBounds)
+  | "decjump-not-taken-at-or-past-end" => some (.decJumpNotTaken .atOrPastEnd)
+  | "int-divisor-zero" => some .intDivisorZero
+  | _ => none
+
+def allRawBodyPaths : List RawBodyPath :=
+  allCursorGoals.map RawBodyPath.decJumpTaken ++
+    allCursorGoals.map RawBodyPath.decJumpNotTaken ++
+    [ .intDivisorZero ]
+
 private def joinLines : List String -> String
   | [] => ""
   | line :: rest => line ++ "\n" ++ joinLines rest
+
+private def joinWith (sep : String) : List String -> String
+  | [] => ""
+  | value :: [] => value
+  | value :: rest => value ++ sep ++ joinWith sep rest
 
 private def signedI16Range (name : String) : String :=
   "(assert (and (<= (- 32768) " ++ name ++ ") (<= " ++ name ++ " 32767)))"
@@ -144,6 +178,14 @@ private def cursorGoalAssertion (targetName : String) : CursorGoal -> String
 private def maxJumpOperandIndex (jumpShape : TouhouFormal.ECL.RawFixedJumpShape) : Nat :=
   Nat.max jumpShape.targetTimeOperandIndex jumpShape.displacementOperandIndex
 
+private def maxDecJumpOperandIndex (decJumpShape : TouhouFormal.ECL.RawDecJumpShape) : Nat :=
+  Nat.max
+    (Nat.max decJumpShape.targetTimeOperandIndex decJumpShape.displacementOperandIndex)
+    decJumpShape.counterOperandIndex
+
+private def maxNatList (values : List Nat) : Nat :=
+  values.foldl (fun acc value => Nat.max acc value) 0
+
 private def requiredInstructionBytes
     (rawShape : TouhouFormal.ECL.RawInstrShape)
     (path : RawStepPath) : Nat :=
@@ -154,6 +196,26 @@ private def requiredInstructionBytes
           baseOffset + rawShape.fixedI32OperandStride * (maxJumpOperandIndex jumpShape + 1)
       | _, _ => rawShape.fixedPrefixBytes
   | _ => rawShape.fixedPrefixBytes
+
+private def requiredBodyInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawBodyPath) : Nat :=
+  match path with
+  | .decJumpTaken _ | .decJumpNotTaken _ =>
+      match rawShape.fixedDecJumpShape, rawShape.fixedI32OperandBaseOffset with
+      | some decJumpShape, some baseOffset =>
+          baseOffset + rawShape.fixedI32OperandStride * (maxDecJumpOperandIndex decJumpShape + 1)
+      | _, _ => rawShape.fixedPrefixBytes
+  | .intDivisorZero =>
+      match rawShape.fixedI32OperandBaseOffset with
+      | some baseOffset =>
+          let maxOperand :=
+            maxNatList (rawShape.intDivisorHazards.map (fun hazard => hazard.divisorOperandIndex))
+          if rawShape.intDivisorHazards.isEmpty then
+            rawShape.fixedPrefixBytes
+          else
+            baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
+      | none => rawShape.fixedPrefixBytes
 
 private def opcodeExclusions (rawShape : TouhouFormal.ECL.RawInstrShape) : List Int :=
   let excludeJump :=
@@ -168,6 +230,15 @@ private def opcodeExclusions (rawShape : TouhouFormal.ECL.RawInstrShape) : List 
 
 private def notOpcodeAssertions (opcodes : List Int) : List String :=
   opcodes.map fun opcode => "(assert (not (= opcode " ++ toString opcode ++ ")))"
+
+private def opcodeSetAssertion (opcodes : List Int) : String :=
+  match opcodes with
+  | [] => "(assert false) ; no source-backed opcode for this body path"
+  | [opcode] => "(assert (= opcode " ++ toString opcode ++ "))"
+  | _ =>
+      "(assert (or " ++
+        joinWith " " (opcodes.map fun opcode => "(= opcode " ++ toString opcode ++ ")") ++
+        "))"
 
 private def rawStepPathConstraints
     (rawShape : TouhouFormal.ECL.RawInstrShape)
@@ -205,8 +276,42 @@ private def rawStepPathConstraints
       , "(assert difficultyPass)" ] ++
       unimpConstraints
 
+private def rawBodyPathConstraints
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawBodyPath) : List String :=
+  let decJumpOpcodeConstraints :=
+    match rawShape.fixedDecJumpShape with
+    | none => ["(assert false) ; profile has no JUMPDEC opcode"]
+    | some decJumpShape => ["(assert (= opcode " ++ toString decJumpShape.opcode ++ "))"]
+  let divisorHazardOpcodes :=
+    rawShape.intDivisorHazards.map (fun hazard => hazard.opcode)
+  let dispatchPrefix :=
+    [ "(assert (= currentTime instrTime))"
+    , "(assert difficultyPass)"
+    , "(assert (= operandMask 0)) ; immediate/raw operand branch" ]
+  match path with
+  | .decJumpTaken cursor =>
+      dispatchPrefix ++
+      decJumpOpcodeConstraints ++
+      [ "(assert (> (- counterBefore 1) 0))"
+      , "(define-fun targetCursor () Int (+ fileOffset jumpDisplacement))"
+      , cursorGoalAssertion "targetCursor" cursor ]
+  | .decJumpNotTaken cursor =>
+      dispatchPrefix ++
+      decJumpOpcodeConstraints ++
+      [ "(assert (<= (- counterBefore 1) 0))"
+      , "(define-fun targetCursor () Int (+ fileOffset nextOffset))"
+      , cursorGoalAssertion "targetCursor" cursor ]
+  | .intDivisorZero =>
+      dispatchPrefix ++
+      [ opcodeSetAssertion divisorHazardOpcodes
+      , "(assert (= divisorValue 0))" ]
+
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
+
+private def rawBodyValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement counterBefore divisorValue bufferSize difficultyPass)"
 
 private def rawStepQueryWith
     (includeModel includeValues : Bool)
@@ -274,6 +379,76 @@ def rawStepValuesQuery
 def listRawStepPathsText : String :=
   joinLines (allRawStepPaths.map RawStepPath.name)
 
+private def rawBodyQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawBodyPath)
+    (activeMask overrideMask : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL body query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      let difficultyExpr :=
+        match rawShape.difficultyMaskPolicy with
+        | none => "true"
+        | some policy => difficultyPassExpr policy
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared raw ECL body semantics."
+         , "; Title: " ++ shape.title
+         , "; Body path: " ++ path.name
+         , "(declare-const currentTime Int)"
+         , "(declare-const instrTime Int)"
+         , "(declare-const opcode Int)"
+         , "(declare-const nextOffset Int)"
+         , "(declare-const jumpTargetTime Int)"
+         , "(declare-const jumpDisplacement Int)"
+         , "(declare-const counterBefore Int)"
+         , "(declare-const divisorValue Int)"
+         , "(declare-const bufferSize Int)"
+         , "(define-fun fileOffset () Int 0)"
+         , "(declare-const instructionMask (_ BitVec 8))"
+         , "(define-fun activeMask () (_ BitVec 8) " ++ bv8 activeMask ++ ")"
+         , "(define-fun overrideMask () (_ BitVec 8) " ++ bv8 overrideMask ++ ")"
+         , "(define-fun requiredDifficultyMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+         , "(define-fun difficultyPass () Bool " ++ difficultyExpr ++ ")"
+         , scalarRange "instrTime" rawShape.timeWidth
+         , scalarRange "opcode" rawShape.opcodeWidth
+         , scalarRange "nextOffset" rawShape.nextOffsetWidth
+         , signedI32Range "jumpTargetTime"
+         , signedI32Range "jumpDisplacement"
+         , signedI32Range "counterBefore"
+         , signedI32Range "divisorValue"
+         , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
+         , "(assert (and (<= " ++ toString (requiredBodyInstructionBytes rawShape path) ++
+             " bufferSize) (<= bufferSize 1048576)))" ] ++
+         operandMaskSmtLines rawShape ++
+         rawBodyPathConstraints rawShape path ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawBodyValueTerms ++ ")"] else []))
+
+def rawBodyQuery
+    (title : Title)
+    (path : RawBodyPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawBodyQueryWith true false title path activeMask overrideMask
+
+def rawBodyValuesQuery
+    (title : Title)
+    (path : RawBodyPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawBodyQueryWith false true title path activeMask overrideMask
+
+def listRawBodyPathsText : String :=
+  joinLines (allRawBodyPaths.map RawBodyPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -288,6 +463,11 @@ structure RawStepWitness where
   bufferSize : Nat
 deriving Repr, DecidableEq
 
+structure RawBodyWitness extends RawStepWitness where
+  counterBefore : Int
+  divisorValue : Int
+deriving Repr, DecidableEq
+
 structure RawStepMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
@@ -295,6 +475,13 @@ structure RawStepMaterialization where
   outcome : TouhouFormal.ECL.RawStepOutcome
   matchesPath : Bool
 deriving Repr, DecidableEq
+
+structure RawBodyMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome
+  matchesPath : Bool
+deriving Repr
 
 structure RawStepEclFileMaterialization where
   rawStep : RawStepMaterialization
@@ -408,6 +595,111 @@ def rawStepWitnessBytes
             .error ("profile has no fixed jump operand shape for " ++ shape.title)
         | _, _, _ => .ok bytes
 
+private def writeFixedI32OperandValue
+    (bytes : TouhouFormal.Bytes)
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (operandIndex : Nat)
+    (value : Int)
+    (fieldName : String) : Except String TouhouFormal.Bytes :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.fixedI32OperandBaseOffset with
+      | none => .error ("profile has no fixed-width i32 raw operand shape for " ++ shape.title)
+      | some baseOffset =>
+          writeScalar
+            bytes
+            (baseOffset + rawShape.fixedI32OperandStride * operandIndex)
+            .i32
+            value
+            fieldName
+
+private def rawBodyWitnessBaseBytes
+    (title : Title)
+    (path : RawBodyPath)
+    (witness : RawBodyWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredBodyInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required raw body bytes=" ++ toString requiredBytes)
+      else
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := witness.currentTime
+            instrTime := witness.instrTime
+            opcode := witness.opcode
+            nextOffset := witness.nextOffset
+            instructionMask := witness.instructionMask
+            operandMask := witness.operandMask
+            activeMask := witness.activeMask
+            overrideMask := witness.overrideMask
+            jumpTargetTime := witness.jumpTargetTime
+            jumpDisplacement := witness.jumpDisplacement
+            bufferSize := witness.bufferSize }
+
+private def findBodyDivisorHazard
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (opcode : Int) :
+    Except String TouhouFormal.ECL.RawIntDivisorHazard :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.findIntDivisorHazard? opcode with
+      | none =>
+          .error
+            ("opcode " ++ toString opcode ++
+              " is not a source-backed integer divisor hazard for " ++ shape.title)
+      | some hazard => .ok hazard
+
+private def rawBodyWitnessBytes
+    (title : Title)
+    (path : RawBodyPath)
+    (witness : RawBodyWitness) : Except String TouhouFormal.Bytes := do
+  let shape := title.headerShape
+  let bytes <- rawBodyWitnessBaseBytes title path witness
+  match path with
+  | .decJumpTaken _ | .decJumpNotTaken _ =>
+      match shape.rawInstrShape with
+      | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+      | some rawShape =>
+          match rawShape.fixedDecJumpShape with
+          | none => .error ("profile has no JUMPDEC shape for " ++ shape.title)
+          | some decJumpShape => do
+              let bytes <-
+                writeFixedI32OperandValue
+                  bytes
+                  shape
+                  decJumpShape.targetTimeOperandIndex
+                  witness.jumpTargetTime
+                  "decJumpTargetTime"
+              let bytes <-
+                writeFixedI32OperandValue
+                  bytes
+                  shape
+                  decJumpShape.displacementOperandIndex
+                  witness.jumpDisplacement
+                  "decJumpDisplacement"
+              writeFixedI32OperandValue
+                bytes
+                shape
+                decJumpShape.counterOperandIndex
+                witness.counterBefore
+                "decJumpCounterBefore"
+  | .intDivisorZero =>
+      let hazard <- findBodyDivisorHazard shape witness.opcode
+      writeFixedI32OperandValue
+        bytes
+        shape
+        hazard.divisorOperandIndex
+        witness.divisorValue
+        "intDivisor"
+
 private def decodeJumpForWitness
     (title : Title)
     (bytes : TouhouFormal.Bytes)
@@ -444,6 +736,23 @@ private def RawStepPath.matchesOutcome
   | .vmError, .vmError, _ => true
   | _, _, _ => false
 
+private def RawBodyPath.matchesResult
+    (path : RawBodyPath)
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : Bool :=
+  match path, result with
+  | .intDivisorZero, .error faultValue => faultValue.kind == .divideByZero
+  | .decJumpTaken cursor, .ok outcome =>
+      outcome.action == .jumped &&
+        match outcome.cursorClass with
+        | some actual => actual == cursor.toCursorClass
+        | none => false
+  | .decJumpNotTaken cursor, .ok outcome =>
+      outcome.action == .advanced &&
+        match outcome.cursorClass with
+        | some actual => actual == cursor.toCursorClass
+        | none => false
+  | _, _ => false
+
 def rawStepMaterialize
     (title : Title)
     (path : RawStepPath)
@@ -469,6 +778,88 @@ def rawStepMaterialize
       jump := jump
       outcome := outcome
       matchesPath := path.matchesOutcome outcome }
+
+private def runRawBodyResult
+    (title : Title)
+    (path : RawBodyPath)
+    (witness : RawBodyWitness)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String (Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) :=
+  let shape := title.headerShape
+  match path with
+  | .decJumpTaken _ | .decJumpNotTaken _ =>
+      match shape.rawInstrShape with
+      | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+      | some rawShape =>
+          match rawShape.fixedDecJumpShape with
+          | none => .error ("profile has no JUMPDEC shape for " ++ shape.title)
+          | some decJumpShape => do
+              let targetTime <-
+                liftFaultToString
+                  (TouhouFormal.ECL.readFixedI32Operand
+                    shape
+                    bytes
+                    rawPrefix
+                    decJumpShape.targetTimeOperandIndex)
+              let displacement <-
+                liftFaultToString
+                  (TouhouFormal.ECL.readFixedI32Operand
+                    shape
+                    bytes
+                    rawPrefix
+                    decJumpShape.displacementOperandIndex)
+              let counterBefore <-
+                liftFaultToString
+                  (TouhouFormal.ECL.readFixedI32Operand
+                    shape
+                    bytes
+                    rawPrefix
+                    decJumpShape.counterOperandIndex)
+              .ok
+                (TouhouFormal.ECL.rawDecJumpStep
+                  shape
+                  witness.currentTime
+                  witness.activeMask
+                  witness.overrideMask
+                  8
+                  witness.bufferSize
+                  rawPrefix
+                  { targetTime := targetTime
+                    displacement := displacement
+                    counterBefore := counterBefore })
+  | .intDivisorZero => do
+      let hazard <- findBodyDivisorHazard shape rawPrefix.opcode
+      let divisor <-
+        liftFaultToString
+          (TouhouFormal.ECL.readFixedI32Operand
+            shape
+            bytes
+            rawPrefix
+            hazard.divisorOperandIndex)
+      .ok
+        (TouhouFormal.ECL.rawIntDivisorStep
+          shape
+          witness.currentTime
+          witness.activeMask
+          witness.overrideMask
+          8
+          witness.bufferSize
+          rawPrefix
+          { divisor := divisor })
+
+def rawBodyMaterialize
+    (title : Title)
+    (path : RawBodyPath)
+    (witness : RawBodyWitness) : Except String RawBodyMaterialization := do
+  let bytes <- rawBodyWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix title.headerShape bytes 0)
+  let result <- runRawBodyResult title path witness bytes rawPrefix
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      result := result
+      matchesPath := path.matchesResult result }
 
 private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .yielded => "yielded"
@@ -508,6 +899,60 @@ def RawStepMaterialization.report (materialization : RawStepMaterialization) : S
     , "targetCursor=" ++ optionIntText materialization.outcome.targetCursor
     , "cursorClass=" ++ optionCursorClassText materialization.outcome.cursorClass
     , "targetTime=" ++ optionIntText materialization.outcome.targetTime
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+private def bodyResultActionText
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : String :=
+  match result with
+  | .ok outcome => rawStepActionName outcome.action
+  | .error faultValue => "fault:" ++ faultValue.kind.name
+
+private def bodyResultTargetCursor
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.targetCursor
+  | .error _ => none
+
+private def bodyResultCursorClass
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) :
+    Option TouhouFormal.CursorClass :=
+  match result with
+  | .ok outcome => outcome.cursorClass
+  | .error _ => none
+
+private def bodyResultTargetTime
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.targetTime
+  | .error _ => none
+
+private def bodyResultFaultKind
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.kind.name
+
+private def bodyResultFaultDetail
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.detail
+
+def RawBodyMaterialization.report (materialization : RawBodyMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "action=" ++ bodyResultActionText materialization.result
+    , "targetCursor=" ++ optionIntText (bodyResultTargetCursor materialization.result)
+    , "cursorClass=" ++ optionCursorClassText (bodyResultCursorClass materialization.result)
+    , "targetTime=" ++ optionIntText (bodyResultTargetTime materialization.result)
+    , "faultKind=" ++ bodyResultFaultKind materialization.result
+    , "faultDetail=" ++ bodyResultFaultDetail materialization.result
     , "matchesPath=" ++ toString materialization.matchesPath ]
 
 private def writeOptionalVersion

@@ -85,7 +85,9 @@ when `enemy->eclDifficultyMaskOverride` is nonzero.
 | `ECL-RAW-STEP-SYMEX-BASELINE` | symbolic execution baseline | profile-driven raw ECL single-step executor enumerates time-gate, difficulty-skip, ordinary-advance, fixed-jump, and VM-error paths, then emits SMT path constraints for Z3 | Lean model, Z3-backed `symex` executable, check-script witnesses |
 | `ECL-RAW-STEP-WITNESS-MATERIALIZATION` | solver-to-fixture bridge | Z3 `get-value` witnesses are encoded into raw ECL bytes by Lean using `HeaderShape.rawInstrShape`, decoded again, and replayed through `rawStep`; accepted fixtures must report `matchesPath=true` | TH08 all-path smoke covers 14 path classes under `activeMask=1`, `overrideMask=2`; fixed-hex regressions for TH08 raw instruction and TH06 minimal one-sub ECL file |
 | `ECL-RAW-STEP-CANDIDATE-QUEUE` | symbolic triage baseline | default queue solves/materializes raw-step path classes across five title/difficulty environments and ranks them by generic cursor/liveness/VM-error properties | 70 satisfiable materialized candidates on 2026-08-31; 45 high-priority cursor/liveness candidates |
-| `ECL-RAW-STEP-EFFECTIVENESS` | coverage assessment | reruns the candidate queue, checks modeled path coverage per environment, counts local source opcode surface still outside `rawStep`, and compares the current formal lane against DanmakuFuzz | `docs/effectiveness.md`; 70/70 `sat`, 70/70 `matchesPath=true`, 14/14 modeled paths per default environment |
+| `ECL-RAW-BODY-JUMPDEC` | symbolic execution baseline | shared body semantics models source-backed `JUMPDEC`: decrement operand slot 2, jump iff the decremented value is positive, otherwise advance | 40 satisfiable materialized `decjump-*` candidates across five title/difficulty environments; taken/not-taken × four cursor classes per environment |
+| `ECL-RAW-BODY-INT-DIVISOR-ZERO` | symbolic execution finding | shared body semantics records source-backed integer div/mod opcodes and divisor operand slots, then searches for immediate/raw zero-divisor paths | 5 satisfiable materialized `divide-by-zero` candidates across five title/difficulty environments |
+| `ECL-RAW-STEP-EFFECTIVENESS` | coverage assessment | reruns the raw-step and body candidate queues, checks modeled path coverage per environment, counts local source opcode surface still outside the model, and compares the current formal lane against DanmakuFuzz | `docs/effectiveness.md`; raw 70/70 `sat`, body 45/45 `sat`, all `matchesPath=true`, all modeled paths per default environment |
 
 Formal value: this is the baseline the project should compare fuzzing against.
 The executor is not given a concrete bug. It enumerates source-backed path
@@ -108,11 +110,11 @@ Fuzzing can still validate and minimize the resulting cases, but it is no longer
 responsible for discovering that those path classes exist.
 
 The current effectiveness assessment is deliberately scoped. Lean + SMT is now
-stronger than fuzzing for the implemented raw-step dispatch abstraction because
-it exhaustively covers all modeled path classes. It is not yet stronger than
-fuzzing for the full ECL/ANM VM because most opcode bodies, operand-resolution
-branches, host state, and multi-context scheduling remain outside the formal
-semantics. See [`docs/effectiveness.md`](effectiveness.md).
+stronger than fuzzing for the implemented raw-step dispatch abstraction and the
+first shared body slice because it exhaustively covers all modeled path classes.
+It is not yet stronger than fuzzing for the full ECL/ANM VM because most opcode
+bodies, operand-resolution branches, host state, and multi-context scheduling
+remain outside the formal semantics. See [`docs/effectiveness.md`](effectiveness.md).
 
 ## ANM entry chain
 

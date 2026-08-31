@@ -42,6 +42,18 @@ MODELED_RAW_STEP_PATHS = [
     "vm-error",
 ]
 
+MODELED_RAW_BODY_PATHS = [
+    "decjump-taken-before-buffer",
+    "decjump-taken-non-progress",
+    "decjump-taken-in-bounds",
+    "decjump-taken-at-or-past-end",
+    "decjump-not-taken-before-buffer",
+    "decjump-not-taken-non-progress",
+    "decjump-not-taken-in-bounds",
+    "decjump-not-taken-at-or-past-end",
+    "int-divisor-zero",
+]
+
 SOURCE_COVERAGE = [
     {
         "area": "ECL loader/header shape",
@@ -64,6 +76,16 @@ SOURCE_COVERAGE = [
         "reason": "time gate, difficulty skip, ordinary advance, fixed jump, VM error, and cursor classes are enumerated by SMT path constraints",
     },
     {
+        "area": "JUMPDEC body semantics",
+        "status": "covered-by-symbolic-execution",
+        "reason": "shared profile records opcode, target-time slot, displacement slot, and counter slot; SMT enumerates taken/not-taken cursor classes",
+    },
+    {
+        "area": "integer div/mod immediate divisor hazards",
+        "status": "covered-by-symbolic-execution",
+        "reason": "shared profile records source-backed integer div/mod opcodes and divisor operand slots; SMT finds zero-divisor body faults",
+    },
+    {
         "area": "raw ECL difficulty mask policy",
         "status": "covered-by-model",
         "reason": "TH06/TH07 active-bit intersection and TH08 contains(active|override) are separate profile policies",
@@ -75,8 +97,8 @@ SOURCE_COVERAGE = [
     },
     {
         "area": "full raw ECL opcode bodies",
-        "status": "not-yet-modeled",
-        "reason": "current rawStep semantics distinguishes UNIMP and fixed JUMP, then lumps all other opcodes into prefix-level ordinary advance",
+        "status": "partially-covered",
+        "reason": "UNIMP, fixed JUMP, JUMPDEC, and integer div/mod divisor hazards are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
     },
     {
         "area": "operandFlags / variable lvalue-rvalue resolution",
@@ -84,14 +106,14 @@ SOURCE_COVERAGE = [
         "reason": "TH07/TH08 operand masks branch into local/global/enemy/player/RNG state; those host-state cells are not yet in the symbolic state",
     },
     {
-        "area": "conditional jumps, JUMPDEC, CALL/RET, callback stack",
+        "area": "conditional jumps, CALL/RET, callback stack",
         "status": "not-yet-modeled",
         "reason": "needs multi-step ECL context state, stack depth, time updates, comparison flags, and target subroutine bounds",
     },
     {
-        "area": "arithmetic body faults",
+        "area": "remaining arithmetic body faults",
         "status": "not-yet-modeled",
-        "reason": "division/modulo by zero and numeric non-finite behavior require operand resolution plus C/C++-faithful arithmetic semantics",
+        "reason": "immediate integer div/mod zero is modeled; resolver-driven divisors, float divide/fmod zero, overflow, and numeric non-finite behavior still require operand resolution plus C/C++-faithful arithmetic semantics",
     },
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
@@ -171,6 +193,20 @@ def load_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]
     return payload, command
 
 
+def load_body_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
+    if args.body_queue_json:
+        path = Path(args.body_queue_json)
+        return json.loads(path.read_text()), {
+            "argv": ["read-existing-json", str(path)],
+            "returncode": 0,
+            "elapsedSeconds": 0.0,
+        }
+    payload, command = run_json_command([sys.executable, "scripts/symex_body_candidate_queue.py"])
+    if not isinstance(payload, dict):
+        raise EvaluationError("body candidate queue did not return an object")
+    return payload, command
+
+
 def action_from_path(path: str) -> str:
     if path == "yielded":
         return "yielded"
@@ -179,10 +215,30 @@ def action_from_path(path: str) -> str:
     return path.split("-", 1)[0]
 
 
+def body_action_from_path(path: str) -> str:
+    if path == "int-divisor-zero":
+        return "int-divisor-zero"
+    if path.startswith("decjump-taken-"):
+        return "decjump-taken"
+    if path.startswith("decjump-not-taken-"):
+        return "decjump-not-taken"
+    return path
+
+
 def cursor_goal_from_path(path: str) -> str:
     if path in {"yielded", "vm-error"}:
         return "-"
     return path.split("-", 1)[1]
+
+
+def body_cursor_goal_from_path(path: str) -> str:
+    if path == "int-divisor-zero":
+        return "-"
+    if path.startswith("decjump-taken-"):
+        return path.removeprefix("decjump-taken-")
+    if path.startswith("decjump-not-taken-"):
+        return path.removeprefix("decjump-not-taken-")
+    return "-"
 
 
 def summarize_queue(queue: dict[str, Any]) -> dict[str, Any]:
@@ -262,6 +318,86 @@ def summarize_queue(queue: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def summarize_body_queue(queue: dict[str, Any]) -> dict[str, Any]:
+    candidates = queue.get("candidates", [])
+    if not isinstance(candidates, list):
+        raise EvaluationError("body candidate queue has no candidate list")
+
+    statuses = Counter(str(candidate.get("status")) for candidate in candidates)
+    risks = Counter(str(candidate.get("risk", {}).get("class")) for candidate in candidates)
+    priorities = Counter(str(candidate.get("risk", {}).get("priority")) for candidate in candidates)
+    actions = Counter(body_action_from_path(str(candidate.get("path"))) for candidate in candidates)
+    fixture_actions = Counter(str(candidate.get("fixture", {}).get("action")) for candidate in candidates)
+    cursor_goals = Counter(body_cursor_goal_from_path(str(candidate.get("path"))) for candidate in candidates)
+    cursor_classes = Counter(str(candidate.get("fixture", {}).get("cursorClass", "-")) for candidate in candidates)
+    fault_kinds = Counter(str(candidate.get("fixture", {}).get("faultKind", "-")) for candidate in candidates)
+    matches = Counter(str(candidate.get("fixture", {}).get("matchesPath")) for candidate in candidates)
+
+    by_environment: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for candidate in candidates:
+        key = (
+            f"{candidate.get('title')}:{candidate.get('environment')}:"
+            f"active={candidate.get('activeMask')}:override={candidate.get('overrideMask')}"
+        )
+        by_environment[key].append(candidate)
+
+    expected_paths = set(MODELED_RAW_BODY_PATHS)
+    env_reports = {}
+    for env, env_candidates in sorted(by_environment.items()):
+        paths = {str(candidate.get("path")) for candidate in env_candidates}
+        env_reports[env] = {
+            "pathCount": len(paths),
+            "candidateCount": len(env_candidates),
+            "satCount": sum(1 for candidate in env_candidates if candidate.get("status") == "sat"),
+            "matchesPathCount": sum(
+                1 for candidate in env_candidates
+                if candidate.get("fixture", {}).get("matchesPath") == "true"
+            ),
+            "missingModeledPaths": sorted(expected_paths - paths),
+            "extraPaths": sorted(paths - expected_paths),
+        }
+
+    top_candidates = [
+        {
+            "id": candidate.get("id"),
+            "risk": candidate.get("risk", {}).get("class"),
+            "priority": candidate.get("risk", {}).get("priority"),
+            "hex": candidate.get("fixture", {}).get("hex"),
+            "action": candidate.get("fixture", {}).get("action"),
+            "cursorClass": candidate.get("fixture", {}).get("cursorClass"),
+            "faultKind": candidate.get("fixture", {}).get("faultKind"),
+            "faultDetail": candidate.get("fixture", {}).get("faultDetail"),
+        }
+        for candidate in candidates[:10]
+    ]
+
+    return {
+        "schema": queue.get("schema"),
+        "environmentCount": queue.get("environmentCount"),
+        "candidateCount": queue.get("candidateCount"),
+        "uniquePathCount": len({str(candidate.get("path")) for candidate in candidates}),
+        "modeledPathCount": len(MODELED_RAW_BODY_PATHS),
+        "modeledPaths": MODELED_RAW_BODY_PATHS,
+        "statuses": dict(statuses),
+        "matchesPath": dict(matches),
+        "riskCounts": dict(risks),
+        "priorityCounts": dict(priorities),
+        "pathActionCounts": dict(actions),
+        "fixtureActionCounts": dict(fixture_actions),
+        "cursorGoalCounts": dict(cursor_goals),
+        "fixtureCursorClassCounts": dict(cursor_classes),
+        "faultKindCounts": dict(fault_kinds),
+        "allModeledPathsCoveredPerEnvironment": all(
+            not report["missingModeledPaths"] and not report["extraPaths"]
+            for report in env_reports.values()
+        ),
+        "allSat": statuses == Counter({"sat": len(candidates)}),
+        "allMaterializedAndReplayMatched": matches == Counter({"true": len(candidates)}),
+        "byEnvironment": env_reports,
+        "topCandidates": top_candidates,
+    }
+
+
 def unique_preserving(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result = []
@@ -295,8 +431,14 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
         report["titles"]["th06"] = {
             "source": str(th06),
             "rawOpcodeSymbolCount": len(names),
-            "modeledOpcodeSpecificSymbols": ["ECL_OPCODE_UNIMP", "ECL_OPCODE_JUMP"],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 2),
+            "modeledOpcodeSpecificSymbols": [
+                "ECL_OPCODE_UNIMP",
+                "ECL_OPCODE_JUMP",
+                "ECL_OPCODE_JUMPDEC",
+                "ECL_OPCODE_MATHINTDIV",
+                "ECL_OPCODE_MATHINTMOD",
+            ],
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 5),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -312,8 +454,14 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
         report["titles"]["th07"] = {
             "source": str(th07),
             "rawOpcodeSymbolCountApprox": len(names),
-            "modeledOpcodeSpecificSymbols": ["ECL_UNIMP", "ECL_JUMP"],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 2),
+            "modeledOpcodeSpecificSymbols": [
+                "ECL_UNIMP",
+                "ECL_JUMP",
+                "ECL_DEC_JUMP",
+                "ECL_DIV",
+                "ECL_MOD",
+            ],
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 5),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -325,8 +473,16 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
             "source": str(th08_low),
             "runSource": str(th08_run) if th08_run.exists() else None,
             "lowOpcodeCaseLabelCount": len(case_labels),
-            "modeledOpcodeSpecificCases": ["case 1", "case 4"],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 2),
+            "modeledOpcodeSpecificCases": [
+                "case 1",
+                "case 4",
+                "case 5",
+                "case 13",
+                "case 14",
+                "case 23",
+                "case 24",
+            ],
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 7),
             "firstCaseLabels": case_labels[:12],
             "lastCaseLabels": case_labels[-12:],
         }
@@ -441,6 +597,7 @@ def fuzz_comparison() -> dict[str, Any]:
     return {
         "formalCurrentlyBeatsFuzzFor": [
             "exhaustively enumerating the implemented raw-step path classes instead of waiting for random mutation to hit each class",
+            "exhaustively enumerating the implemented JUMPDEC taken/not-taken cursor classes and immediate integer div/mod zero-divisor faults",
             "returning satisfiable/unsatisfiable path facts with concrete byte-realizable witnesses",
             "keeping TH06/TH07/TH08 differences in shared profiles, reducing per-title semantic drift",
             "explaining exact invariants such as cursor must progress and remain in-bounds",
@@ -453,7 +610,7 @@ def fuzz_comparison() -> dict[str, Any]:
         ],
         "currentVerdict": (
             "The current Lean+SMT baseline is stronger than prior fuzzing on the modeled VM-core skeleton, "
-            "because all 14 raw-step path classes are solved and materialized for every default environment. "
+            "because all 14 raw-step path classes and all 9 initial body-step path classes are solved and materialized for every default environment. "
             "It is not yet stronger than fuzzing for the full ECL/ANM VM, because most opcode bodies and host-state branches "
             "remain outside the semantics."
         ),
@@ -473,6 +630,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--queue-json",
         help="reuse an existing symex_candidate_queue.py JSON payload instead of rerunning the solver",
+    )
+    parser.add_argument(
+        "--body-queue-json",
+        help="reuse an existing symex_body_candidate_queue.py JSON payload instead of rerunning the body solver",
     )
     parser.add_argument(
         "--run-check",
@@ -503,12 +664,16 @@ def main(argv: list[str]) -> int:
     queue, command = load_queue(args)
     commands["candidateQueue"] = command
     queue_summary = summarize_queue(queue)
+    body_queue, body_command = load_body_queue(args)
+    commands["bodyCandidateQueue"] = body_command
+    body_queue_summary = summarize_body_queue(body_queue)
 
     payload = {
         "schema": "touhou-formal-symex-effectiveness-v1",
         "date": "2026-08-31",
         "commands": commands,
         "rawStepSymbolicCoverage": queue_summary,
+        "rawBodySymbolicCoverage": body_queue_summary,
         "sourceOpcodeSurface": source_opcode_surface(args.reference_root),
         "sourceCoverage": SOURCE_COVERAGE,
         "retailConfirmations": retail_confirmations(args.retail_root),

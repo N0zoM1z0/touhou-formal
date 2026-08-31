@@ -17,6 +17,16 @@ TH08:
 6. resulting cursor transfers are classified as before-buffer, non-progress,
    in-bounds, or at/past-end.
 
+The first opcode-body layer is also modeled through shared title profiles:
+
+1. `JUMPDEC` decrements operand slot 2, jumps iff the decremented value is
+   positive, and otherwise advances by `nextOffset`;
+2. integer div/mod hazards use source-backed opcode lists and divisor operand
+   slots;
+3. body symbolic execution currently uses the immediate/raw operand branch
+   (`operandMask = 0`) so that witnesses are byte-realizable without a symbolic
+   host-state resolver.
+
 This intentionally avoids hand-selecting a suspicious bug site. The executor
 enumerates generic path classes and asks Z3 for witnesses.
 
@@ -38,6 +48,12 @@ Emit a value-oriented query for machine parsing:
 
 ```bash
 lake exe symex query-values th08 jumped-before-buffer 1 0 | z3 -in
+```
+
+Emit and solve one body-level query:
+
+```bash
+lake exe symex query-body-values th08 int-divisor-zero 1 2 | z3 -in
 ```
 
 Run a matrix for one title and difficulty environment:
@@ -68,6 +84,13 @@ Build a sorted candidate queue:
 
 ```bash
 ./scripts/symex_candidate_queue.py
+```
+
+Solve/materialize body-level paths:
+
+```bash
+./scripts/symex_materialize_body_step.py th08 all 1 2
+./scripts/symex_body_candidate_queue.py
 ```
 
 Evaluate the current formal-vs-fuzz effectiveness baseline:
@@ -170,3 +193,28 @@ The TH06 `jumped-before-buffer` materialized witness has been taken through that
 bridge once: `scripts/retail_confirm_th06_raw_symex.py` splices it into a
 reachable stage-5 subroutine entry and the retained 2026-08-31 repeat run
 classifies the mutant as `crash-dialog` in 2/2 Wine attempts.
+
+## Body candidate queue
+
+`scripts/symex_body_candidate_queue.py` is the corresponding non-manual triage
+layer for the first opcode-body slice. It enumerates these path classes:
+
+- `decjump-taken-*` for four cursor classes;
+- `decjump-not-taken-*` for four cursor classes;
+- `int-divisor-zero`.
+
+A full default run on 2026-08-31 produced 45 satisfiable materialized
+candidates:
+
+```text
+arithmetic-fault: 5
+cursor-underflow: 10
+cursor-out-of-range: 10
+liveness: 10
+reachable-control-path: 10
+```
+
+All 45 replayed through Lean with `matchesPath=true`. The five
+`arithmetic-fault` witnesses are integer div/mod zero-divisor paths: one per
+default title/difficulty environment. They are source-backed body-level formal
+findings, not yet retail-confirmed cases.
