@@ -57,4 +57,12 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           firstArgWidth := some .i16 }
     evidence := eclEvidence }
 
+theorem headerShape_timelineTableEnd :
+    headerShape.timelineTableEnd = rawHeaderFixedPrefixBytes := by
+  rfl
+
+theorem headerShape_loaderTimelineSlots :
+    headerShape.loaderTimelineSlots = timelinePointerCount := by
+  rfl
+
 end TouhouFormal.TH07

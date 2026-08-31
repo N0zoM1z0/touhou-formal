@@ -17,11 +17,18 @@ The intended loop is:
 ## Layers
 
 `TouhouFormal/Core` contains title-independent transition-system machinery:
-faults, bounded execution, traces, and evidence references.
+faults, little-endian byte reads, bounded execution, traces, and evidence
+references.
 
-`TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` contain
-version-specific wire layouts and VM semantics. Similar names across titles are
-not assumed equivalent; shared abstractions must preserve title differences.
+`TouhouFormal/ECL` contains the shared ECL core: profile-driven header loading,
+subTable lookup policy, and timeline-prefix decoding. These definitions encode
+the original unsafe boundary and return a structured `Fault` at the first
+invalid modeled operation.
+
+`TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
+contain profile facts and title deltas. Similar names across titles are not
+assumed equivalent; a title module should justify differences by filling a
+shared profile field before adding one-off logic.
 
 `TouhouFormal/Search` is allowed to duplicate a bounded query in SMT-LIB when
 the duplicated relation is small and source-linked. Larger encodings should be

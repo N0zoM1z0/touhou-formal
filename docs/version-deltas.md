@@ -1,16 +1,16 @@
 # ECL Version Deltas
 
 The first cross-title Lean data lives in `TouhouFormal.ECL.HeaderShape` and the
-title-specific `Wire.lean` modules. These are source-backed facts, not a shared
-semantic model yet.
+title-specific `Wire.lean` modules. Shared loader, timeline-prefix, and subTable
+lookup semantics now consume these profiles directly.
 
 ## Initial Profiles
 
-| Title | Fixed header bytes | Timeline slots | Version gate | Negative `CallEclSub` id |
-| --- | ---: | ---: | --- | --- |
-| TH06 | `0x10` | 3 | none observed | unchecked |
-| TH07 | `0x44` | 16 | none observed | unchecked |
-| TH08 | `0x48` | 16 | must equal `0x800` | successful no-op |
+| Title | Header | Loader timeline slots | Timeline prefix | Version gate | Negative `CallEclSub` id |
+| --- | ---: | ---: | --- | --- | --- |
+| TH06 | `0x10` | 1 of 3 | `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size` | none observed | unchecked |
+| TH07 | `0x44` | 16 of 16 | `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size` | none observed | unchecked |
+| TH08 | `0x48` | 16 of 16 | `i32 time`, `i16 opcode`, `u8 size`, `args.ints[0]` first operand | must equal `0x800` | successful no-op |
 
 ## Modeling Impact
 
@@ -21,3 +21,8 @@ not counterexamples for that specific boundary.
 
 These deltas matter for any SMT generator. A property proved for TH06's
 `CallEclSub` cannot be copied to TH08 without carrying the negative-id policy.
+
+Lean currently checks these deltas as executable theorems: TH06 raw bytes flow
+through the shared loader/decoder/lookup path, TH07 preserves unchecked negative
+lookup, and TH08 rejects wrong versions before rebasing and treats negative
+sub ids as no-ops.

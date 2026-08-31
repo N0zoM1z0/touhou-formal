@@ -26,6 +26,8 @@ relative to `/home/yann/yann/touhou/formal`.
 
 - `reference/th07/src/th07/EclManager.hpp:277`: `EclRawHeader` stores
   `subCount`, `timelineCount`, sixteen timeline pointers, and `subTable[]`.
+- `reference/th07/src/th07/EclManager.hpp:317`: `EclTimelineInstr` stores
+  `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size`, and six argument slots.
 - `reference/th07/src/th07/EclManager.cpp:106`: `CallEclSub` reads
   `this->subTable[subId]` directly.
 
@@ -38,6 +40,23 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclManager.cpp:69`: `CallEclSub` returns immediately for
   negative sub ids, but still reads `this->subTable[subId]` directly for
   nonnegative ids.
+- `reference/th08/src/EnemyManager.hpp:419`: `EclTimelineInstruction` stores
+  `i32 time`, `i16 opcode`, `u8 size`, `u8 difficultyMask`, and seven 32-bit
+  args; there is no TH06-style top-level `arg0`.
+- `reference/th08/src/EnemyTimeline.cpp:120`: TH08 timeline spawn opcodes pass
+  `args.ints[0]` into `SpawnEnemy1`, which then calls `CallEclSub`.
+
+## DanmakuFuzz Boundary
+
+- `reference/DanmakuFuzz/src/danmakufuzz/ecl_ir/parser.py`: the historical
+  parser rejects malformed headers, invalid offsets, overlapping regions, and
+  timeline instructions smaller than the fixed prefix. That is useful fuzzing
+  infrastructure, but it is not faithful runtime semantics for the original
+  ZUN loader.
+- `reference/DanmakuFuzz/src/danmakufuzz/ecl_ir/model.py`: its
+  `TimelineInstruction` serializes a TH06-style `i16 time/arg0/opcode/size`
+  prefix, so the Lean model now represents the corresponding TH08 layout as a
+  profile delta instead of copying this old shape globally.
 
 ## Retail Calibration
 

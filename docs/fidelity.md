@@ -11,6 +11,12 @@ For C++ undefined behavior or wild pointer execution, the model stops at the
 first invalid operation and returns a structured `Fault`. That is a modeling
 boundary, not a claim that retail always crashes at that exact instruction.
 
+The formal parser is intentionally not a defensive tooling parser. Prior
+DanmakuFuzz IR code rejects truncated headers, bad offsets, and undersized
+timeline instructions so the fuzzer can keep mutating valid-enough files. The
+Lean model should not inherit those validations unless the original title source
+performs them before the observed access.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and
