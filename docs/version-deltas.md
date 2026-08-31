@@ -6,11 +6,11 @@ lookup semantics now consume these profiles directly.
 
 ## Initial Profiles
 
-| Title | Header | Loader timeline slots | Timeline prefix | Version gate | Negative `CallEclSub` id |
-| --- | ---: | ---: | --- | --- | --- |
-| TH06 | `0x10` | 1 of 3 | `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size` | none observed | unchecked |
-| TH07 | `0x44` | 16 of 16 | `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size` | none observed | unchecked |
-| TH08 | `0x48` | 16 of 16 | `i32 time`, `i16 opcode`, `u8 size`, `args.ints[0]` first operand | must equal `0x800` | successful no-op |
+| Title | Header | Loader timeline slots | Timeline prefix | Raw instruction prefix | Version gate | Negative `CallEclSub` id |
+| --- | ---: | ---: | --- | --- | --- | --- |
+| TH06 | `0x10` | 1 of 3 | `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size` | `i32 time`, `i16 opcode`, `i16 offsetToNext`, difficulty byte | none observed | unchecked |
+| TH07 | `0x44` | 16 of 16 | `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size` | `u32 time`, `i16 opcode`, `i16 size`, difficulty byte, `u16 paramMask` | none observed | unchecked |
+| TH08 | `0x48` | 16 of 16 | `i32 time`, `i16 opcode`, `u8 size`, `args.ints[0]` first operand | `i32 time`, `i16 opcode`, `i16 nextOffset`, difficulty byte, `u16 operandFlags` | must equal `0x800` | successful no-op |
 
 ## Modeling Impact
 

@@ -1,5 +1,6 @@
 import TouhouFormal.Core.Bytes
 import TouhouFormal.ECL.Call
+import TouhouFormal.ECL.Instruction
 import TouhouFormal.ECL.Loader
 import TouhouFormal.ECL.Timeline
 import TouhouFormal.TH06.Timeline
@@ -37,6 +38,18 @@ def rawNegativeSizeTimelinePrefixBytes : TouhouFormal.Bytes :=
     TouhouFormal.leU16Bytes 0 ++
     TouhouFormal.leU16Bytes 0xffff ++
     TouhouFormal.zeroBytes 20).toArray
+
+def rawZeroNextOffsetInstrPrefixBytes : TouhouFormal.Bytes :=
+  (TouhouFormal.leU32Bytes 441 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU16Bytes 0 ++
+    [TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0]).toArray
+
+def rawNegativeNextOffsetInstrPrefixBytes : TouhouFormal.Bytes :=
+  (TouhouFormal.leU32Bytes 441 ++
+    TouhouFormal.leU16Bytes 0 ++
+    TouhouFormal.leU16Bytes 0xffff ++
+    [TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0, TouhouFormal.byteOfNat 0]).toArray
 
 def rawOneSubArg0256Header : Except TouhouFormal.ECL.LoadError TouhouFormal.ECL.LoadedHeader :=
   TouhouFormal.ECL.loadHeaderOffsets headerShape rawOneSubArg0256Ecl
@@ -141,6 +154,45 @@ theorem rawNegativeSizeTimelinePrefix_after_advance_faults :
           "timeline cursor moved before the beginning of the ECL buffer"
           (-1)
           rawNegativeSizeTimelinePrefixBytes.size) := by
+  rfl
+
+theorem rawZeroNextOffsetInstrPrefix_nonprogresses :
+    TouhouFormal.ECL.decodeRawInstrPrefix headerShape rawZeroNextOffsetInstrPrefixBytes 0 =
+      .ok
+        { fileOffset := 0
+          time := 441
+          opcode := 0
+          nextOffset := 0
+          difficultyMask := some 0
+          operandMask := none } := by
+  rfl
+
+theorem rawZeroNextOffsetInstrPrefix_next_cursor_stays :
+    ( { fileOffset := 0
+        time := 441
+        opcode := 0
+        nextOffset := 0
+        difficultyMask := some 0
+        operandMask := none } : TouhouFormal.ECL.RawInstrPrefix ).isNonProgressing = true := by
+  rfl
+
+theorem rawNegativeNextOffsetInstrPrefix_after_advance_faults :
+    TouhouFormal.ECL.decodeRawInstrPrefixAfterAdvance
+      headerShape
+      rawNegativeNextOffsetInstrPrefixBytes
+      { fileOffset := 0
+        time := 441
+        opcode := 0
+        nextOffset := -1
+        difficultyMask := some 0
+        operandMask := none } =
+      .error
+        (Fault.outOfBoundsRead
+          title
+          "EclRun.decode.cursor"
+          "raw ECL instruction cursor moved before the beginning of the ECL buffer"
+          (-1)
+          rawNegativeNextOffsetInstrPrefixBytes.size) := by
   rfl
 
 end TouhouFormal.TH06

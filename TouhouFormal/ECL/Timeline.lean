@@ -1,5 +1,4 @@
-import TouhouFormal.Core.Bytes
-import TouhouFormal.ECL.Profile
+import TouhouFormal.ECL.Scalar
 
 namespace TouhouFormal.ECL
 
@@ -22,15 +21,6 @@ private def missingTimelineShapeFault (shape : HeaderShape) : Fault :=
     title := shape.title
     component := "EclTimeline.decode"
     detail := "profile does not define a timeline wire shape" }
-
-def readScalar (title component : String) (bytes : TouhouFormal.Bytes) (offset : Nat)
-    (width : ScalarWidth) : Except Fault Int :=
-  match width with
-  | .u8 => do
-      let value <- readU8 title component bytes offset
-      pure (Int.ofNat value.toNat)
-  | .i16 => readI16LE title component bytes offset
-  | .i32 => readI32LE title component bytes offset
 
 def decodeTimelinePrefix (shape : HeaderShape) (bytes : TouhouFormal.Bytes) (fileOffset : Nat) :
     Except Fault TimelinePrefix :=

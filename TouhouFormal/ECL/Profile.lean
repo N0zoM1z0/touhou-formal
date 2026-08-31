@@ -13,12 +13,16 @@ def NegativeSubIdPolicy.name : NegativeSubIdPolicy -> String
 
 inductive ScalarWidth where
   | u8
+  | u16
+  | u32
   | i16
   | i32
 deriving Repr, DecidableEq
 
 def ScalarWidth.bytes : ScalarWidth -> Nat
   | .u8 => 1
+  | .u16 => 2
+  | .u32 => 4
   | .i16 => 2
   | .i32 => 4
 
@@ -32,6 +36,20 @@ structure TimelineShape where
   sizeWidth : ScalarWidth
   firstArgOffset : Option Nat := none
   firstArgWidth : Option ScalarWidth := none
+deriving Repr, DecidableEq
+
+structure RawInstrShape where
+  fixedPrefixBytes : Nat
+  timeOffset : Nat
+  timeWidth : ScalarWidth
+  opcodeOffset : Nat
+  opcodeWidth : ScalarWidth
+  nextOffsetOffset : Nat
+  nextOffsetWidth : ScalarWidth
+  difficultyMaskOffset : Option Nat := none
+  difficultyMaskWidth : Option ScalarWidth := none
+  operandMaskOffset : Option Nat := none
+  operandMaskWidth : Option ScalarWidth := none
 deriving Repr, DecidableEq
 
 structure HeaderShape where
@@ -48,6 +66,7 @@ structure HeaderShape where
   subTableField : String
   negativeSubIdPolicy : NegativeSubIdPolicy
   timelineShape : Option TimelineShape := none
+  rawInstrShape : Option RawInstrShape := none
   evidence : List TouhouFormal.SourceRef := []
 deriving Repr, DecidableEq
 

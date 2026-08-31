@@ -20,10 +20,11 @@ The intended loop is:
 faults, little-endian byte reads, bounded execution, traces, and evidence
 references.
 
-`TouhouFormal/ECL` contains the shared ECL core: profile-driven header loading,
-subTable lookup policy, and timeline-prefix decoding. These definitions encode
-the original unsafe boundary and return a structured `Fault` at the first
-invalid modeled operation.
+`TouhouFormal/ECL` contains the shared ECL core: scalar byte reads,
+profile-driven header loading, subTable lookup policy, timeline-prefix decoding,
+timeline cursor advancement, and raw instruction-prefix decoding. These
+definitions encode the original unsafe boundary and return a structured `Fault`
+at the first invalid modeled operation.
 
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not

@@ -64,6 +64,19 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
           sizeWidth := .u8
           firstArgOffset := some 8
           firstArgWidth := some .i32 }
+    rawInstrShape :=
+      some
+        { fixedPrefixBytes := 12
+          timeOffset := 0
+          timeWidth := .i32
+          opcodeOffset := 4
+          opcodeWidth := .i16
+          nextOffsetOffset := 6
+          nextOffsetWidth := .i16
+          difficultyMaskOffset := some 9
+          difficultyMaskWidth := some .u8
+          operandMaskOffset := some 10
+          operandMaskWidth := some .u16 }
     evidence := eclEvidence }
 
 theorem headerShape_timelineTableEnd :

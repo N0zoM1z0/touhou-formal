@@ -9,6 +9,8 @@ relative to `/home/yann/yann/touhou/formal`.
   `i16 arg0`, `i16 opCode`, `i16 size`, then timeline args.
 - `reference/th06/src/EclManager.hpp:340`: `EclRawHeader` stores `i16 subCount`,
   `i16 mainCount`, three timeline offsets, and a flexible `subOffsets` table.
+- `reference/th06/src/EclManager.hpp:326`: `EclRawInstr` stores `i32 time`,
+  `i16 opCode`, `i16 offsetToNext`, difficulty skip byte, and raw args.
 - `reference/th06/src/EclManager.cpp:54`: loader rebases `timelineOffsets[0]`.
 - `reference/th06/src/EclManager.cpp:56`: `subTable` points at `subOffsets[0]`.
 - `reference/th06/src/EclManager.cpp:57`: loader rebases `subTable[idx]` for
@@ -28,6 +30,8 @@ relative to `/home/yann/yann/touhou/formal`.
 
 - `reference/th07/src/th07/EclManager.hpp:277`: `EclRawHeader` stores
   `subCount`, `timelineCount`, sixteen timeline pointers, and `subTable[]`.
+- `reference/th07/src/th07/EclManager.hpp:291`: `EclRawInstr` stores `u32 time`,
+  `i16 id`, `i16 size`, difficulty skip byte, `u16 paramMask`, and args.
 - `reference/th07/src/th07/EclManager.hpp:317`: `EclTimelineInstr` stores
   `i16 time`, `i16 arg0`, `i16 opcode`, `i16 size`, and six argument slots.
 - `reference/th07/src/th07/EclManager.cpp:106`: `CallEclSub` reads
@@ -39,6 +43,9 @@ relative to `/home/yann/yann/touhou/formal`.
 
 - `reference/th08/src/EclManager.hpp:181`: `EclRawHeader` stores version,
   `subCount`, `timelineCount`, sixteen timeline offsets, and `subOffsets[1]`.
+- `reference/th08/src/EclManager.hpp:147`: `EclRawInstruction` stores
+  `i32 time`, `i16 opcode`, `i16 nextOffset`, difficulty byte, `u16
+  operandFlags`, and operands.
 - `reference/th08/src/EclManager.cpp:38`: loader rejects non-`0x800` ECL
   versions.
 - `reference/th08/src/EclManager.cpp:69`: `CallEclSub` returns immediately for

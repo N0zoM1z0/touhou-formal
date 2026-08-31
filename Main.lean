@@ -27,6 +27,16 @@ private def describeTimelinePrefix : Except Fault TouhouFormal.ECL.TimelinePrefi
         " nextCursor=" ++ toString timelinePrefix.nextCursor
   | .error faultValue => faultValue.describe
 
+private def describeRawInstrPrefix : Except Fault TouhouFormal.ECL.RawInstrPrefix -> String
+  | .ok rawPrefix =>
+      "ok time=" ++ toString rawPrefix.time ++
+        " opcode=" ++ toString rawPrefix.opcode ++
+        " nextOffset=" ++ toString rawPrefix.nextOffset ++
+        " nextCursor=" ++ toString rawPrefix.nextCursor ++
+        " difficulty=" ++ toString rawPrefix.difficultyMask ++
+        " operandMask=" ++ toString rawPrefix.operandMask
+  | .error faultValue => faultValue.describe
+
 def main : IO Unit := do
   let result := runBounded TouhouFormal.TH06.stepTimeline 1 TouhouFormal.TH06.arg0_256State
   IO.println "TH06 timeline/subTable counterexample seed"
@@ -54,3 +64,9 @@ def main : IO Unit := do
   IO.println "Timeline cursor controls"
   IO.println s!"TH06 size=0 prefix: {describeTimelinePrefix (TouhouFormal.ECL.decodeTimelinePrefix TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawZeroSizeTimelinePrefixBytes 0)}"
   IO.println s!"TH06 size=-1 after advance: {describeTimelinePrefix (TouhouFormal.ECL.decodeTimelinePrefixAfterAdvance TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawNegativeSizeTimelinePrefixBytes { fileOffset := 0, time := 441, opcode := 0, size := -1, firstArg := some 0 })}"
+  IO.println ""
+  IO.println "Raw ECL instruction prefix controls"
+  IO.println s!"TH06 nextOffset=0 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawZeroNextOffsetInstrPrefixBytes 0)}"
+  IO.println s!"TH06 nextOffset=-1 after advance: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefixAfterAdvance TouhouFormal.TH06.headerShape TouhouFormal.TH06.rawNegativeNextOffsetInstrPrefixBytes { fileOffset := 0, time := 441, opcode := 0, nextOffset := -1, difficultyMask := some 0, operandMask := none })}"
+  IO.println s!"TH07 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH07.headerShape TouhouFormal.TH07.rawInstrPrefixBytes 0)}"
+  IO.println s!"TH08 prefix: {describeRawInstrPrefix (TouhouFormal.ECL.decodeRawInstrPrefix TouhouFormal.TH08.headerShape TouhouFormal.TH08.rawInstrPrefixBytes 0)}"
