@@ -114,6 +114,10 @@ def eclOpcodeSetLife : Int := 131
 def eclOpcodeSetBossTimer : Int := 132
 def eclOpcodeSetLifeCallback : Int := 133
 def eclOpcodeSetTimerCallback : Int := 134
+def eclOpcodeSpawnItem : Int := 141
+def eclOpcodeSpawnItems : Int := 142
+def eclOpcodeSetItemDropType : Int := 143
+def eclOpcodeSetItemDropCounts : Int := 144
 def eclOpcodeSetRotateAnmWithMovement : Int := 145
 def eclOpcodeAddTime : Int := 146
 def eclOpcodeRunInterrupt : Int := 125
@@ -126,6 +130,7 @@ def eclOpcodeBindTimerCallbackToDeath : Int := 153
 def eclOpcodeClearLasers : Int := 154
 def eclOpcodeSetPrimaryVmRotZ : Int := 165
 def eclOpcodeSetLaserAngle : Int := 167
+def eclOpcodeSpawnPointItems : Int := 168
 def eclOpcodeRandomExitAngle : Int := 169
 def eclOpcodeSetLaserHideCapDuringStartup : Int := 170
 def eclOpcodeSetLaserStartLength : Int := 171
@@ -497,7 +502,11 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th08/src/EnemyManager.cpp"
       startLine := 1424
       endLine := 1498
-      claim := "KillAllNonBossEnemies skips inactive, boss, and noDeath enemies, clears life, may spawn point items/popups, detaches parent chains, and may enter death callbacks." } ]
+      claim := "KillAllNonBossEnemies skips inactive, boss, and noDeath enemies, clears life, may spawn point items/popups, detaches parent chains, and may enter death callbacks." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 639
+      endLine := 710
+      claim := "TH08 item opcodes resolve item-drop state fields, power-or-point loops, point-only loops, and single item ids through operandFlags, with 128/64 random spread and default item state." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -872,6 +881,28 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 eclOpcodeKillAllNonBossEnemies
                 .killAllNonBossEnemies
                 enemyPoolSlots ]
+          itemOps :=
+            [ TouhouFormal.ECL.rawItemSingleOp
+                eclOpcodeSpawnItem
+                (TouhouFormal.ECL.rawItemSingleInputs .intRValue),
+              TouhouFormal.ECL.rawItemLoopOp
+                eclOpcodeSpawnItems
+                .powerOrPointByPlayerPower
+                (TouhouFormal.ECL.rawItemLoopCountInputs .intRValue)
+                128
+                64,
+              TouhouFormal.ECL.rawItemDropTypeOp
+                eclOpcodeSetItemDropType
+                (TouhouFormal.ECL.rawItemSingleInputs .intRValue),
+              TouhouFormal.ECL.rawItemDropCountsOp
+                eclOpcodeSetItemDropCounts
+                (TouhouFormal.ECL.rawItemDropCountInputs .intRValue),
+              TouhouFormal.ECL.rawItemLoopOp
+                eclOpcodeSpawnPointItems
+                .pointOnly
+                (TouhouFormal.ECL.rawItemLoopCountInputs .intRValue)
+                128
+                64 ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

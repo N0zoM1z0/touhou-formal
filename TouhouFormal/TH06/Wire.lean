@@ -102,8 +102,11 @@ def eclOpcodeSetLifeCallbackSub : Int := 114
 def eclOpcodeSetTimerCallbackThreshold : Int := 115
 def eclOpcodeSetTimerCallbackSub : Int := 116
 def eclOpcodeSetInteractable : Int := 117
+def eclOpcodeEffectParticle : Int := 118
+def eclOpcodeDropItems : Int := 119
 def eclOpcodeAnmFlagRotation : Int := 120
 def eclOpcodeTimeSet : Int := 123
+def eclOpcodeDropItemId : Int := 124
 def eclOpcodeAnmInterruptMain : Int := 128
 def eclOpcodeAnmInterruptSlot : Int := 129
 def eclOpcodeSetCallStackDisabled : Int := 130
@@ -409,7 +412,15 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th06/src/EnemyManager.cpp"
       startLine := 92
       endLine := 124
-      claim := "SpawnEnemy scans the 256-slot pool, copies the template, writes requested fields, calls CallEclSub, immediately runs the spawned ECL context, and then records item/score/maxLife." } ]
+      claim := "SpawnEnemy scans the 256-slot pool, copies the template, writes requested fields, calls CallEclSub, immediately runs the spawned ECL context, and then records item/score/maxLife." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 809
+      endLine := 824
+      claim := "DROPITEMS loops a raw i32 count, randomizes enemy-relative X/Y by 144 minus 72, and spawns power items below power 128 or point items otherwise." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 846
+      endLine := 847
+      claim := "DROPITEMID spawns one item at the enemy position from the raw dropItem.itemId field." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -740,6 +751,16 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 eclOpcodeEnemyKillAll
                 .inlineTH06Loop
                 enemyPoolSlots ]
+          itemOps :=
+            [ TouhouFormal.ECL.rawItemLoopOp
+                eclOpcodeDropItems
+                .powerOrPointByPlayerPower
+                (TouhouFormal.ECL.rawItemLoopCountInputs .rawI32)
+                144
+                72,
+              TouhouFormal.ECL.rawItemSingleOp
+                eclOpcodeDropItemId
+                (TouhouFormal.ECL.rawItemSingleInputs .rawI32) ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

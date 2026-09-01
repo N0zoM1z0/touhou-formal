@@ -507,6 +507,29 @@ records source-visible arguments, resolver order, truncation, pool size, and
 remove-all policy, but it does not yet simulate the entire enemy array,
 template copy, spawned-context execution, item creation, or callback scheduler.
 
+## Item/Drop Evidence
+
+- `reference/th06/src/EclManager.cpp:809-824` loops over the raw `setInt`
+  operand, starts each item at enemy position, applies two RNG offsets from a
+  144-wide range shifted by 72, and chooses power items below player power 128
+  or point items otherwise.
+- `reference/th06/src/EclManager.cpp:846-847` spawns a single item from the raw
+  `dropItem.itemId` field at enemy position.
+- `reference/th07/src/th07/EclManager.cpp:1768-1798` resolves item loop counts
+  through `GET_INT_VALUE`, applies a 128-wide range shifted by 64, implements a
+  point-only loop for opcode 154, and spawns a single resolved item id for
+  opcode 124.
+- `reference/th08/src/EclRunHigh.inl:639-710` resolves item-drop state fields,
+  loop counts, and single item ids through `TH08_ECL_READ_I`. The power-or-point
+  and point-only loops use two `GetRandomF32() * 128.0f - 64.0f` offsets, and
+  single spawns pass `ITEM_STATE_DEFAULT`.
+
+The model records item/drop requests and field writes rather than simulating
+the item pool. This keeps the proof obligation at the VM boundary: operand
+resolution, loop count, spread constants, item-selection policy, and TH08 state
+fields are source-backed, while actual item allocation and RNG samples remain
+host behavior.
+
 ## Shooting Control Evidence
 
 - `reference/th06/src/EclManager.cpp:428-454` uses raw interval operands,

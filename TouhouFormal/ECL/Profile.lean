@@ -1685,6 +1685,121 @@ def rawEnemyLifecycleRemoveAllOp
     removeScoreMax := scoreMax
     removeInitialScore := initialScore }
 
+inductive RawItemIntInputPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawItemIntInputPolicy.name : RawItemIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+inductive RawItemIntRole where
+  | count
+  | itemType
+  | pointCount
+  | powerOrPointCount
+deriving Repr, DecidableEq
+
+def RawItemIntRole.name : RawItemIntRole -> String
+  | .count => "count"
+  | .itemType => "item-type"
+  | .pointCount => "point-count"
+  | .powerOrPointCount => "power-or-point-count"
+
+structure RawItemIntInputShape where
+  role : RawItemIntRole
+  operandIndex : Nat
+  policy : RawItemIntInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawItemLoopKind where
+  | powerOrPointByPlayerPower
+  | pointOnly
+deriving Repr, DecidableEq
+
+def RawItemLoopKind.name : RawItemLoopKind -> String
+  | .powerOrPointByPlayerPower => "power-or-point-by-player-power"
+  | .pointOnly => "point-only"
+
+inductive RawItemOpKind where
+  | spawnLoop (loopKind : RawItemLoopKind)
+  | spawnSingle
+  | setItemDropType
+  | setItemDropCounts
+deriving Repr, DecidableEq
+
+def RawItemOpKind.name : RawItemOpKind -> String
+  | .spawnLoop loopKind => "spawn-loop-" ++ loopKind.name
+  | .spawnSingle => "spawn-single"
+  | .setItemDropType => "set-item-drop-type"
+  | .setItemDropCounts => "set-item-drop-counts"
+
+structure RawItemOpShape where
+  opcode : Int
+  kind : RawItemOpKind
+  intInputs : List RawItemIntInputShape := []
+  spreadFullWidth : Int := 128
+  spreadHalfWidth : Int := 64
+  powerThreshold : Int := 128
+  itemStateDefault : Bool := true
+deriving Repr, DecidableEq
+
+def rawItemLoopCountInputs
+    (policy : RawItemIntInputPolicy) : List RawItemIntInputShape :=
+  [ { role := .count
+      operandIndex := 0
+      policy := policy } ]
+
+def rawItemSingleInputs
+    (policy : RawItemIntInputPolicy) : List RawItemIntInputShape :=
+  [ { role := .itemType
+      operandIndex := 0
+      policy := policy } ]
+
+def rawItemDropCountInputs
+    (policy : RawItemIntInputPolicy) : List RawItemIntInputShape :=
+  [ { role := .pointCount
+      operandIndex := 0
+      policy := policy },
+    { role := .powerOrPointCount
+      operandIndex := 1
+      policy := policy } ]
+
+def rawItemLoopOp
+    (opcode : Int)
+    (loopKind : RawItemLoopKind)
+    (intInputs : List RawItemIntInputShape)
+    (spreadFullWidth spreadHalfWidth : Int)
+    (powerThreshold : Int := 128) : RawItemOpShape :=
+  { opcode := opcode
+    kind := .spawnLoop loopKind
+    intInputs := intInputs
+    spreadFullWidth := spreadFullWidth
+    spreadHalfWidth := spreadHalfWidth
+    powerThreshold := powerThreshold }
+
+def rawItemSingleOp
+    (opcode : Int)
+    (intInputs : List RawItemIntInputShape) : RawItemOpShape :=
+  { opcode := opcode
+    kind := .spawnSingle
+    intInputs := intInputs }
+
+def rawItemDropTypeOp
+    (opcode : Int)
+    (intInputs : List RawItemIntInputShape) : RawItemOpShape :=
+  { opcode := opcode
+    kind := .setItemDropType
+    intInputs := intInputs }
+
+def rawItemDropCountsOp
+    (opcode : Int)
+    (intInputs : List RawItemIntInputShape) : RawItemOpShape :=
+  { opcode := opcode
+    kind := .setItemDropCounts
+    intInputs := intInputs }
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -1722,6 +1837,7 @@ structure RawInstrShape where
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   enemyLifecycleOps : List RawEnemyLifecycleOpShape := []
+  itemOps : List RawItemOpShape := []
   shootingOps : List RawShootingOpShape := []
   timeControlOps : List RawTimeControlOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
@@ -1809,6 +1925,11 @@ def RawInstrShape.findEnemyLifecycleOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawEnemyLifecycleOpShape :=
   rawShape.enemyLifecycleOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findItemOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawItemOpShape :=
+  rawShape.itemOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)

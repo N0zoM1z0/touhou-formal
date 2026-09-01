@@ -107,6 +107,11 @@ The executable model currently covers these source-backed boundaries:
   relative-position host f32 addition as an explicit boundary, context-argument
   copying policy, i16 sub-id truncation at `CallEclSub`, i8 item-drop
   truncation in TH07/TH08, and the three distinct remove-all loop policies.
+- Shared item/drop effects cover 10 cross-title opcodes. The model records
+  raw-versus-resolved item counts and item ids, TH06's 144/72 random spread,
+  TH07/TH08's 128/64 spread, the power-under-128 branch that selects power
+  items versus point items, point-only loops, single-item spawns, and TH08's
+  item-drop state fields without simulating the full `ItemManager`.
 - Shared shooting-control effects cover 18 interval, gate, previous-pattern,
   and offset opcodes. One rank-scaling function is reused across all titles,
   while profiles retain TH06's unconditional zero-interval timer reset,

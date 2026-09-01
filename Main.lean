@@ -289,6 +289,44 @@ private def describeEnemyLifecycleOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeItemOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawItemOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            let loopSummary :=
+              match effect.loopSpawn with
+              | none => "loop=none"
+              | some loop =>
+                  "loop=" ++ loop.kind.name ++
+                    " count=" ++ toString loop.count ++
+                    " spread=" ++ toString loop.spreadFullWidth ++
+                    "/" ++ toString loop.spreadHalfWidth ++
+                    " powerThreshold=" ++ toString loop.powerThreshold
+            let singleSummary :=
+              match effect.singleSpawn with
+              | none => "single=none"
+              | some single =>
+                  "single=item " ++ toString single.itemType ++
+                    " defaultState=" ++ toString single.itemStateDefault
+            let stateSummary :=
+              match effect.stateWrite with
+              | none => "state=none"
+              | some write =>
+                  "state=" ++ reprStr
+                    (write.itemDropType,
+                      write.pointItemDropCount,
+                      write.powerOrPointItemDropCount)
+            loopSummary ++ " " ++ singleSummary ++ " " ++ stateSummary
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeShootingOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawShootingOutcome) :
     String :=
@@ -673,6 +711,16 @@ def main : IO Unit := do
   IO.println s!"TH06 remove all: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th06RemoveAllOutcome}"
   IO.println s!"TH07 remove all: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th07RemoveAllOutcome}"
   IO.println s!"TH08 remove all: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th08RemoveAllOutcome}"
+  IO.println ""
+  IO.println "Item/drop controls"
+  IO.println s!"TH06 item opcode count: {TouhouFormal.Search.Item.itemOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 item opcode count: {TouhouFormal.Search.Item.itemOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 item opcode count: {TouhouFormal.Search.Item.itemOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 drop items: {describeItemOutcome TouhouFormal.Search.Item.th06DropItemsOutcome}"
+  IO.println s!"TH06 drop item id: {describeItemOutcome TouhouFormal.Search.Item.th06DropItemIdOutcome}"
+  IO.println s!"TH07 point items: {describeItemOutcome TouhouFormal.Search.Item.th07PointItemsOutcome}"
+  IO.println s!"TH08 drop counts: {describeItemOutcome TouhouFormal.Search.Item.th08DropCountsOutcome}"
+  IO.println s!"TH08 spawn item: {describeItemOutcome TouhouFormal.Search.Item.th08SpawnItemOutcome}"
   IO.println ""
   IO.println "Shooting controls"
   IO.println s!"TH06 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH06.headerShape}"

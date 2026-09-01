@@ -9,12 +9,12 @@ dispatch skeleton, the first shared opcode-body slice, the integer resolver,
 the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
 the CALL/RET/conditional-CALL slices. It also now source-models several
 gameplay-effect opcode families in Lean, including bullet-control host effects,
-time/wait controls, enemy lifecycle spawn/remove requests, laser-spawn
-descriptors, laser slot controls, animation controls, and primary bullet
-patterns, but those families are not yet dedicated SMT/materializer lanes. It
-is not yet better than fuzzing for the full ECL/ANM VM, because full
-BulletManager/EnemyManager runtime behavior, full ANM execution, and
-multi-context scheduling are not modeled yet.
+time/wait controls, enemy lifecycle spawn/remove requests, item/drop requests,
+laser-spawn descriptors, laser slot controls, animation controls, and primary
+bullet patterns, but those families are not yet dedicated SMT/materializer
+lanes. It is not yet better than fuzzing for the full ECL/ANM VM, because full
+BulletManager/EnemyManager/ItemManager runtime behavior, full ANM execution,
+and multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -46,10 +46,10 @@ The current manual verification run on 2026-09-01 executed:
 
 ```bash
 lake build
-lake exe check > /tmp/touhou_check_enemy_lifecycle.txt
-./scripts/check.sh > /tmp/touhou_full_check_enemy_lifecycle.txt
+lake exe check > /tmp/touhou_check_item.txt
+./scripts/check.sh > /tmp/touhou_full_check_item.txt
 python3 scripts/evaluate_symex_effectiveness.py \
-  > /tmp/touhou_effectiveness_enemy_lifecycle.json
+  > /tmp/touhou_effectiveness_item.json
 ```
 
 All completed successfully on the raw-step, raw-body, resolver,
@@ -567,7 +567,8 @@ dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
 movement state writes, timed direction/position interpolation, orbit movement,
-enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior,
+enemy hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove
+requests, item/drop requests and state writes, plain CALL/RET stack behavior,
 zero divisors, shooting-control state writes, time/wait controls,
 bullet-control host effects, laser spawn descriptor construction, primary
 bullet-pattern descriptor construction/gates, laser slot controls,
@@ -579,9 +580,9 @@ Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 115: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 21 |
-| TH07 | 159 `EclOpcode` symbols | 126: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 33 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 127: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 57 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 119: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, enemy-lifecycle, item/drop, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 17 |
+| TH07 | 159 `EclOpcode` symbols | 132: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, enemy-lifecycle, item/drop, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 27 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 135: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, enemy-lifecycle, item/drop, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 49 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -602,8 +603,9 @@ Not covered:
   hazards;
 - BulletManager allocation/runtime simulation, TH08 transform-table execution,
   runtime laser simulation, full EnemyManager spawn/removal runtime after the
-  VM request boundary, item creation, full ANM execution, sound playback, and
-  callback trigger side effects;
+  VM request boundary, full ItemManager allocation/runtime after the VM request
+  boundary, full ANM execution, sound playback, and callback trigger side
+  effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
@@ -645,6 +647,9 @@ complete for the implemented bullet-control host-effect abstraction, including
 complete for the implemented enemy-lifecycle host-effect abstraction,
   including spawn packet order, parent-life gates, relative-position host
   boundary, context-copy policy, pool size, and remove-all loop deltas;
+complete for the implemented item/drop host-effect abstraction, including
+  raw/resolved counts, item ids, spread constants, power-threshold policy,
+  point-only loops, default item state, and TH08 item-drop field writes;
 complete for the implemented laser-spawn descriptor abstraction, including
   source-ordered descriptor construction and unchecked selected-slot writes
   after spawn requests;

@@ -100,6 +100,13 @@ the retail binary. Remove-all opcodes are likewise summarized as title-specific
 loop policies: TH06's inline loop has no item/pop-up path, TH07 may spawn point
 items, and TH08 additionally skips noDeath enemies and detaches parent chains.
 
+Item/drop opcodes are also VM-to-host requests. Lean records resolved loop
+counts, single item ids, spread constants, default item-state usage, and TH08's
+item-drop state writes. It does not allocate item objects or sample RNG
+coordinates. The power-under-128 branch is retained as policy because it is a
+source-visible branch in the opcode body, but the concrete player power and item
+pool state are later host inputs.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

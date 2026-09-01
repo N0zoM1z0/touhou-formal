@@ -94,6 +94,9 @@ def eclOpcodeSetAnm : Int := 95
 def eclOpcodeSetMoveAnm : Int := 96
 def eclOpcodeSetSubAnm : Int := 97
 def eclOpcodeSetDeathAnm : Int := 98
+def eclOpcodeSpawnItems : Int := 119
+def eclOpcodeSpawnItem : Int := 124
+def eclOpcodeSpawnPointItems : Int := 154
 def eclOpcodeSetHitboxSize : Int := 101
 def eclOpcodeSetGrazeSize : Int := 153
 def eclOpcodeSetContactHitbox : Int := 102
@@ -460,7 +463,11 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       { path := "reference/th07/src/th07/EnemyManager.cpp"
         startLine := 1459
         endLine := 1520
-        claim := "RemoveAllEnemies skips inactive and boss enemies, clears life, may spawn point items/popups, and may enter death callbacks for non-dying enemies." } ]
+        claim := "RemoveAllEnemies skips inactive and boss enemies, clears life, may spawn point items/popups, and may enter death callbacks for non-dying enemies." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1768
+        endLine := 1798
+        claim := "Item opcodes resolve counts through paramMask, use 128/64 random spread for power-or-point and point-only loops, and spawn single item ids through GET_INT_VALUE." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -842,6 +849,22 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 eclOpcodeRemoveAllEnemies
                 .removeAllEnemies
                 enemyPoolSlots ]
+          itemOps :=
+            [ TouhouFormal.ECL.rawItemLoopOp
+                eclOpcodeSpawnItems
+                .powerOrPointByPlayerPower
+                (TouhouFormal.ECL.rawItemLoopCountInputs .intRValue)
+                128
+                64,
+              TouhouFormal.ECL.rawItemLoopOp
+                eclOpcodeSpawnPointItems
+                .pointOnly
+                (TouhouFormal.ECL.rawItemLoopCountInputs .intRValue)
+                128
+                64,
+              TouhouFormal.ECL.rawItemSingleOp
+                eclOpcodeSpawnItem
+                (TouhouFormal.ECL.rawItemSingleInputs .intRValue) ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval
