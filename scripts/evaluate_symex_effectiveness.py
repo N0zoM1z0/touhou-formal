@@ -409,6 +409,11 @@ SOURCE_COVERAGE = [
         "reason": "callback configuration, explicit interrupt entry, and fixed-table EX dispatch/install are modeled with partial-write/fault ordering; automatic callback triggers, high-opcode pending-sub dispatch, and their bounded multi-context lifecycles remain",
     },
     {
+        "area": "TH08 child ECL block installation",
+        "status": "covered-by-model",
+        "reason": "opcode 135 models the unchecked 4-slot table, release/clear ordering, allocator outcome, 0x24b0 zeroing, repeated sub-id reads, i16 CallEclSub boundary, partial lookup faults, and 0x78-byte variable copy",
+    },
+    {
         "area": "remaining arithmetic body faults",
         "status": "not-yet-modeled",
         "reason": "integer div/mod zero and signed idiv overflow are modeled; exact signed add/sub/mul overflow behavior, float divide/fmod edge cases, and numeric non-finite behavior still require C/C++/x87/SSE-faithful arithmetic semantics",

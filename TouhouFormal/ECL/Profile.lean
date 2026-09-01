@@ -1405,6 +1405,27 @@ structure RawExtensionOpShape where
   repeatIndexReadOnInstall : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawChildContextIntPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawChildContextIntPolicy.name : RawChildContextIntPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+structure RawChildContextOpShape where
+  opcode : Int
+  intPolicy : RawChildContextIntPolicy
+  slotOperandIndex : Nat := 0
+  subOperandIndex : Nat := 1
+  slotCount : Nat
+  repeatSubReadAfterAllocation : Bool := true
+  truncateCallSubToI16 : Bool := true
+  blockByteCount : Nat
+  copiedVariableBytes : Nat
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -2324,6 +2345,7 @@ structure RawInstrShape where
   callbackConfigOps : List RawCallbackConfigOpShape := []
   interruptOps : List RawInterruptOpShape := []
   extensionOps : List RawExtensionOpShape := []
+  childContextOps : List RawChildContextOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -2492,6 +2514,11 @@ def RawInstrShape.findExtensionOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawExtensionOpShape :=
   rawShape.extensionOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findChildContextOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawChildContextOpShape :=
+  rawShape.childContextOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

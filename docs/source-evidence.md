@@ -842,6 +842,24 @@ host boundary and records immediate calls or installation writes only after a
 valid lookup. Negative install indices clear the callback without reading the
 table; the stage-specific callback bodies remain explicit host behavior.
 
+## TH08 Child ECL Block Evidence
+
+- `reference/th08/src/EclRunHigh.inl:580-612` resolves a child slot, reads and
+  clears `childEclBlocks[slot]` without a bounds check, conditionally allocates
+  and zeroes an `EnemyChildEclBlock`, resolves the sub id again, calls
+  `CallEclSub`, and only then copies the active variable region.
+- `reference/th08/src/EnemyManager.hpp:288-290` fixes the pointer table at four
+  entries. `EclManager.hpp:252-268` gives the block size `0x24b0`, embedded
+  context, and 16-frame call stack.
+- `reference/th08/src/EclManager.hpp:225-231` places `intVariables` at offset
+  `0x18` and `secondaryTime` at `0x90`, making the source `memcpy` span exactly
+  `0x78` bytes. `EclManager.cpp:69-81` shows the i16 sub-id boundary and the
+  negative-id no-op.
+
+The model preserves allocator failure and all writes before a subTable fault.
+The main/child context selection loop in `EclRun.cpp:179-205` is evidence for a
+later scheduler transition rather than hidden inside this opcode body.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

@@ -188,6 +188,11 @@ The executable model currently covers these source-backed boundaries:
   callback-table bounds, TH06 raw indices, TH07/TH08 resolver reads, negative
   callback clearing, repeated condition/table-index reads, and the boundary
   between callback installation and later scheduler execution.
+- TH08 child-ECL block installation models its unchecked four-slot pointer
+  table, old-block release, allocator failure, full `0x24b0` zeroing, repeated
+  sub-id resolution, i16 `CallEclSub` conversion, partial state before lookup
+  faults, and the exact `0x78`-byte variable-region copy. Multi-context frame
+  scheduling remains a separate transition layer.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector

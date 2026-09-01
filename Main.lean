@@ -714,6 +714,33 @@ private def describeExtensionOutcome
         " " ++ effectSummary ++ faultSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeChildContextOutcome
+    (result : Except TouhouFormal.Fault
+      TouhouFormal.ECL.RawChildContextOutcome) : String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "slot=" ++ reprStr effect.slotIndex ++
+              " freed=" ++ toString effect.oldBlockFreed ++
+              " cleared=" ++ toString effect.slotCleared ++
+              " alloc=" ++ reprStr
+                (effect.allocationRequested, effect.allocationSucceeded) ++
+              " rawSub=" ++ reprStr effect.blockSubIdWrite ++
+              " callSub=" ++ reprStr effect.callSubId ++
+              " target=" ++ reprStr effect.targetSubOffset ++
+              " copied=" ++ reprStr effect.copiedVariableBytes
+      let faultSummary :=
+        match outcome.fault with
+        | none => ""
+        | some fault => " fault=" ++ fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -1062,6 +1089,14 @@ def main : IO Unit := do
   IO.println s!"TH07 repeated extension index fault: {describeExtensionOutcome TouhouFormal.Search.Extension.th07SecondRead24Outcome}"
   IO.println s!"TH08 extension clear: {describeExtensionOutcome TouhouFormal.Search.Extension.th08NegativeClearOutcome}"
   IO.println s!"TH08 extension call: {describeExtensionOutcome TouhouFormal.Search.Extension.th08Index31Outcome}"
+  IO.println ""
+  IO.println "Child ECL context controls"
+  IO.println s!"TH08 child-context opcode count: {TouhouFormal.Search.ChildContext.childContextOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH08 child slot fault: {describeChildContextOutcome TouhouFormal.Search.ChildContext.th08Slot4Outcome}"
+  IO.println s!"TH08 child negative sub: {describeChildContextOutcome TouhouFormal.Search.ChildContext.th08NegativeSubOutcome}"
+  IO.println s!"TH08 child allocation failure: {describeChildContextOutcome TouhouFormal.Search.ChildContext.th08AllocationFailureOutcome}"
+  IO.println s!"TH08 child truncated negative sub: {describeChildContextOutcome TouhouFormal.Search.ChildContext.th08TruncatedNegativeSubOutcome}"
+  IO.println s!"TH08 child subTable fault: {describeChildContextOutcome TouhouFormal.Search.ChildContext.th08SubTableFaultOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

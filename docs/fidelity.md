@@ -144,6 +144,13 @@ to execute all title- and stage-specific callback bodies. TH07/TH08 repeat the
 resolver read after the nonnegative guard; TH06 reuses one raw field. A
 negative install index clears only the callback pointer.
 
+TH08 child-context installation is modeled below the scheduler boundary. The
+four-pointer slot access, prior block release, allocation outcome, zeroed block,
+two sub-id reads, i16 call conversion, `CallEclSub` lookup, and final 0x78-byte
+state copy are ordered exactly as in opcode 135. Lean records an allocated,
+partially initialized block if subTable lookup faults; it does not invent the
+later per-frame interleaving of main and child contexts.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies
