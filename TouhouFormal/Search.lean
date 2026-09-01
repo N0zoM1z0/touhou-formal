@@ -7,6 +7,7 @@ import TouhouFormal.Search.FloatArithmetic
 import TouhouFormal.Search.FloatFunction
 import TouhouFormal.Search.IntUnaryUpdate
 import TouhouFormal.Search.Movement
+import TouhouFormal.Search.RandomDirection
 import TouhouFormal.Search.TimedMovement
 import TouhouFormal.Search.OrbitMovement
 import TouhouFormal.Search.EnemyState

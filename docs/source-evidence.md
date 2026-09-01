@@ -65,6 +65,9 @@ relative to `/home/yann/yann/touhou/formal`.
   `MOVEATPLAYER`'s angle offset, which is added as a raw float word.
 - `reference/th06/src/EclManager.cpp:612`: movement bounds are copied directly
   from four raw float fields and toggle `shouldClampPos`.
+- `reference/th06/src/EclManager.cpp:622`: opcodes 49/50 sample an angle from
+  two raw fields. Opcode 50 sequentially reflects it at the rectangular
+  margins and uses the generated angle in its right-positive subtraction.
 - `reference/th06/src/EnemyEclInstr.cpp:41`: `MoveDirTime` resolves only its
   angle operand, computes a half-duration polar delta, snapshots position, and
   starts interpolation mode; `MovePosTime` and `MoveTime` share the same timer
@@ -174,6 +177,11 @@ relative to `/home/yann/yann/touhou/formal`.
   player-relative operands; axis velocity additionally writes `atan2f(y, x)`.
 - `reference/th07/src/th07/EclManager.cpp:1573`: movement bounds resolve four
   float operands and toggle `hasMovementBounds`.
+- `reference/th07/src/th07/EclManager.cpp:1587`: opcode 52 selects a
+  player-side exit cone, reflects it at the rectangular margins, and in the
+  right-positive branch subtracts `enemy->angle` rather than `exitAngle`.
+- `reference/th07/src/th07/EclManager.cpp:1965`: opcode 155 selects its exit
+  cone using player/enemy X plus fixed 96/288 inner-arena thresholds.
 - `reference/th07/src/th07/EclManager.cpp:576`: timed direction and position
   helpers resolve duration/speed operands at every macro occurrence, snapshot
   the origin, install three-bit easing/mode state, and optionally mirror the
@@ -305,6 +313,8 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclDependencies.cpp:99`: low opcode 67 and high opcode
   178 derive an angle in host code and then share immediate/timed polar
   displacement writes; neither handler reads a bytecode angle operand.
+- `reference/th08/src/EclRunHigh.inl:882`: high opcode 169 reuses TH07's
+  fixed-cone arena-exit condition and writes a float lvalue.
 - `reference/th08/src/EclRunLow.inl:571`: opcodes 72 through 74 initialize or
   partially update orbit motion. Opcode 72 writes only origin X/Y, while
   opcode 73 snapshots the full current position and sets radius to zero.

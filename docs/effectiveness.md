@@ -559,8 +559,8 @@ SET_INT/SET_FLOAT scalar assignment, INC/DEC integer unary updates, integer
 ADD/SUB/MUL/DIV/MOD single-step behavior, float ADD/SUB/MUL/DIV/MOD
 dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
-jumps, TH07/TH08 boss integer/float reads, immediate movement state writes,
-timed direction/position interpolation, orbit movement,
+jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
+movement state writes, timed direction/position interpolation, orbit movement,
 enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior, zero
 divisors, shooting-control state writes, primary bullet-pattern descriptor
 construction/gates, callback configuration, interrupt entry, and signed idiv overflow. Most gameplay host effects
@@ -570,9 +570,9 @@ Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 92: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 44 |
-| TH07 | 159 `EclOpcode` symbols | 94: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 65 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 94: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 90 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 94: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 42 |
+| TH07 | 159 `EclOpcode` symbols | 96: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 63 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 95: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 89 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`

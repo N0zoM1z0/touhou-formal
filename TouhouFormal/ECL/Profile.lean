@@ -344,6 +344,62 @@ structure RawMovementOpShape where
   resetMovementTimers : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawRandomDirectionGeneratorKind where
+  | operandRange
+  | playerSide
+  | arenaExit
+  | hostCandidate
+deriving Repr, DecidableEq
+
+def RawRandomDirectionGeneratorKind.name :
+    RawRandomDirectionGeneratorKind -> String
+  | .operandRange => "operand-range"
+  | .playerSide => "player-side"
+  | .arenaExit => "arena-exit"
+  | .hostCandidate => "host-candidate"
+
+inductive RawRandomDirectionRightPositiveSource where
+  | candidateAngle
+  | currentEnemyAngle
+deriving Repr, DecidableEq
+
+def RawRandomDirectionRightPositiveSource.name :
+    RawRandomDirectionRightPositiveSource -> String
+  | .candidateAngle => "candidate-angle"
+  | .currentEnemyAngle => "current-enemy-angle"
+
+inductive RawRandomDirectionBoundaryPolicy where
+  | none
+  | rectangle (rightPositiveSource : RawRandomDirectionRightPositiveSource)
+  | vertical
+deriving Repr, DecidableEq
+
+def RawRandomDirectionBoundaryPolicy.name :
+    RawRandomDirectionBoundaryPolicy -> String
+  | .none => "none"
+  | .rectangle source => "rectangle-" ++ source.name
+  | .vertical => "vertical"
+
+inductive RawRandomDirectionOutputPolicy where
+  | enemyAngle
+  | floatLValue (operandIndex : Nat)
+  | hostAngle
+deriving Repr, DecidableEq
+
+def RawRandomDirectionOutputPolicy.name :
+    RawRandomDirectionOutputPolicy -> String
+  | .enemyAngle => "enemy-angle"
+  | .floatLValue operandIndex => "float-lvalue-" ++ toString operandIndex
+  | .hostAngle => "host-angle"
+
+structure RawRandomDirectionOpShape where
+  opcode : Int
+  generator : RawRandomDirectionGeneratorKind
+  floatInputs : List RawMovementFloatInputShape := []
+  boundaryPolicy : RawRandomDirectionBoundaryPolicy := .none
+  outputPolicy : RawRandomDirectionOutputPolicy
+deriving Repr, DecidableEq
+
 inductive RawTimedMovementKind where
   | direction
   | hostDirection
@@ -1044,6 +1100,7 @@ structure RawInstrShape where
   floatFunctions : List RawFloatFunctionShape := []
   randomOps : List RawRandomOpShape := []
   movementOps : List RawMovementOpShape := []
+  randomDirectionOps : List RawRandomDirectionOpShape := []
   timedMovementFamilies : List RawTimedMovementFamilyShape := []
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
@@ -1090,6 +1147,11 @@ def RawInstrShape.findMovementOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawMovementOpShape :=
   rawShape.movementOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findRandomDirectionOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawRandomDirectionOpShape :=
+  rawShape.randomDirectionOps.find? (fun op => op.opcode == opcode)
 
 private def findTimedMovementFamilyInList?
     (families : List RawTimedMovementFamilyShape)

@@ -45,4 +45,16 @@ def f32LessThanBits (lhs rhs : Int) : Bool :=
   else
     decide (f32MagnitudeBits lhs < f32MagnitudeBits rhs)
 
+def f32OrderedBits (lhs rhs : Int) : Bool :=
+  !f32IsNaNBits lhs && !f32IsNaNBits rhs
+
+def f32LessOrEqualBits (lhs rhs : Int) : Bool :=
+  f32OrderedBits lhs rhs && !f32LessThanBits rhs lhs
+
+def f32GreaterThanBits (lhs rhs : Int) : Bool :=
+  f32LessThanBits rhs lhs
+
+def f32GreaterOrEqualBits (lhs rhs : Int) : Bool :=
+  f32OrderedBits lhs rhs && !f32LessThanBits lhs rhs
+
 end TouhouFormal

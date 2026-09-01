@@ -154,6 +154,25 @@ private def describeMovementOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeRandomDirectionOutcome
+    (result :
+      Except TouhouFormal.Fault TouhouFormal.ECL.RawRandomDirectionOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let details :=
+        match outcome.prepared with
+        | none => "candidate=none final=none reflections=[]"
+        | some prepared =>
+            "candidate=" ++ reprStr prepared.candidateBranch ++
+              " final=" ++ toString prepared.finalAngleBits ++
+              " reflections=" ++ reprStr
+                (prepared.reflections.map (fun reflection => reflection.kind))
+      "action=" ++ reprStr outcome.action ++
+        " " ++ details ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeTimedMovementOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawTimedMovementOutcome) :
     String :=
@@ -454,6 +473,12 @@ def main : IO Unit := do
   IO.println s!"TH07 axis velocity: {describeMovementOutcome TouhouFormal.Search.Movement.th07AxisVelocityOutcome}"
   IO.println s!"TH08 polar velocity: {describeMovementOutcome TouhouFormal.Search.Movement.th08PolarVelocityOutcome}"
   IO.println s!"TH08 position: {describeMovementOutcome TouhouFormal.Search.Movement.th08PositionOutcome}"
+  IO.println s!"TH06 random-direction opcode count: {TouhouFormal.Search.RandomDirection.randomDirectionOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 random-direction opcode count: {TouhouFormal.Search.RandomDirection.randomDirectionOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 random-direction opcode count: {TouhouFormal.Search.RandomDirection.randomDirectionOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 bounded random direction: {describeRandomDirectionOutcome TouhouFormal.Search.RandomDirection.th06BoundedOutcome}"
+  IO.println s!"TH07 bounded exit direction: {describeRandomDirectionOutcome TouhouFormal.Search.RandomDirection.th07GetExitOutcome}"
+  IO.println s!"TH08 biased vertical direction: {describeRandomDirectionOutcome TouhouFormal.Search.RandomDirection.th08BiasedVerticalOutcome}"
   IO.println s!"TH06 timed movement opcode count: {TouhouFormal.Search.TimedMovement.timedMovementOpcodeCount TouhouFormal.TH06.headerShape}"
   IO.println s!"TH07 timed movement opcode count: {TouhouFormal.Search.TimedMovement.timedMovementOpcodeCount TouhouFormal.TH07.headerShape}"
   IO.println s!"TH08 timed movement opcode count: {TouhouFormal.Search.TimedMovement.timedMovementOpcodeCount TouhouFormal.TH08.headerShape}"

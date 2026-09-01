@@ -52,6 +52,8 @@ def eclOpcodeMoveVelocity : Int := 45
 def eclOpcodeMoveAngularVelocity : Int := 46
 def eclOpcodeMoveSpeed : Int := 47
 def eclOpcodeMoveAcceleration : Int := 48
+def eclOpcodeMoveRandom : Int := 49
+def eclOpcodeMoveRandomInBounds : Int := 50
 def eclOpcodeMoveAtPlayer : Int := 51
 def eclOpcodeMoveDirTimeFirst : Int := 52
 def eclOpcodeMoveDirTimeLast : Int := 55
@@ -194,6 +196,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 612
       endLine := 620
       claim := "Movement-bound opcodes copy four raw float fields and toggle the shouldClampPos flag without resolving those bounds through GetVarFloat." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 622
+      endLine := 657
+      claim := "MOVERAND samples between two raw angle fields; MOVERANDINBOUND then reflects the generated angle at four movement-bound margins, using that candidate in the right-positive subtraction." },
     { path := "reference/th06/src/EclManager.cpp"
       startLine := 668
       endLine := 683
@@ -508,6 +514,20 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .rawBits } ] },
               { opcode := eclOpcodeMoveBoundsDisable
                 kind := .disableBounds } ]
+          randomDirectionOps :=
+            [ { opcode := eclOpcodeMoveRandom
+                generator := .operandRange
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .rawBits },
+                    { operandIndex := 1, policy := .rawBits } ]
+                outputPolicy := .enemyAngle },
+              { opcode := eclOpcodeMoveRandomInBounds
+                generator := .operandRange
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .rawBits },
+                    { operandIndex := 1, policy := .rawBits } ]
+                boundaryPolicy := .rectangle .candidateAngle
+                outputPolicy := .enemyAngle } ]
           timedMovementFamilies :=
             [ { firstOpcode := eclOpcodeMoveDirTimeFirst
                 lastOpcode := eclOpcodeMoveDirTimeLast

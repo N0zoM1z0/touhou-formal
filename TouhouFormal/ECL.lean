@@ -16,7 +16,9 @@ import TouhouFormal.ECL.Unary
 import TouhouFormal.ECL.FloatFunction
 import TouhouFormal.ECL.Random
 import TouhouFormal.ECL.Movement
+import TouhouFormal.ECL.RandomDirection
 import TouhouFormal.ECL.TimedMovement
+import TouhouFormal.ECL.RandomTimedMovement
 import TouhouFormal.ECL.OrbitMovement
 import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.Shooting

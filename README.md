@@ -89,6 +89,12 @@ The executable model currently covers these source-backed boundaries:
   radius/angle updates, and three movement-timer mode setters; plus TH08's
   full orbit, orbit-from-current-position, and velocity update. Profiles retain
   TH08's X/Y-only origin write for opcode 72 and the exact timer reset state.
+- Random-direction semantics covers TH06's raw range moves, TH07's two exit
+  angle helpers, and their TH08 counterparts. One profile parameter preserves
+  whether a right-wall reflection subtracts the generated candidate or the
+  enemy's old angle; ordered binary32 guards reject NaNs exactly like the C++
+  comparisons. TH08 host-derived directions compose directly into the shared
+  timed-movement transition, with a profile-drift check between both stages.
 - Shared enemy-state effects cover 24 hitbox, collision/damage flag,
   death-mode, life, and boss-timer opcodes. The model retains TH06/TH07
   bitfield truncation, TH08's inverted replace-mask rules, alignment-effect
