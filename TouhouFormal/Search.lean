@@ -3,6 +3,7 @@ import TouhouFormal.Search.Call
 import TouhouFormal.Search.Cursor
 import TouhouFormal.Search.Difficulty
 import TouhouFormal.Search.FloatArithmetic
+import TouhouFormal.Search.FloatFunction
 import TouhouFormal.Search.IntUnaryUpdate
 import TouhouFormal.Search.ScalarAssignment
 import TouhouFormal.Search.SMT

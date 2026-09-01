@@ -78,6 +78,25 @@ private def describeFloatBinaryOutcome
         " resultBits=" ++ resultBits
         ++ " cursor=" ++ toString outcome.targetCursor
 
+private def describeFloatFunctionOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawFloatFunctionOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let functionKind :=
+        match outcome.result with
+        | none => "none"
+        | some value => value.kind.name
+      let resultBits :=
+        match outcome.result with
+        | none => "none"
+        | some value => toString value.resultBits
+      "action=" ++ reprStr outcome.action ++
+        " function=" ++ functionKind ++
+        " resultBits=" ++ resultBits ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -178,6 +197,14 @@ def main : IO Unit := do
   IO.println s!"TH06 float add: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th06FloatAddOutcome}"
   IO.println s!"TH07 float add: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th07FloatAddOutcome}"
   IO.println s!"TH08 float add in-place: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th08FloatAddInPlaceOutcome}"
+  IO.println ""
+  IO.println "Float function controls"
+  IO.println s!"TH06 float function opcode count: {TouhouFormal.Search.FloatFunction.floatFunctionOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 float function opcode count: {TouhouFormal.Search.FloatFunction.floatFunctionOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 float function opcode count: {TouhouFormal.Search.FloatFunction.floatFunctionOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 atan2: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th06Atan2Outcome}"
+  IO.println s!"TH07 sin: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th07SinOutcome}"
+  IO.println s!"TH08 vector angle: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th08VectorAngleOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

@@ -12,4 +12,5 @@ import TouhouFormal.ECL.Stack
 import TouhouFormal.ECL.Arithmetic
 import TouhouFormal.ECL.Assignment
 import TouhouFormal.ECL.Unary
+import TouhouFormal.ECL.FloatFunction
 import TouhouFormal.ECL.Boss

@@ -76,47 +76,49 @@ private def rawScalarAssignCursorOutcome
     valueBits := valueBits
     prepared := prepared }
 
-private def resolveScalarAssignRValue
+def resolveScalarRValue
     (shape : HeaderShape)
     (rawPrefix : RawInstrPrefix)
-    (op : RawScalarAssignShape)
-    (operands : RawScalarAssignOperands) :
+    (policy : RawScalarAssignRValuePolicy)
+    (operandIndex : Nat)
+    (rawValue hostValue : Int) :
     Except Fault RawScalarAssignRValue :=
-  match op.rvaluePolicy with
+  match policy with
   | .intBits => do
       let value <-
         resolveIntRValue
           shape
           rawPrefix
-          op.valueOperandIndex
-          operands.valueRaw
-          operands.valueHost
+          operandIndex
+          rawValue
+          hostValue
       .ok (.intBits value)
   | .floatBits => do
       let value <-
         resolveFloatRValue
           shape
           rawPrefix
-          op.valueOperandIndex
-          operands.valueRaw
-          operands.valueHost
+          operandIndex
+          rawValue
+          hostValue
       .ok (.floatBits value)
 
-private def resolveScalarAssignOutput
+def resolveScalarOutput
     (shape : HeaderShape)
     (rawPrefix : RawInstrPrefix)
-    (op : RawScalarAssignShape)
-    (operands : RawScalarAssignOperands) :
+    (policy : RawScalarAssignOutputPolicy)
+    (operandIndex : Nat)
+    (rawValue intHostBefore floatHostBefore : Int) :
     Except Fault RawScalarAssignOutput :=
-  match op.outputPolicy with
+  match policy with
   | .intLValue => do
       let output <-
         resolveIntLValue
           shape
           rawPrefix
-          op.outputOperandIndex
-          operands.outputRaw
-          operands.outputIntHostBefore
+          operandIndex
+          rawValue
+          intHostBefore
       if output.kind == .nonIntOutput then
         .ok .none
       else
@@ -126,9 +128,9 @@ private def resolveScalarAssignOutput
         resolveFloatLValue
           shape
           rawPrefix
-          op.outputOperandIndex
-          operands.outputRaw
-          operands.outputFloatHostBefore
+          operandIndex
+          rawValue
+          floatHostBefore
       if output.kind == .nonFloatOutput then
         .ok .none
       else
@@ -138,9 +140,9 @@ private def resolveScalarAssignOutput
         resolveIntLValue
           shape
           rawPrefix
-          op.outputOperandIndex
-          operands.outputRaw
-          operands.outputIntHostBefore
+          operandIndex
+          rawValue
+          intHostBefore
       if intOutput.kind != .nonIntOutput then
         .ok (.int intOutput)
       else
@@ -148,9 +150,9 @@ private def resolveScalarAssignOutput
           resolveFloatLValue
             shape
             rawPrefix
-            op.outputOperandIndex
-            operands.outputRaw
-            operands.outputFloatHostBefore
+            operandIndex
+            rawValue
+            floatHostBefore
         if floatOutput.kind != .nonFloatOutput then
           .ok (.float floatOutput)
         else
@@ -162,8 +164,23 @@ def rawScalarAssignPrepare
     (op : RawScalarAssignShape)
     (operands : RawScalarAssignOperands) :
     Except Fault RawScalarAssignPrepared := do
-  let valueResolution <- resolveScalarAssignRValue shape rawPrefix op operands
-  let output <- resolveScalarAssignOutput shape rawPrefix op operands
+  let valueResolution <-
+    resolveScalarRValue
+      shape
+      rawPrefix
+      op.rvaluePolicy
+      op.valueOperandIndex
+      operands.valueRaw
+      operands.valueHost
+  let output <-
+    resolveScalarOutput
+      shape
+      rawPrefix
+      op.outputPolicy
+      op.outputOperandIndex
+      operands.outputRaw
+      operands.outputIntHostBefore
+      operands.outputFloatHostBefore
   .ok
     { op := op
       output := output

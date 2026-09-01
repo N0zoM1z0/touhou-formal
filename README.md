@@ -62,6 +62,10 @@ The executable model currently covers these source-backed boundaries:
   title-profiled operand layouts, output lvalue resolution, and resolver
   behavior for TH06/TH07/TH08. Lean records lhs/rhs/result bit patterns; exact
   IEEE-754/fmod solving is a later SMT boundary, not claimed here.
+- Shared float-function semantics cover TH06/TH07 `atan2f`, TH08
+  `VectorAngle`, TH07/TH08 `sinf`/`cosf`, and angle normalization. The profile
+  preserves TH06's unusual `GetVar`-pointer read followed by `SetVar`, while
+  transcendental result bits remain an explicit host/SMT float-theory boundary.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -156,9 +160,10 @@ integer div/mod zero-divisor faults. The resolver materializer covers integer
 rvalue `operandFlags` branches separately from opcode-body effects. The
 integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
-overflow. Scalar assignment, integer unary updates, and float binary arithmetic
-currently have Lean executable controls for profile coverage and shared-step
-execution, but no dedicated solver/materializer lane yet. The boss integer-read
+overflow. Scalar assignment, integer unary updates, float binary arithmetic,
+and float functions currently have Lean executable controls for profile
+coverage and shared-step execution, but no dedicated solver/materializer lane
+yet. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses

@@ -173,6 +173,39 @@ structure RawFloatBinaryOpShape where
   rhsOperandIndex : Nat
 deriving Repr, DecidableEq
 
+inductive RawFloatFunctionKind where
+  | sin
+  | cos
+  | atan2
+  | vectorAngle
+  | normalizeAngle
+deriving Repr, DecidableEq
+
+def RawFloatFunctionKind.name : RawFloatFunctionKind -> String
+  | .sin => "sin"
+  | .cos => "cos"
+  | .atan2 => "atan2"
+  | .vectorAngle => "vector-angle"
+  | .normalizeAngle => "normalize-angle"
+
+inductive RawFloatFunctionInputPolicy where
+  | floatRValues
+  | sourceGetVarPointerBits
+deriving Repr, DecidableEq
+
+def RawFloatFunctionInputPolicy.name : RawFloatFunctionInputPolicy -> String
+  | .floatRValues => "float-rvalues"
+  | .sourceGetVarPointerBits => "source-getvar-pointer-bits"
+
+structure RawFloatFunctionShape where
+  opcode : Int
+  kind : RawFloatFunctionKind
+  outputPolicy : RawScalarAssignOutputPolicy
+  inputPolicy : RawFloatFunctionInputPolicy
+  outputOperandIndex : Nat
+  inputOperandIndices : List Nat
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -339,6 +372,7 @@ structure RawInstrShape where
   intUnaryUpdates : List RawIntUnaryUpdateShape := []
   intBinaryOps : List RawIntBinaryOpShape := []
   floatBinaryOps : List RawFloatBinaryOpShape := []
+  floatFunctions : List RawFloatFunctionShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -363,6 +397,11 @@ def RawInstrShape.findFloatBinaryOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawFloatBinaryOpShape :=
   rawShape.floatBinaryOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findFloatFunction?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawFloatFunctionShape :=
+  rawShape.floatFunctions.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

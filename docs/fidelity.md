@@ -39,6 +39,13 @@ resolution, title-specific slot layouts, and the selected operation
 `resultBits` from the host/SMT float-theory boundary; it does not yet claim to
 implement IEEE-754 single-precision arithmetic or `fmodf` internally.
 
+Float functions follow the same boundary. Lean resolves every input and output
+through the title profile, records the operation and bit patterns, and accepts
+the `sinf`, `cosf`, `atan2f`, `VectorAngle`, or normalization result from the
+host/SMT float layer. TH06 normalization is intentionally separate: its source
+reads slot 0 through the integer-shaped `GetVar` pointer API and writes the f32
+result through `SetVar`, rather than using the ordinary float resolver pair.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

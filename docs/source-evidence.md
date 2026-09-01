@@ -89,6 +89,12 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EnemyEclInstr.cpp:288`: float `MathAdd`, `MathSub`,
   `MathMul`, `MathDiv`, and `MathMod` write only after the output is classified
   as FLOAT, read lhs/rhs through `GetVarFloat`, and use `fmodf` for float modulo.
+- `reference/th06/src/EnemyEclInstr.cpp:395`: `MathAtan2` accepts only a
+  FLOAT-classified output and computes `atan2f(slot4 - slot2, slot3 - slot1)`
+  from four `GetVarFloat` inputs.
+- `reference/th06/src/EclManager.cpp:145`: `MATHNORMANGLE` reads slot 0 through
+  `GetVar`, interprets the pointed-to bits as f32, and writes the normalized
+  result through `SetVar`.
 - `reference/th06/src/EnemyEclInstr.cpp:348`: integer division assigns
   `*outPtr = *lhsPtr / *rhsPtr` without a zero-divisor guard.
 - `reference/th06/src/EnemyEclInstr.cpp:372`: integer modulo assigns
@@ -104,6 +110,11 @@ relative to `/home/yann/yann/touhou/formal`.
 
 ## TH07
 
+- `reference/th07/src/th07/EclManager.cpp:1051`: `ECL_SIN` and `ECL_COS`
+  resolve float slot 1 and write `sinf`/`cosf` to float slot 0; `ECL_ATAN2`
+  uses the same four-slot delta layout as TH06.
+- `reference/th07/src/th07/EclManager.cpp:963`: `ECL_NORMALIZE_ANGLE` resolves
+  float slot 0 for both its read and write.
 - `reference/th07/src/th07/EclManager.hpp:277`: `EclRawHeader` stores
   `subCount`, `timelineCount`, sixteen timeline pointers, and `subTable[]`.
 - `reference/th07/src/th07/EclManager.hpp:291`: `EclRawInstr` stores `u32 time`,
@@ -239,6 +250,11 @@ relative to `/home/yann/yann/touhou/formal`.
   operand slots 1 and 2; opcode 29 uses `fmodf`.
 - `reference/th08/src/EclRunLow.inl:333`: TH08 low opcodes 30 and 31 increment
   or decrement `WriteInt(..., 0)` in place.
+- `reference/th08/src/EclRunLow.inl:335`: TH08 low opcodes 32 and 33 apply
+  `sinf`/`cosf` to float slot 1, while opcode 34 calls `VectorAngle` on the same
+  four-slot coordinate deltas used by the older `atan2f` opcodes.
+- `reference/th08/src/EclRunLow.inl:353`: low opcode 37 normalizes float slot 0
+  in place through `AddNormalizeAngle`.
 - `reference/th08/src/EclRunLow.inl:694`: TH08 low opcode 86 writes slot 0
   from raw slot 1 when `operandFlags & 2U` is clear, otherwise it resolves slot
   1 against `g_EnemyManager.bosses[ReadInt(..., 2)]`.
