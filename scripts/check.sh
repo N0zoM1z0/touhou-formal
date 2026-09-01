@@ -7,6 +7,11 @@ lake exe check
 solver_output="$(mktemp)"
 trap 'rm -f "$solver_output"' EXIT
 
+python3 -m py_compile \
+  scripts/ecl_wire_patch.py \
+  scripts/retail_confirm_boss_int_read.py \
+  scripts/retail_pbg.py
+
 lake exe smt th06-sub-oob | z3 -in | tee "$solver_output"
 grep -q '^sat$' "$solver_output"
 

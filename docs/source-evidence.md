@@ -220,6 +220,17 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EnemyTimeline.cpp:131`: TH08 timeline ECL still uses the
   active difficulty-mask intersection check and does not include the raw ECL
   override mask.
+- `reference/th07/src/th07/EnemyManager.cpp:198`: TH07 timeline dispatch spawns
+  enemies for opcodes 0 through 7 and uses timeline `arg0` as the ECL sub id.
+- `reference/th08/src/EnemyTimeline.cpp:134`: TH08 timeline dispatch spawns
+  enemies for opcodes 0, 1, 2, 3, 4, 5, 11, 12, and 15 and uses
+  `args.ints[0]` as the ECL sub id after the timeline difficulty-mask gate.
+- `reference/th07/src/th07/Supervisor.hpp:65`: TH07 retail cfg has size `0x38`;
+  `colorMode16bit`, `windowed`, and `frameskipConfig` are at offsets `0x1e`,
+  `0x22`, and `0x23`.
+- `reference/th08/src/Supervisor.hpp:62`: TH08 retail cfg has size `0x3c`; the
+  same three cfg fields are at offsets `0x1e`, `0x22`, and `0x23`, with opts at
+  `0x38`.
 
 ## DanmakuFuzz Boundary
 
@@ -263,3 +274,10 @@ The witness bytes are produced by `scripts/symex_materialize_raw_step.py` and
 then spliced into stage 5 subroutine 0 instruction 0 by
 `scripts/retail_confirm_th06_raw_symex.py`. Two repeated attempts classified
 the mutant as `crash-dialog` against clean `game-window-live` baselines.
+
+The TH08 boss-int `boss-int-null-deref` symbolic witness has been lowered into
+`th08.dat` and retail-checked under Wine in
+`retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z`.
+The witness bytes are produced by `scripts/symex_materialize_boss_int_read.py`,
+placed in an early timeline-spawned subroutine by
+`scripts/retail_confirm_boss_int_read.py`, and classified as `crash-dialog`.

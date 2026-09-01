@@ -378,6 +378,19 @@ shape and generic path predicates; Z3 returns `bossIndexRaw = -1`,
 classes are satisfiable; Lean then encodes those witnesses into 24-byte raw ECL
 instructions and replays them.
 
+Retail calibration added on 2026-09-01:
+
+- the TH07/TH08 PBG4/PBGZ archive adapter can replace a single `ecldata1.ecl`
+  entry and verify the re-extracted payload;
+- the retail lowering now selects an early source-backed timeline-spawned
+  subroutine instead of the first same-sized instruction in the file;
+- the TH08 normal-difficulty `boss-int-null-deref` witness is retail-confirmed
+  as `crash-dialog` with a Wine page fault at `0041F456`;
+- the TH07 null/OOB and TH08 OOB runs reached gameplay without a crash in the
+  current generic Wine oracle, which is expected for some memory-safety CEs:
+  an OOB read is a formal fault even when adjacent mapped state lets retail
+  continue.
+
 ## CALL/RET stack coverage
 
 The shared CALL/RET model covers the plain subroutine control-transfer stack
@@ -570,6 +583,8 @@ Concrete advantages already demonstrated:
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a
   reachable stage-5 retail mutation and confirmed as `crash-dialog` in 2/2 Wine
   attempts.
+- the TH08 `boss-int-null-deref` symbolic witness has been lowered into a
+  reachable stage-1 retail mutation and confirmed as `crash-dialog` under Wine.
 
 Fuzz is still better outside the current formal model:
 

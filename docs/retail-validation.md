@@ -157,3 +157,85 @@ Observed report:
 
 The Wine crash signature normalizes to
 `crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...`.
+
+## TH07/TH08 boss integer-read witness lowering
+
+`scripts/retail_confirm_boss_int_read.py` lowers a Lean/Z3 boss-int witness into
+an isolated TH07 or TH08 retail mutation:
+
+- ask `scripts/symex_materialize_boss_int_read.py` for the requested symbolic
+  path;
+- extract `ecldata1.ecl` from `th07.dat`/`th08.dat`;
+- decrypt and re-encrypt TH08 ECL entry blobs when the `edz` file-level crypt
+  marker is present;
+- preserve the original ECL layout and replace one equal-sized raw instruction;
+- rebuild the PBG4/PBGZ archive with only that entry changed;
+- write a source-backed windowed cfg before Wine launch;
+- run a generic title-menu key probe and record screenshots, window census, Wine
+  log classification, and a root `report.json`.
+
+The default site selector is `reachable-timeline-spawn`. It does not use a
+pre-found crash site. It reads the stage timeline, finds an early source-backed
+enemy spawn opcode, and patches a same-sized raw instruction in the spawned
+subroutine.
+
+Normal-difficulty materialization is important for the default retail menu path:
+TH07/TH08 `defaultDifficulty = 1` corresponds to active mask `2`, not the
+Lunatic mask `8`.
+
+### TH08 null boss read: retail-confirmed crash
+
+Command used on 2026-09-01:
+
+```bash
+python3 scripts/retail_confirm_boss_int_read.py th08 \
+  --symex-path boss-int-null-deref \
+  --active-mask 2 \
+  --override-mask 0 \
+  --cfg-safe-video-flags \
+  --post-input-wait-seconds 12
+```
+
+Observed report:
+
+- artifact:
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z`
+- root report:
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/report.json`
+- source result:
+  `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/source-result/result.json`
+- witness bytes:
+  `000000005600180000020200000000801027000000000000`
+- selected placement:
+  `timeline0/instr0 -> sub14/instr1`, source timeline opcode `0`, time `1`,
+  difficulty mask `255`;
+- patched `th08.dat` SHA-256:
+  `3e097bcb413646bc443eca4dd3be243f110246f0222b331f4721df6b014c12c6`
+- cfg SHA-256:
+  `595b7c04f94acb6f81e01f947a132083cc3d5991164ab008e43744f96a67796a`
+- oracle classification: `crash-dialog`, `interesting = true`;
+- Wine signature:
+  `wine: Unhandled page fault on read access to 00002CA0 at address 0041F456 (thread 0148), starting debugger...`
+
+This is the first TH08 retail crash produced by the formal boss-int lane. The
+crash is not a hand-written ECL case: the 24-byte instruction comes from the
+solver witness, then the retail lowering chooses an early timeline-spawned
+subroutine.
+
+### TH07 and boss-index OOB status
+
+The same lowering path also produces runnable TH07 artifacts, but the current
+generic Wine oracle did not classify them as crashes:
+
+| Case | Artifact | Oracle |
+| --- | --- | --- |
+| TH07 `boss-int-null-deref`, active mask `2` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024506Z` | `game-window-live` |
+| TH07 `boss-int-index-at-or-past-array`, active mask `2` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
+| TH08 `boss-int-index-at-or-past-array`, active mask `2` | `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
+
+These are still useful calibration cases. The formal OOB property is a memory
+safety statement about `g_EnemyManager.bosses[index]`, not a guarantee that the
+retail process will immediately fault: an out-of-bounds read can land on mapped
+adjacent state. The TH07 null-deref result is also host-state dependent; the
+chosen early spawned context did not reproduce a null boss slot at the moment of
+execution.
