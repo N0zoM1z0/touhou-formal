@@ -265,6 +265,30 @@ private def describeShootingOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeLaserOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawLaserOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "selectedSlot=" ++ reprStr effect.selectedSlotWrite ++
+              " angle=" ++ reprStr effect.angleWrite ++
+              " pos=" ++ reprStr effect.positionWrite ++
+              " test=" ++ reprStr effect.testWrite ++
+              " stop=" ++ reprStr effect.stopWrite ++
+              " startLen=" ++ reprStr effect.startLengthWrite ++
+              " offsets=" ++ reprStr effect.offsetsWrite ++
+              " hide=" ++ reprStr effect.hideWarningWrite ++
+              " clearAll=" ++ reprStr effect.clearAllSlots
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " fault=" ++ reprStr outcome.fault ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeAnimationOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawAnimationOutcome) :
     String :=
@@ -545,6 +569,17 @@ def main : IO Unit := do
   IO.println s!"TH08 random interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th08RandomIntervalOutcome}"
   IO.println s!"TH06 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th06OffsetOutcome}"
   IO.println s!"TH08 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th08OffsetOutcome}"
+  IO.println ""
+  IO.println "Laser slot controls"
+  IO.println s!"TH06 laser opcode count: {TouhouFormal.Search.Laser.laserOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 laser opcode count: {TouhouFormal.Search.Laser.laserOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 laser opcode count: {TouhouFormal.Search.Laser.laserOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 set laser index: {describeLaserOutcome TouhouFormal.Search.Laser.th06SetLaserIndexOutcome}"
+  IO.println s!"TH06 rotate high fault: {describeLaserOutcome TouhouFormal.Search.Laser.th06RotateHighFaultOutcome}"
+  IO.println s!"TH07 add laser angle: {describeLaserOutcome TouhouFormal.Search.Laser.th07AddLaserAngleOutcome}"
+  IO.println s!"TH07 stop laser: {describeLaserOutcome TouhouFormal.Search.Laser.th07StopLaserOutcome}"
+  IO.println s!"TH08 test laser: {describeLaserOutcome TouhouFormal.Search.Laser.th08TestLaserInUseOutcome}"
+  IO.println s!"TH08 offsets negative fault: {describeLaserOutcome TouhouFormal.Search.Laser.th08SetLaserOffsetsNegativeFaultOutcome}"
   IO.println ""
   IO.println "Animation controls"
   IO.println s!"TH06 animation opcode count: {TouhouFormal.Search.Animation.animationOpcodeCount TouhouFormal.TH06.headerShape}"

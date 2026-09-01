@@ -71,6 +71,14 @@ def eclOpcodeDisableShooting : Int := 78
 def eclOpcodeEnableShooting : Int := 79
 def eclOpcodeSpawnPreviousPattern : Int := 80
 def eclOpcodeSetShootOffset : Int := 81
+def eclOpcodeLaserCreate : Int := 85
+def eclOpcodeLaserCreateAimed : Int := 86
+def eclOpcodeLaserIndex : Int := 87
+def eclOpcodeLaserRotate : Int := 88
+def eclOpcodeLaserRotateFromPlayer : Int := 89
+def eclOpcodeLaserOffset : Int := 90
+def eclOpcodeLaserTest : Int := 91
+def eclOpcodeLaserCancel : Int := 92
 def eclOpcodeAnmSetMain : Int := 97
 def eclOpcodeAnmSetPoses : Int := 98
 def eclOpcodeAnmSetSlot : Int := 99
@@ -94,8 +102,10 @@ def eclOpcodeAnmInterruptMain : Int := 128
 def eclOpcodeAnmInterruptSlot : Int := 129
 def eclOpcodeSetCallStackDisabled : Int := 130
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
+def eclOpcodeLaserClearAll : Int := 134
 def enemyAnmScriptBase : Int := 0x100
 def secondaryAnmVmCount : Nat := 8
+def laserSlotCount : Nat := 32
 
 def isTimelineSpawnOpcode (opcode : Int) : Bool :=
   decide (0 <= opcode /\ opcode <= 7)
@@ -237,6 +247,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 357
       endLine := 410
       claim := "Bullet-pattern opcodes 67 through 75 share one descriptor body: the opcode delta selects aim mode, counts and floats always use GetVar/GetVarFloat, rank adjustment and minimum-speed clamps always run, angle1 is normalized, and shootingDisabled suppresses only the final spawn call." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 485
+      endLine := 534
+      claim := "Laser slot opcodes set the selected laser index, mutate indexed lasers after an unchecked pointer-slot read, test active status into compareRegister, stop active lasers by state/timer writes, and clear all 32 enemy laser slots." },
     { path := "reference/th06/src/EclManager.cpp"
       startLine := 304
       endLine := 317
@@ -629,6 +643,42 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          laserOps :=
+            [ { opcode := eclOpcodeLaserIndex
+                kind := .setSelectedSlot
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeLaserRotate
+                kind := .writeAngle .add
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ]
+                floatInputs :=
+                  [ { operandIndex := 1, policy := .floatRValue } ] },
+              { opcode := eclOpcodeLaserRotateFromPlayer
+                kind := .writeAngle .aimAtPlayer
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ]
+                floatInputs :=
+                  [ { operandIndex := 1, policy := .floatRValue } ] },
+              { opcode := eclOpcodeLaserOffset
+                kind := .writeRelativePosition
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ]
+                floatInputs :=
+                  [ { operandIndex := 1, policy := .rawBits },
+                    { operandIndex := 2, policy := .rawBits },
+                    { operandIndex := 3, policy := .rawBits } ] },
+              { opcode := eclOpcodeLaserTest
+                kind := .testInUse
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeLaserCancel
+                kind := .stop
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeLaserClearAll
+                kind := .clearAll
+                slotCount := laserSlotCount } ]
           animationOps :=
             [ { opcode := eclOpcodeAnmSetMain
                 kind := .setPrimaryScript

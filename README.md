@@ -106,6 +106,12 @@ The executable model currently covers these source-backed boundaries:
   while profiles retain TH06's unconditional zero-interval timer reset,
   TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
   TH08's forced-zero offset Z.
+- Shared laser slot controls cover 29 cross-title opcodes for selected-slot
+  writes, indexed angle/position/start-length/offset/hide updates, active-state
+  tests, stop transitions, and clear-all loops. The model preserves unchecked
+  enemy laser pointer-slot reads, null-pointer guards that suppress later
+  operand reads, TH06's non-normalized angle add, TH07/TH08 stop-width copies,
+  and TH08's inverted in-use test value.
 - Shared animation-control effects cover the first 28 ECL/ANM bridge opcodes:
   TH06/TH07 primary enemy script selection, packed move/death animation fields,
   raw bitfield auto-rotation, primary VM interrupts, TH07/TH08 primary

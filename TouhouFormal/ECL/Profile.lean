@@ -753,6 +753,97 @@ structure RawShootingOpShape where
   zeroOffsetZ : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawLaserIntInputPolicy where
+  | intRValue
+  | rawI32
+  | rawByte
+deriving Repr, DecidableEq
+
+def RawLaserIntInputPolicy.name : RawLaserIntInputPolicy -> String
+  | .intRValue => "int-rvalue"
+  | .rawI32 => "raw-i32"
+  | .rawByte => "raw-byte"
+
+structure RawLaserIntInputShape where
+  operandIndex : Nat
+  policy : RawLaserIntInputPolicy
+  byteIndex : Nat := 0
+deriving Repr, DecidableEq
+
+inductive RawLaserFloatInputPolicy where
+  | floatRValue
+  | rawBits
+deriving Repr, DecidableEq
+
+def RawLaserFloatInputPolicy.name : RawLaserFloatInputPolicy -> String
+  | .floatRValue => "float-rvalue"
+  | .rawBits => "raw-bits"
+
+structure RawLaserFloatInputShape where
+  operandIndex : Nat
+  policy : RawLaserFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawLaserAngleMode where
+  | add
+  | addNormalized
+  | set
+  | aimAtPlayer
+deriving Repr, DecidableEq
+
+def RawLaserAngleMode.name : RawLaserAngleMode -> String
+  | .add => "add"
+  | .addNormalized => "add-normalized"
+  | .set => "set"
+  | .aimAtPlayer => "aim-at-player"
+
+inductive RawLaserTestTarget where
+  | compareRegister
+  | laserNotInUse
+  | extraIntVariable (index : Nat)
+deriving Repr, DecidableEq
+
+def RawLaserTestTarget.name : RawLaserTestTarget -> String
+  | .compareRegister => "compare-register"
+  | .laserNotInUse => "laser-not-in-use"
+  | .extraIntVariable index => "extra-int-" ++ toString index
+
+inductive RawLaserOpKind where
+  | setSelectedSlot
+  | writeAngle (mode : RawLaserAngleMode)
+  | writeRelativePosition
+  | testInUse
+  | stop
+  | clearAll
+  | writeStartLength
+  | writeOffsets
+  | writeHideWarning
+deriving Repr, DecidableEq
+
+def RawLaserOpKind.name : RawLaserOpKind -> String
+  | .setSelectedSlot => "set-selected-slot"
+  | .writeAngle mode => "write-angle-" ++ mode.name
+  | .writeRelativePosition => "write-relative-position"
+  | .testInUse => "test-in-use"
+  | .stop => "stop"
+  | .clearAll => "clear-all"
+  | .writeStartLength => "write-start-length"
+  | .writeOffsets => "write-offsets"
+  | .writeHideWarning => "write-hide-warning"
+
+structure RawLaserOpShape where
+  opcode : Int
+  kind : RawLaserOpKind
+  slotCount : Nat := 32
+  intInputs : List RawLaserIntInputShape := []
+  floatInputs : List RawLaserFloatInputShape := []
+  stopCopiesCurrentWidth : Bool := false
+  hideTruncatesToU8 : Bool := false
+  testTarget : RawLaserTestTarget := .compareRegister
+  testActiveValue : Int := 0
+  testInactiveValue : Int := 1
+deriving Repr, DecidableEq
+
 inductive RawAnimationBank where
   | primary
   | alternate
@@ -1240,6 +1331,7 @@ structure RawInstrShape where
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
+  laserOps : List RawLaserOpShape := []
   animationOps : List RawAnimationOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
   callbackConfigOps : List RawCallbackConfigOpShape := []
@@ -1322,6 +1414,11 @@ def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawShootingOpShape :=
   rawShape.shootingOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findLaserOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawLaserOpShape :=
+  rawShape.laserOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findAnimationOp?
     (rawShape : RawInstrShape)
