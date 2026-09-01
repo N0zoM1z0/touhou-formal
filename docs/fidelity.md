@@ -27,6 +27,11 @@ Scalar assignment preserves the source-level write boundary. In TH06,
 type decides whether an integer or float destination is written. In TH07/TH08,
 the opcode body selects the int or float lvalue resolver directly.
 
+Integer unary updates preserve a different TH06 boundary. `MATHINC` and
+`MATHDEC` call `GetVar(..., NULL)` and write the returned pointer directly, so
+unknown outputs update the raw operand cell and known non-integer/read-only
+pointers are not filtered through `SetVar`'s type guard.
+
 Float arithmetic is currently faithful at the VM boundary that matters for
 opcode dispatch: output lvalue resolution, operand-flag-controlled rvalue
 resolution, title-specific slot layouts, and the selected operation

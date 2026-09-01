@@ -98,6 +98,31 @@ structure RawScalarAssignShape where
   valueOperandIndex : Nat
 deriving Repr, DecidableEq
 
+inductive RawIntUnaryUpdateKind where
+  | inc
+  | dec
+deriving Repr, DecidableEq
+
+def RawIntUnaryUpdateKind.name : RawIntUnaryUpdateKind -> String
+  | .inc => "inc"
+  | .dec => "dec"
+
+inductive RawIntUnaryUpdateOutputPolicy where
+  | intLValue
+  | sourceGetVarPointer
+deriving Repr, DecidableEq
+
+def RawIntUnaryUpdateOutputPolicy.name : RawIntUnaryUpdateOutputPolicy -> String
+  | .intLValue => "int-lvalue"
+  | .sourceGetVarPointer => "source-getvar-pointer"
+
+structure RawIntUnaryUpdateShape where
+  opcode : Int
+  kind : RawIntUnaryUpdateKind
+  outputPolicy : RawIntUnaryUpdateOutputPolicy
+  outputOperandIndex : Nat
+deriving Repr, DecidableEq
+
 inductive RawBinaryOpKind where
   | add
   | sub
@@ -311,6 +336,7 @@ structure RawInstrShape where
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
   scalarAssignments : List RawScalarAssignShape := []
+  intUnaryUpdates : List RawIntUnaryUpdateShape := []
   intBinaryOps : List RawIntBinaryOpShape := []
   floatBinaryOps : List RawFloatBinaryOpShape := []
   bossIntReads : List RawBossIntReadShape := []
@@ -357,6 +383,11 @@ def RawInstrShape.findScalarAssign?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawScalarAssignShape :=
   rawShape.scalarAssignments.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findIntUnaryUpdate?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawIntUnaryUpdateShape :=
+  rawShape.intUnaryUpdates.find? (fun op => op.opcode == opcode)
 
 structure HeaderShape where
   title : String

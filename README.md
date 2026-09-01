@@ -51,6 +51,9 @@ The executable model currently covers these source-backed boundaries:
 - Shared scalar assignment semantics cover `SET_INT`/`SET_FLOAT` across
   TH06/TH07/TH08, including TH06's source-level `SetVar` type guard and the
   TH07/TH08 opcode-specific int/float lvalue split.
+- Shared integer unary-update semantics cover `INC`/`DEC`, including TH06's
+  direct `GetVar(..., NULL)` pointer write path where unknown outputs update
+  the raw operand cell instead of becoming a `SetVar` no-op.
 - Shared integer binary-op semantics cover ADD/SUB/MUL/DIV/MOD over
   title-profiled operand layouts, including output lvalue resolution,
   TH08 in-place arithmetic, resolver-driven zero divisors, and signed
@@ -153,10 +156,10 @@ integer div/mod zero-divisor faults. The resolver materializer covers integer
 rvalue `operandFlags` branches separately from opcode-body effects. The
 integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
-overflow. Scalar assignment and float binary arithmetic currently have Lean
-executable controls for profile coverage and shared-step execution, but no
-dedicated solver/materializer lane yet. The boss integer-read materializer
-covers TH07/TH08
+overflow. Scalar assignment, integer unary updates, and float binary arithmetic
+currently have Lean executable controls for profile coverage and shared-step
+execution, but no dedicated solver/materializer lane yet. The boss integer-read
+materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses
 that host boundary with float selector bit-pattern ranges and the TH07/TH08

@@ -97,6 +97,25 @@ private def describeScalarAssignOutcome
         " valueBits=" ++ valueBits ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeIntUnaryUpdateOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawIntUnaryUpdateOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let resultValue :=
+        match outcome.result with
+        | none => "none"
+        | some value => toString value
+      let outputKind :=
+        match outcome.prepared with
+        | none => "none"
+        | some prepared => prepared.output.kind.name
+      "action=" ++ reprStr outcome.action ++
+        " outputKind=" ++ outputKind ++
+        " result=" ++ resultValue ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeAnmEntry : Except Fault TouhouFormal.ANM.EntryHeader -> String
   | .ok entry =>
       "ok sprites=" ++ toString entry.numSprites ++
@@ -167,6 +186,14 @@ def main : IO Unit := do
   IO.println s!"TH06 set float: {describeScalarAssignOutcome TouhouFormal.Search.ScalarAssignment.th06SetFloatOutcome}"
   IO.println s!"TH07 set float: {describeScalarAssignOutcome TouhouFormal.Search.ScalarAssignment.th07SetFloatOutcome}"
   IO.println s!"TH08 set int: {describeScalarAssignOutcome TouhouFormal.Search.ScalarAssignment.th08SetIntOutcome}"
+  IO.println ""
+  IO.println "Integer unary update controls"
+  IO.println s!"TH06 int unary update opcode count: {TouhouFormal.Search.IntUnaryUpdate.intUnaryUpdateOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 int unary update opcode count: {TouhouFormal.Search.IntUnaryUpdate.intUnaryUpdateOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 int unary update opcode count: {TouhouFormal.Search.IntUnaryUpdate.intUnaryUpdateOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 inc unknown raw cell: {describeIntUnaryUpdateOutcome TouhouFormal.Search.IntUnaryUpdate.th06IncUnknownOutcome}"
+  IO.println s!"TH07 inc resolved host: {describeIntUnaryUpdateOutcome TouhouFormal.Search.IntUnaryUpdate.th07IncResolvedOutcome}"
+  IO.println s!"TH08 dec raw cell: {describeIntUnaryUpdateOutcome TouhouFormal.Search.IntUnaryUpdate.th08DecRawCellOutcome}"
   IO.println ""
   IO.println "Relative jump controls"
   IO.println s!"TH06 jump operands: {describeJumpOperands TouhouFormal.TH06.rawJumpMinusOneOperands}"

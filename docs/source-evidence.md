@@ -68,6 +68,9 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:199`: `MATHINTMUL` dispatches into
   `MathMul`; the helper performs extra initial lhs/rhs reads before output
   classification, which is a known future precision target.
+- `reference/th06/src/EclManager.cpp:187`: `MATHINC` and `MATHDEC` call
+  `GetVar` with `valueType = NULL` and directly increment/decrement the
+  returned pointer, so they bypass `SetVar`'s INT/FLOAT output type guard.
 - `reference/th06/src/EclManager.cpp:200`: `MATHFLOATMUL` dispatches through
   `MathMul`, so the extra initial reads are also a future precision target for
   float multiplication.
@@ -121,6 +124,8 @@ relative to `/home/yann/yann/touhou/formal`.
   `GET_INT_PTR(enemy, 0)` from `GET_INT_VALUE(enemy, 1)`, while
   `ECL_SET_FLOAT` writes `GET_FLOAT_PTR(enemy, 0)` from
   `GET_FLOAT_VALUE(enemy, 1)`.
+- `reference/th07/src/th07/EclManager.cpp:995`: `ECL_INC` and `ECL_DEC`
+  update `GET_INT_PTR(enemy, 0)` in place by `+1` or `-1`.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
 - `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
@@ -232,6 +237,8 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclRunLow.inl:292`: TH08 low opcodes 25 through 29 assign
   float arithmetic results to `WriteFloat(..., 0)` using resolved/raw float
   operand slots 1 and 2; opcode 29 uses `fmodf`.
+- `reference/th08/src/EclRunLow.inl:333`: TH08 low opcodes 30 and 31 increment
+  or decrement `WriteInt(..., 0)` in place.
 - `reference/th08/src/EclRunLow.inl:694`: TH08 low opcode 86 writes slot 0
   from raw slot 1 when `operandFlags & 2U` is clear, otherwise it resolves slot
   1 against `g_EnemyManager.bosses[ReadInt(..., 2)]`.

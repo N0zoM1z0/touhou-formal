@@ -258,6 +258,64 @@ def resolveIntLValue
                     selectorKnown := selectorKnown
                     flagEnabled := flagEnabled }
 
+def resolveIntPointerLValue
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (slot : Nat)
+    (rawValue : Int)
+    (hostValueBefore : Int) : Except Fault RawIntLValueResolution :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      match rawShape.intRValueResolver with
+      | none => .error (missingIntLValueResolverFault shape)
+      | some resolver => do
+          let flagEnabled <- rawIntOperandFlagEnabled shape rawPrefix slot resolver
+          let selectorKnown := resolver.knownRValueSelectors.contains rawValue
+          match resolver.maskPolicy with
+          | .noMaskAlwaysResolve =>
+              if selectorKnown then
+                .ok
+                  { kind := .resolvedHost
+                    valueBefore := some hostValueBefore
+                    rawValue := rawValue
+                    hostValueBefore := some hostValueBefore
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+              else
+                .ok
+                  { kind := .resolvedDefaultRawCell
+                    valueBefore := some rawValue
+                    rawValue := rawValue
+                    hostValueBefore := none
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+          | .bitSetMeansResolve =>
+              if !flagEnabled then
+                .ok
+                  { kind := .rawOperandCell
+                    valueBefore := some rawValue
+                    rawValue := rawValue
+                    hostValueBefore := none
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+              else if selectorKnown then
+                .ok
+                  { kind := .resolvedHost
+                    valueBefore := some hostValueBefore
+                    rawValue := rawValue
+                    hostValueBefore := some hostValueBefore
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+              else
+                .ok
+                  { kind := .resolvedDefaultRawCell
+                    valueBefore := some rawValue
+                    rawValue := rawValue
+                    hostValueBefore := none
+                    selectorKnown := selectorKnown
+                    flagEnabled := flagEnabled }
+
 def resolveFloatRValue
     (shape : HeaderShape)
     (rawPrefix : RawInstrPrefix)

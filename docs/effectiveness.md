@@ -555,25 +555,26 @@ controls rather than missing queue entries.
 The current executor still does not cover the full game semantics of each
 instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer rvalue/lvalue resolver branches,
-SET_INT/SET_FLOAT scalar assignment, integer ADD/SUB/MUL/DIV/MOD single-step behavior, float
-ADD/SUB/MUL/DIV/MOD dispatch/resolver/lvalue behavior, TH07/TH08 boss
-integer/float reads, plain CALL/RET stack behavior, zero divisors, and signed
-idiv overflow, but not most gameplay host effects.
+SET_INT/SET_FLOAT scalar assignment, INC/DEC integer unary updates, integer
+ADD/SUB/MUL/DIV/MOD single-step behavior, float ADD/SUB/MUL/DIV/MOD
+dispatch/resolver/lvalue behavior, TH07/TH08 boss integer/float reads, plain
+CALL/RET stack behavior, zero divisors, and signed idiv overflow, but not most
+gameplay host effects.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, `SETINT`, `SETFLOAT`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD`, `MATHFLOATADD/SUB/MUL/DIV/MOD` | 107 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, `SET_INT`, `SET_FLOAT`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD`, `ADD_FLOAT/SUB_FLOAT/MUL_FLOAT/DIV_FLOAT/MOD_FLOAT`, `GET_BOSS_INT` | 135 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, scalar assignment cases `6` and `7`, integer arithmetic cases `10..14` and `20..24`, float arithmetic cases `15..19` and `25..29`, integer condition cases `40/42/44/46/48/50`, CALL/RET cases `52/53`, and boss integer-read `case 86` | 57 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, `SETINT`, `SETFLOAT`, `MATHINC`, `MATHDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD`, `MATHFLOATADD/SUB/MUL/DIV/MOD` | 105 |
+| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, `SET_INT`, `SET_FLOAT`, `INC`, `DEC`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD`, `ADD_FLOAT/SUB_FLOAT/MUL_FLOAT/DIV_FLOAT/MOD_FLOAT`, `GET_BOSS_INT` | 133 |
+| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, scalar assignment cases `6` and `7`, integer unary update cases `30` and `31`, integer arithmetic cases `10..14` and `20..24`, float arithmetic cases `15..19` and `25..29`, integer condition cases `40/42/44/46/48/50`, CALL/RET cases `52/53`, and boss integer-read `case 86` | 55 |
 
 The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer resolver branches, scalar assignment,
-integer binary arithmetic, float binary arithmetic dispatch/resolver/lvalue
-behavior, boss integer reads, plain CALL/RET stack edges, and integer div/mod
-fault hazards are now modeled; "ordinary advance" for the remaining opcodes
-still does not prove their internal branches.
+integer unary updates, integer binary arithmetic, float binary arithmetic
+dispatch/resolver/lvalue behavior, boss integer reads, plain CALL/RET stack
+edges, and integer div/mod fault hazards are now modeled; "ordinary advance" for
+the remaining opcodes still does not prove their internal branches.
 
 Not covered:
 
@@ -607,6 +608,7 @@ complete for the implemented raw-step abstraction;
 complete for the first implemented raw-body abstraction;
 complete for the implemented integer rvalue resolver abstraction;
 complete for the implemented SET_INT/SET_FLOAT scalar-assignment abstraction;
+complete for the implemented INC/DEC integer-unary-update abstraction;
 complete for the implemented integer binary-op/lvalue abstraction;
 complete for the implemented float binary-op dispatch/resolver/lvalue
   abstraction, with result bits supplied by the external float theory boundary;
