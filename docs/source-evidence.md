@@ -480,6 +480,29 @@ The Lean family model retains these ordering boundaries and represents the
 fixed TH08 copy span explicitly, including whether its source bytes lie within
 the supplied ECL buffer.
 
+## Callback Configuration Evidence
+
+- `reference/th06/src/EclManager.cpp:685-686`, `:788-800`, and `:919-922`
+  write raw death/life/timer callback fields; timer-threshold and
+  death-bound-timer opcodes reset `bossTimer` through `SetCurrent(0)`.
+- `reference/th07/src/th07/EclManager.cpp:1670-1672` zero-extends a raw byte
+  into `deathCallbackSub`. Lines `1722-1746` resolve legacy slot-0 life fields,
+  an unchecked indexed four-slot life pair, timer fields, and a periodic pair
+  that resets its counter and snapshots current ECL arguments. Lines
+  `1895-1898` bind timer callback to death and reset the timer.
+- `reference/th07/src/th07/EclManager.cpp:245-248` shows that an integer
+  resolver input may consume RNG state. Because the indexed life-pair body
+  spells out `GET_INT_VALUE(enemy, 0)` for both array writes, those indices are
+  distinct reads rather than one guaranteed stable value.
+- `reference/th08/src/EclRunHigh.inl:483-488`, `:551-579`, and `:820-825`
+  encode raw-u16 death configuration, unchecked indexed life configuration,
+  combined timer configuration, and death binding. The presentation guard can
+  suppress death or callback-sub writes while threshold writes and timer reset
+  still occur.
+
+The Lean outcome carries partial callback writes together with the first
+invalid host-array access, which is necessary for repeated resolver reads.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

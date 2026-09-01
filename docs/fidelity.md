@@ -82,6 +82,16 @@ Integer rank interpolation uses `Int.tdiv`, not Lean's default integer `/`.
 This matches C/C++ truncation toward zero for negative intermediate values;
 the distinction is observable for small interval endpoints such as `-1 / 5`.
 
+Callback array operands are not memoized unless the source is. TH07 and TH08
+spell out the indexed life-callback operand more than once, and their integer
+resolvers include RNG selectors. The model accepts one host value per read
+occurrence, so the threshold index and subroutine index may differ. If the
+first write succeeds and the second index is invalid, the outcome retains the
+first write alongside the first-operation out-of-bounds fault. TH08's
+presentation policy is also ordered precisely: it can preserve a threshold
+write and timer reset while suppressing the corresponding subroutine-id read
+and write.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

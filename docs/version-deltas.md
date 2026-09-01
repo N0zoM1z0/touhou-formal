@@ -38,3 +38,15 @@ sub ids as no-ops.
 All three ranges share the same semantic operand order and use
 `opcode - firstOpcode` for aim mode. The Lean profile therefore stores one
 range per title rather than nine independently maintained opcode records.
+
+## Callback Configuration
+
+| Title | Death sub input | Life callbacks | Timer callback | Periodic callback | Presentation guard |
+| --- | --- | --- | --- | --- | --- |
+| TH06 | raw i32 | one scalar threshold/sub pair | separate raw threshold/sub; threshold resets timer | none | none |
+| TH07 | zero-extended raw byte | four slots; legacy slot-0 setters plus indexed pair | separate resolved threshold/sub | interval, sub id, counter reset, context-arg snapshot | none |
+| TH08 | raw u16 assigned to signed i16 | one indexed four-slot pair | combined threshold/sub and timer reset | none | may suppress death/sub-id writes while retaining threshold/reset writes |
+
+TH07/TH08 indexed life configuration re-evaluates the index expression for
+each array write. The shared model therefore records resolver occurrences
+instead of assuming one cached index.

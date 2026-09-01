@@ -92,6 +92,11 @@ The executable model currently covers these source-backed boundaries:
   bypass, binary32 zero/minimum-speed tests, and descriptor-versus-spawn
   ordering. TH08 additionally exposes dead/defer/alignment/distance exits and
   records its unchecked fixed `0x2c`-byte pending-instruction copy boundary.
+- Shared callback-configuration effects cover 18 death/life/timer/periodic
+  opcodes. They retain raw-width versus resolved operands, exact timer resets,
+  TH08 presentation suppression, unchecked four-slot life arrays, and repeated
+  index resolution—so an RNG selector can produce a successful threshold write
+  followed by a second-index fault instead of being silently memoized.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -193,8 +198,8 @@ float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate movement effects, enemy-state effects, and
 shooting-control effects currently have Lean executable controls for profile
 coverage and shared-step execution, but no dedicated
-solver/materializer lane yet. Bullet-pattern descriptor effects have the same
-Lean-only status for now. The boss integer-read
+solver/materializer lane yet. Bullet-pattern and callback-configuration effects
+have the same Lean-only status for now. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses

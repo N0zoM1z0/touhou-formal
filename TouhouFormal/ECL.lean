@@ -19,4 +19,5 @@ import TouhouFormal.ECL.Movement
 import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.Shooting
 import TouhouFormal.ECL.BulletPattern
+import TouhouFormal.ECL.Callback
 import TouhouFormal.ECL.Boss

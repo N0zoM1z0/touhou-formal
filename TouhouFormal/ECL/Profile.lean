@@ -570,6 +570,52 @@ structure RawBulletPatternFamilyMatch where
   aimMode : Int
 deriving Repr, DecidableEq
 
+inductive RawCallbackConfigOpKind where
+  | setDeathSub
+  | setLifeThreshold
+  | setLifeSub
+  | setLifePairIndexed
+  | setTimerThreshold
+  | setTimerSub
+  | setTimerPair
+  | setPeriodic
+  | bindTimerToDeath
+deriving Repr, DecidableEq
+
+def RawCallbackConfigOpKind.name : RawCallbackConfigOpKind -> String
+  | .setDeathSub => "set-death-sub"
+  | .setLifeThreshold => "set-life-threshold"
+  | .setLifeSub => "set-life-sub"
+  | .setLifePairIndexed => "set-life-pair-indexed"
+  | .setTimerThreshold => "set-timer-threshold"
+  | .setTimerSub => "set-timer-sub"
+  | .setTimerPair => "set-timer-pair"
+  | .setPeriodic => "set-periodic"
+  | .bindTimerToDeath => "bind-timer-to-death"
+
+inductive RawCallbackConfigIntPolicy where
+  | rawI32
+  | rawU8
+  | rawU16ToI16
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawCallbackConfigIntPolicy.name : RawCallbackConfigIntPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .rawU8 => "raw-u8"
+  | .rawU16ToI16 => "raw-u16-to-i16"
+  | .intRValue => "int-rvalue"
+
+structure RawCallbackConfigOpShape where
+  opcode : Int
+  kind : RawCallbackConfigOpKind
+  intPolicy : RawCallbackConfigIntPolicy := .intRValue
+  lifeSlotCount : Nat := 4
+  guardAllWritesByPresentation : Bool := false
+  guardSubWriteByPresentation : Bool := false
+  resetBossTimer : Bool := false
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -791,6 +837,7 @@ structure RawInstrShape where
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
+  callbackConfigOps : List RawCallbackConfigOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -855,6 +902,11 @@ def RawInstrShape.findBulletPatternFamily?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawBulletPatternFamilyMatch :=
   findBulletPatternFamilyInList? rawShape.bulletPatternFamilies opcode
+
+def RawInstrShape.findCallbackConfigOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawCallbackConfigOpShape :=
+  rawShape.callbackConfigOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

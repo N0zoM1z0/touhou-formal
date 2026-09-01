@@ -52,6 +52,14 @@ deferred raw copy plus alignment/distance filters. Source-side float arithmetic
 results remain explicit host-boundary values, while IEEE binary32 zero, NaN,
 and ordered minimum-speed comparisons execute directly from their bits.
 
+Callback configuration emits typed writes independently of callback dispatch.
+The shared layer covers scalar and indexed life callbacks, timer callbacks,
+death binding, and TH07 periodic state. Indexed operands retain per-occurrence
+host values because source macros may resolve an RNG selector more than once;
+an outcome can therefore carry both writes completed before the first invalid
+host access and the resulting fault. Interrupt-driven context switching can
+consume this state later without redefining callback storage semantics.
+
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not
 assumed equivalent; a title module should justify differences by filling a

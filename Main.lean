@@ -218,6 +218,35 @@ private def describeBulletPatternOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeCallbackConfigOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCallbackConfigOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "death=" ++ reprStr effect.deathCallbackSubWrite ++
+              " lifeThresholds=" ++ reprStr effect.lifeThresholdWrites ++
+              " lifeSubs=" ++ reprStr effect.lifeSubWrites ++
+              " timer=" ++ reprStr
+                (effect.timerThresholdWrite,
+                  effect.timerSubWrite,
+                  effect.bossTimerWrite) ++
+              " periodic=" ++ reprStr
+                (effect.periodicIntervalWrite, effect.periodicSubWrite) ++
+              " suppressed=" ++
+                toString effect.suppressedByPresentationPolicy
+      let faultSummary :=
+        match outcome.fault with
+        | none => ""
+        | some fault => " fault=" ++ fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -388,6 +417,18 @@ def main : IO Unit := do
   IO.println s!"TH08 alignment-filtered pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08AlignmentFilteredOutcome}"
   IO.println s!"TH08 distance-filtered pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08DistanceFilteredOutcome}"
   IO.println s!"TH08 spawned pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08SpawnOutcome}"
+  IO.println ""
+  IO.println "Callback-configuration controls"
+  IO.println s!"TH06 callback-config opcode count: {TouhouFormal.Search.Callback.callbackConfigOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 callback-config opcode count: {TouhouFormal.Search.Callback.callbackConfigOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 callback-config opcode count: {TouhouFormal.Search.Callback.callbackConfigOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 timer threshold: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th06TimerThresholdOutcome}"
+  IO.println s!"TH07 repeated-index partial fault: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th07LifePairPartialFaultOutcome}"
+  IO.println s!"TH07 periodic callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th07PeriodicOutcome}"
+  IO.println s!"TH08 suppressed death callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08SuppressedDeathOutcome}"
+  IO.println s!"TH08 suppressed life callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08SuppressedLifePairOutcome}"
+  IO.println s!"TH08 suppressed timer callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08SuppressedTimerPairOutcome}"
+  IO.println s!"TH08 bind timer callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08BindOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"
