@@ -3,7 +3,7 @@
 
 The report is intentionally about the implemented model, not about an imagined
 full ECL VM.  It reruns the profile-driven raw-step, body-step, integer
-resolver, integer-binary arithmetic, boss integer-read, CALL/RET, and
+resolver, integer-binary arithmetic, boss integer/float-read, CALL/RET, and
 conditional-CALL candidate queues, summarizes which modeled path classes
 are covered, records source-level opcode surface that is still outside the
 current semantics, and folds in retained retail validation evidence when those
@@ -212,6 +212,32 @@ MODELED_BOSS_INT_PATHS = sorted({
     for path in paths
 })
 
+MODELED_BOSS_FLOAT_PATHS_BY_TITLE = {
+    "th06": [],
+    "th07": [
+        "boss-float-value-raw-no-boss-read",
+        "boss-float-index-before-array",
+        "boss-float-index-at-or-past-array",
+        "boss-float-null-deref",
+        "boss-float-value-resolved-host",
+        "boss-float-value-resolved-default-raw",
+    ],
+    "th08": [
+        "boss-float-value-raw-no-boss-read",
+        "boss-float-index-before-array",
+        "boss-float-index-at-or-past-array",
+        "boss-float-null-guarded-skip",
+        "boss-float-value-resolved-host",
+        "boss-float-value-resolved-default-raw",
+    ],
+}
+
+MODELED_BOSS_FLOAT_PATHS = sorted({
+    path
+    for paths in MODELED_BOSS_FLOAT_PATHS_BY_TITLE.values()
+    for path in paths
+})
+
 SOURCE_COVERAGE = [
     {
         "area": "ECL loader/header shape",
@@ -259,6 +285,11 @@ SOURCE_COVERAGE = [
         "reason": "shared RawBossIntReadShape models TH07 ECL_GET_BOSS_INT and TH08 low opcode 86, including value operand flag bypass, boss index resolution, bosses[8] bounds, null boss pointers, and host/default value resolution",
     },
     {
+        "area": "boss-indexed float reads",
+        "status": "covered-by-symbolic-execution",
+        "reason": "shared RawBossFloatReadShape models TH07 ECL_GET_BOSS_FLOAT and TH08 low opcode 87 with the same bosses[8] boundary, float selector bit-pattern ranges, and the TH07 unguarded versus TH08 guarded null-policy delta",
+    },
+    {
         "area": "integer conditional jumps",
         "status": "covered-by-symbolic-execution",
         "reason": "TH06 compare-register jumps and TH07/TH08 operand-resolved compare jumps are modeled as shared RawIntConditionJumpShape profiles",
@@ -286,7 +317,7 @@ SOURCE_COVERAGE = [
     {
         "area": "full raw ECL opcode bodies",
         "status": "partially-covered",
-        "reason": "UNIMP, fixed JUMP, JUMPDEC, integer conditional jumps, TH06 conditional CALLs, integer ADD/SUB/MUL/DIV/MOD families, and TH07/TH08 boss integer-read opcodes are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
+        "reason": "UNIMP, fixed JUMP, JUMPDEC, integer conditional jumps, TH06 conditional CALLs, integer ADD/SUB/MUL/DIV/MOD families, and TH07/TH08 boss integer/float-read opcodes are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
     },
     {
         "area": "interrupts, callbacks, pending-sub dispatch",
@@ -460,6 +491,20 @@ def load_boss_int_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[
     return payload, command
 
 
+def load_boss_float_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
+    if args.boss_float_queue_json:
+        path = Path(args.boss_float_queue_json)
+        return json.loads(path.read_text()), {
+            "argv": ["read-existing-json", str(path)],
+            "returncode": 0,
+            "elapsedSeconds": 0.0,
+        }
+    payload, command = run_json_command([sys.executable, "scripts/symex_boss_float_candidate_queue.py"])
+    if not isinstance(payload, dict):
+        raise EvaluationError("boss float-read candidate queue did not return an object")
+    return payload, command
+
+
 def action_from_path(path: str) -> str:
     if path == "yielded":
         return "yielded"
@@ -535,6 +580,14 @@ def boss_int_action_from_path(path: str) -> str:
         return "boss-int-index"
     if path.startswith("boss-int-value-"):
         return "boss-int-value"
+    return path
+
+
+def boss_float_action_from_path(path: str) -> str:
+    if path.startswith("boss-float-index-"):
+        return "boss-float-index"
+    if path.startswith("boss-float-value-"):
+        return "boss-float-value"
     return path
 
 
@@ -1031,15 +1084,22 @@ def summarize_condcall_queue(queue: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def summarize_boss_int_queue(queue: dict[str, Any]) -> dict[str, Any]:
+def summarize_boss_read_queue(
+    queue: dict[str, Any],
+    *,
+    label: str,
+    modeled_paths_by_title: dict[str, list[str]],
+    modeled_paths: list[str],
+    action_from_path_fn,
+) -> dict[str, Any]:
     candidates = queue.get("candidates", [])
     if not isinstance(candidates, list):
-        raise EvaluationError("boss integer-read candidate queue has no candidate list")
+        raise EvaluationError(f"{label} candidate queue has no candidate list")
 
     statuses = Counter(str(candidate.get("status")) for candidate in candidates)
     risks = Counter(str(candidate.get("risk", {}).get("class")) for candidate in candidates)
     priorities = Counter(str(candidate.get("risk", {}).get("priority")) for candidate in candidates)
-    actions = Counter(boss_int_action_from_path(str(candidate.get("path"))) for candidate in candidates)
+    actions = Counter(action_from_path_fn(str(candidate.get("path"))) for candidate in candidates)
     fixture_actions = Counter(str(candidate.get("fixture", {}).get("action")) for candidate in candidates)
     fault_kinds = Counter(str(candidate.get("fixture", {}).get("faultKind", "-")) for candidate in candidates)
     output_kinds = Counter(str(candidate.get("fixture", {}).get("outputKind", "-")) for candidate in candidates)
@@ -1059,7 +1119,7 @@ def summarize_boss_int_queue(queue: dict[str, Any]) -> dict[str, Any]:
     env_reports = {}
     for env, env_candidates in sorted(by_environment.items()):
         title = str(env_candidates[0].get("title"))
-        expected_paths = set(MODELED_BOSS_INT_PATHS_BY_TITLE.get(title, MODELED_BOSS_INT_PATHS))
+        expected_paths = set(modeled_paths_by_title.get(title, modeled_paths))
         observed_paths = {str(candidate.get("path")) for candidate in env_candidates}
         env_reports[env] = {
             "title": title,
@@ -1098,8 +1158,8 @@ def summarize_boss_int_queue(queue: dict[str, Any]) -> dict[str, Any]:
         "environmentCount": queue.get("environmentCount"),
         "candidateCount": queue.get("candidateCount"),
         "uniquePathCount": len({str(candidate.get("path")) for candidate in candidates}),
-        "modeledPathFamilies": MODELED_BOSS_INT_PATHS,
-        "modeledPathsByTitle": MODELED_BOSS_INT_PATHS_BY_TITLE,
+        "modeledPathFamilies": modeled_paths,
+        "modeledPathsByTitle": modeled_paths_by_title,
         "statuses": dict(statuses),
         "matchesPath": dict(matches),
         "riskCounts": dict(risks),
@@ -1120,6 +1180,26 @@ def summarize_boss_int_queue(queue: dict[str, Any]) -> dict[str, Any]:
         "byEnvironment": env_reports,
         "topCandidates": top_candidates,
     }
+
+
+def summarize_boss_int_queue(queue: dict[str, Any]) -> dict[str, Any]:
+    return summarize_boss_read_queue(
+        queue,
+        label="boss integer-read",
+        modeled_paths_by_title=MODELED_BOSS_INT_PATHS_BY_TITLE,
+        modeled_paths=MODELED_BOSS_INT_PATHS,
+        action_from_path_fn=boss_int_action_from_path,
+    )
+
+
+def summarize_boss_float_queue(queue: dict[str, Any]) -> dict[str, Any]:
+    return summarize_boss_read_queue(
+        queue,
+        label="boss float-read",
+        modeled_paths_by_title=MODELED_BOSS_FLOAT_PATHS_BY_TITLE,
+        modeled_paths=MODELED_BOSS_FLOAT_PATHS,
+        action_from_path_fn=boss_float_action_from_path,
+    )
 
 
 def unique_preserving(values: list[str]) -> list[str]:
@@ -1213,8 +1293,9 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "ECL_DIV",
                 "ECL_MOD",
                 "ECL_GET_BOSS_INT",
+                "ECL_GET_BOSS_FLOAT",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 17),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 18),
             "firstSymbols": names[:8],
             "lastSymbols": names[-8:],
         }
@@ -1249,8 +1330,9 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
                 "case 52",
                 "case 53",
                 "case 86",
+                "case 87",
             ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 22),
+            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 23),
             "firstCaseLabels": case_labels[:12],
             "lastCaseLabels": case_labels[-12:],
         }
@@ -1330,6 +1412,35 @@ def summarize_retail_report(name: str, path: Path) -> dict[str, Any]:
         )
         return summary
 
+    if isinstance(data.get("wine_probe"), dict):
+        wine_probe = data["wine_probe"]
+        oracle = wine_probe.get("oracle", {})
+        patched = data.get("patched", {}).get("patched_archive", {})
+        cfg = data.get("cfg", {})
+        source_result_path = Path(str(data.get("source_result", "")))
+        source_result = load_json_if_exists(source_result_path) if source_result_path.is_file() else None
+        symex = source_result.get("symex", {}) if isinstance(source_result, dict) else {}
+        mutation = source_result.get("mutation_metadata", {}) if isinstance(source_result, dict) else {}
+        fixture = symex.get("fixture", {}) if isinstance(symex, dict) else {}
+        summary.update(
+            {
+                "schema": source_result.get("schema") if isinstance(source_result, dict) else data.get("schema", "boss-read-retail-report"),
+                "sourceResult": str(source_result_path) if source_result_path else None,
+                "classification": oracle.get("classification"),
+                "interesting": oracle.get("interesting"),
+                "retailSignatureKey": oracle.get("wine_log_primary_signature"),
+                "symexPath": mutation.get("symex_path"),
+                "mutationFamily": mutation.get("family"),
+                "bossReadFamily": mutation.get("boss_read_family"),
+                "leanModel": source_result.get("lean_model") if isinstance(source_result, dict) else None,
+                "witnessHex": fixture.get("hex") if isinstance(fixture, dict) else None,
+                "patchedArchiveSha256": patched.get("sha256") if isinstance(patched, dict) else None,
+                "cfgSha256": cfg.get("sha256") if isinstance(cfg, dict) else None,
+                "timedOut": wine_probe.get("timed_out"),
+            }
+        )
+        return summary
+
     run = data.get("run", {})
     oracle = run.get("oracle", {})
     baseline = oracle.get("baseline_comparison", {})
@@ -1358,6 +1469,26 @@ def retail_confirmations(retail_root: Path) -> list[dict[str, Any]]:
             "TH06 timeline arg0=256 subTable counterexample",
             retail_root / "formal-th06-stage5-arg0-256-run3-long-probe" / "report.json",
         ),
+        summarize_retail_report(
+            "TH08 boss-int null-deref",
+            retail_root / "formal-th08-boss-int-boss-int-null-deref-20260901T024506Z" / "report.json",
+        ),
+        summarize_retail_report(
+            "TH07 boss-float null-deref",
+            retail_root / "formal-th07-boss-float-boss-float-null-deref-20260901T034027Z" / "report.json",
+        ),
+        summarize_retail_report(
+            "TH07 boss-float index-at-or-past-array",
+            retail_root / "formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z" / "report.json",
+        ),
+        summarize_retail_report(
+            "TH08 boss-float null-guarded-skip",
+            retail_root / "formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z" / "report.json",
+        ),
+        summarize_retail_report(
+            "TH08 boss-float index-at-or-past-array",
+            retail_root / "formal-th08-boss-float-boss-float-index-at-or-past-array-20260901T034207Z" / "report.json",
+        ),
     ]
 
 
@@ -1369,6 +1500,7 @@ def fuzz_comparison() -> dict[str, Any]:
             "separating operandFlags resolver branches, including TH06's no-mask behavior and TH07/TH08's mask-clear/mask-set selector behavior",
             "enumerating title-specific integer lvalue/binary arithmetic paths, including resolver-driven zero divisors and signed idiv overflow",
             "enumerating boss-indexed integer-read hazards, including bosses[8] underflow/overflow and null boss dereferences without seeding concrete indices by hand",
+            "enumerating boss-indexed float-read hazards and proving the TH07 unguarded versus TH08 guarded null-policy split with paired sat/unsat controls",
             "separating CALL/RET stack write/read hazards from subTable lookup faults and TH08 child-context RET exits",
             "separating TH06 conditional CALL guard-false fallthrough from guard-true CALL stack/subTable hazards",
             "returning satisfiable/unsatisfiable path facts with concrete byte-realizable witnesses",
@@ -1384,17 +1516,17 @@ def fuzz_comparison() -> dict[str, Any]:
         "currentVerdict": (
             "The current Lean+SMT baseline is stronger than prior fuzzing on the modeled VM-core skeleton, "
             "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
-            "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
+            "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
             "are solved and materialized for the default environments. "
             "It is not yet stronger than fuzzing for the full ECL/ANM VM, because most opcode bodies and host-state branches "
             "remain outside the semantics."
         ),
         "nextHighValueFormalWork": [
             "compose integer arithmetic writes with bounded multi-step execution to see which self-writes and host writes become later control/state hazards",
-            "lower the boss integer-read OOB/null candidates to reachable retail ECL mutations and compare with TH08's guarded float boss-read opcode",
+            "improve retail ranking for boss-read OOB/null candidates by selecting execution sites whose host boss-slot state is forced by the stage timeline",
             "add bounded multi-step raw ECL contexts for nested CALL/RET reachability, callbacks, and stacked jumps",
             "model float division/fmod preconditions and C/C++-faithful non-finite behavior",
-            "reuse the existing materializer queue to lower top-ranked TH07/TH08 witnesses once retail archive adapters exist",
+            "extend the reusable retail lowering pipeline to the next host-boundary opcode family",
         ],
     }
 
@@ -1430,6 +1562,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--boss-int-queue-json",
         help="reuse an existing symex_boss_int_candidate_queue.py JSON payload instead of rerunning the boss integer-read solver",
+    )
+    parser.add_argument(
+        "--boss-float-queue-json",
+        help="reuse an existing symex_boss_float_candidate_queue.py JSON payload instead of rerunning the boss float-read solver",
     )
     parser.add_argument(
         "--run-check",
@@ -1478,16 +1614,20 @@ def main(argv: list[str]) -> int:
     boss_int_queue, boss_int_command = load_boss_int_queue(args)
     commands["bossIntCandidateQueue"] = boss_int_command
     boss_int_queue_summary = summarize_boss_int_queue(boss_int_queue)
+    boss_float_queue, boss_float_command = load_boss_float_queue(args)
+    commands["bossFloatCandidateQueue"] = boss_float_command
+    boss_float_queue_summary = summarize_boss_float_queue(boss_float_queue)
 
     payload = {
         "schema": "touhou-formal-symex-effectiveness-v1",
-        "date": "2026-08-31",
+        "date": "2026-09-01",
         "commands": commands,
         "rawStepSymbolicCoverage": queue_summary,
         "rawBodySymbolicCoverage": body_queue_summary,
         "rawIntResolverCoverage": resolver_queue_summary,
         "rawIntBinaryCoverage": int_binary_queue_summary,
         "rawBossIntReadCoverage": boss_int_queue_summary,
+        "rawBossFloatReadCoverage": boss_float_queue_summary,
         "rawCallRetCoverage": callret_queue_summary,
         "rawConditionalCallCoverage": condcall_queue_summary,
         "sourceOpcodeSurface": source_opcode_surface(args.reference_root),

@@ -306,3 +306,9 @@ The TH08 boss-int `boss-int-null-deref` symbolic witness has been lowered into
 The witness bytes are produced by `scripts/symex_materialize_boss_int_read.py`,
 placed in an early timeline-spawned subroutine by
 `scripts/retail_confirm_boss_int_read.py`, and classified as `crash-dialog`.
+
+The boss-float retail lowering reuses the same archive/ECL patching pipeline
+through `scripts/retail_confirm_boss_float_read.py`. Four representative
+TH07/TH08 witnesses were lowered on 2026-09-01 and classified as
+`game-window-live`; these are retained as calibration artifacts rather than
+retail crash confirmations.

@@ -133,6 +133,7 @@ python3 scripts/evaluate_symex_effectiveness.py
 ./scripts/extract_retail_th06.sh
 python3 scripts/retail_confirm_th06_arg0_256.py --prepare-only
 python3 scripts/retail_confirm_th06_raw_symex.py --symex-path jumped-before-buffer --prepare-only
+python3 scripts/retail_confirm_boss_float_read.py th08 --symex-path boss-float-null-guarded-skip --prepare-only
 ```
 
 `scripts/check.sh` runs the Lean build, executable counterexample check, Z3
@@ -147,8 +148,10 @@ integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. The boss integer-read materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
-and null-dereference counterexamples. The CALL/RET materializer covers
-stack write/read faults, subTable lookup faults, and TH08
+and null-dereference counterexamples. The boss float-read materializer reuses
+that host boundary with float selector bit-pattern ranges and the TH07/TH08
+null-policy split. The CALL/RET materializer covers stack write/read faults,
+subTable lookup faults, and TH08
 child-context RET exits. The conditional-CALL materializer covers TH06
 guard-false fallthrough and guard-true reuse of the same CALL stack/subTable
 body.

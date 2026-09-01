@@ -6,10 +6,10 @@ already better than the previous fuzzing lane?
 
 Short answer: it is already better than fuzzing for the modeled VM-core
 dispatch skeleton, the first shared opcode-body slice, the integer resolver,
-the integer binary-op slice, the TH07/TH08 boss integer-read slice, and the
-CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the full
-ECL/ANM VM, because most gameplay host effects, callbacks, and multi-context
-scheduling are not modeled yet.
+the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
+the CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the
+full ECL/ANM VM, because most gameplay host effects, callbacks, and
+multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -37,19 +37,19 @@ the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
 summaries from `../retail_validation` when present.
 
-The manual verification run on 2026-08-31 executed:
+The current manual verification run on 2026-09-01 executed:
 
 ```bash
 ./scripts/check.sh
-python3 scripts/evaluate_symex_effectiveness.py > /tmp/touhou_symex_effectiveness_full.json
+python3 scripts/evaluate_symex_effectiveness.py \
+  --boss-float-queue-json /tmp/touhou_boss_float_queue_verify.json \
+  > /tmp/touhou_effectiveness_with_boss_float.json
 ```
 
 Both completed successfully on the raw-step, raw-body, resolver,
-integer-binary, boss-int, CALL/RET, and conditional-CALL model available at
-that time. On 2026-09-01, `./scripts/check.sh` was extended and rerun
-successfully for the boss-float lane. When a
-previous queue result should be reused instead of recomputed, the equivalent
-assessment is:
+integer-binary, boss-int, boss-float, CALL/RET, and conditional-CALL model.
+When previous queue results should be reused instead of recomputed, the
+equivalent assessment is:
 
 ```bash
 python3 scripts/evaluate_symex_effectiveness.py \
@@ -58,12 +58,10 @@ python3 scripts/evaluate_symex_effectiveness.py \
   --resolver-queue-json /tmp/resolver_queue.json \
   --int-binary-queue-json /tmp/int_binary_queue.json \
   --boss-int-queue-json /tmp/boss_queue.json \
+  --boss-float-queue-json /tmp/boss_float_queue.json \
   --callret-queue-json /tmp/callret_queue.json \
   --condcall-queue-json /tmp/condcall_queue.json
 ```
-
-Boss-float is currently covered by `./scripts/check.sh` and
-`scripts/symex_boss_float_candidate_queue.py`.
 
 The cost is mostly process startup: the current queues launch
 Lean/Z3/materialization once per candidate.
@@ -432,7 +430,7 @@ boss-float-value-resolved-default-raw
 ```
 
 Observed result from `./scripts/check.sh` and
-`scripts/symex_boss_float_candidate_queue.py` on 2026-09-01:
+`scripts/evaluate_symex_effectiveness.py` on 2026-09-01:
 
 | Metric | Result |
 | --- | --- |
@@ -462,6 +460,19 @@ The important formal signal is the paired satisfiable/unsatisfiable result:
 
 That is not a hand-picked counterexample. It falls out of one shared
 boss-indexed read shape plus a title-profiled null policy.
+
+Retail calibration added on 2026-09-01:
+
+- `scripts/retail_confirm_boss_float_read.py` lowers the same solver witnesses
+  into isolated TH07/TH08 `ecldata1.ecl` mutations through the shared boss-read
+  retail pipeline;
+- TH07 `boss-float-null-deref`, TH07 `boss-float-index-at-or-past-array`, TH08
+  `boss-float-null-guarded-skip`, and TH08
+  `boss-float-index-at-or-past-array` all reached `game-window-live` in the
+  current generic Wine oracle;
+- the important retail signal is calibration: TH08's guarded null path behaves
+  like a positive control, while OOB/null formal faults do not necessarily
+  crash at the selected stage-entry patch site.
 
 ## CALL/RET stack coverage
 
@@ -652,7 +663,8 @@ Concrete advantages already demonstrated:
   including 9 high-priority OOB/null-deref counterexamples;
 - the boss float-read queue adds 18 non-manual host-boundary candidates,
   including 7 high-priority OOB/null-deref counterexamples and TH08
-  guarded-skip positive controls;
+  guarded-skip positive controls, then lowers representative TH07/TH08
+  witnesses into isolated retail DAT mutations;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a

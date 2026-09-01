@@ -36,9 +36,31 @@ WINDOW_NAME_TOKENS = {
     "th07": ("東方妖々夢", "Perfect Cherry Blossom", "th07"),
     "th08": ("東方永夜抄", "Imperishable Night", "th08"),
 }
-DEFAULT_SYMEX_PATH = "boss-int-null-deref"
 DEFAULT_ACTIVE_MASK = 8
 DEFAULT_OVERRIDE_MASK = 0
+DEFAULT_FAMILY = "boss-int"
+FAMILY_CONFIGS = {
+    "boss-int": {
+        "artifact_label": "boss-int",
+        "default_symex_path": "boss-int-null-deref",
+        "materializer": "symex_materialize_boss_int_read.py",
+        "schema": "touhou-formal-retail-boss-int-read-candidate-v1",
+        "formal_id_tag": "ECL-BOSS-INT",
+        "lean_model": "TouhouFormal.ECL.rawBossIntReadStep",
+        "mutation_family": "boss-int-read-symbolic-step",
+        "description": "Lower a boss-int symbolic witness into a TH07/TH08 retail DAT mutation.",
+    },
+    "boss-float": {
+        "artifact_label": "boss-float",
+        "default_symex_path": "boss-float-null-deref",
+        "materializer": "symex_materialize_boss_float_read.py",
+        "schema": "touhou-formal-retail-boss-float-read-candidate-v1",
+        "formal_id_tag": "ECL-BOSS-FLOAT",
+        "lean_model": "TouhouFormal.ECL.rawBossFloatReadStep",
+        "mutation_family": "boss-float-read-symbolic-step",
+        "description": "Lower a boss-float symbolic witness into a TH07/TH08 retail DAT mutation.",
+    },
+}
 DISPLAY_BASE = 210
 DEFAULT_SCREEN_SIZE = "1024x768x24"
 CFG_LAYOUTS = {
@@ -82,20 +104,30 @@ def _utc_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
-def _default_artifact_dir(title: str, symex_path: str) -> Path:
+def _family_config(family: str) -> dict[str, str]:
+    config = FAMILY_CONFIGS.get(family)
+    if config is None:
+        raise ValueError(f"unsupported boss-read family: {family}")
+    return config
+
+
+def _default_artifact_dir(title: str, family: str, symex_path: str) -> Path:
     safe = "".join(char if char.isalnum() or char in "-_" else "-" for char in symex_path)
-    return DEFAULT_RETAIL_ROOT / f"formal-{title}-boss-int-{safe}-{_utc_stamp()}"
+    label = _family_config(family)["artifact_label"]
+    return DEFAULT_RETAIL_ROOT / f"formal-{title}-{label}-{safe}-{_utc_stamp()}"
 
 
 def _run_symex_materializer(
     title: str,
+    family: str,
     path_name: str,
     active_mask: int,
     override_mask: int,
 ) -> dict[str, Any]:
+    config = _family_config(family)
     command = [
         sys.executable,
-        str(FORMAL_ROOT / "scripts" / "symex_materialize_boss_int_read.py"),
+        str(FORMAL_ROOT / "scripts" / config["materializer"]),
         title,
         path_name,
         str(active_mask),
@@ -513,6 +545,7 @@ def build_case(args: argparse.Namespace, artifact_dir: Path) -> Path:
 
     symex_record = _run_symex_materializer(
         args.title,
+        args.family,
         args.symex_path,
         args.active_mask,
         args.override_mask,
@@ -550,6 +583,8 @@ def build_case(args: argparse.Namespace, artifact_dir: Path) -> Path:
         else plain_mutant_payload
     )
     payload_sha256 = sha256_bytes(payload)
+    config = _family_config(args.family)
+    artifact_label = config["artifact_label"]
 
     source_result_dir = artifact_dir / "source-result"
     override_data_dir = source_result_dir / "override" / "data"
@@ -557,19 +592,19 @@ def build_case(args: argparse.Namespace, artifact_dir: Path) -> Path:
     payload_path = override_data_dir / entry_name
     payload_path.write_bytes(payload)
     result = {
-        "schema": "touhou-formal-retail-boss-int-read-candidate-v1",
-        "formal_result_id": f"{args.title.upper()}-ECL-BOSS-INT-{args.symex_path.upper()}",
-        "lean_model": "TouhouFormal.ECL.rawBossIntReadStep",
+        "schema": config["schema"],
+        "formal_result_id": f"{args.title.upper()}-{config['formal_id_tag']}-{args.symex_path.upper()}",
+        "lean_model": config["lean_model"],
         "symex_command": [
-            "scripts/symex_materialize_boss_int_read.py",
+            f"scripts/{config['materializer']}",
             args.title,
             args.symex_path,
             str(args.active_mask),
             str(args.override_mask),
         ],
-        "case_name": f"formal-{args.title}-boss-int-{args.symex_path}",
+        "case_name": f"formal-{args.title}-{artifact_label}-{args.symex_path}",
         "mutant_name": (
-            f"boss-int-{args.symex_path}-s{site.sub_index:02d}-i{site.instruction_index:04d}"
+            f"{artifact_label}-{args.symex_path}-s{site.sub_index:02d}-i{site.instruction_index:04d}"
         ),
         "source_game_dir": str(source_game_dir),
         "source_archive": str(source_archive_path),
@@ -581,7 +616,8 @@ def build_case(args: argparse.Namespace, artifact_dir: Path) -> Path:
         "payload_sha256": payload_sha256,
         "symex": symex_record,
         "mutation_metadata": {
-            "family": "boss-int-read-symbolic-step",
+            "family": config["mutation_family"],
+            "boss_read_family": args.family,
             "symex_path": args.symex_path,
             "active_mask": args.active_mask,
             "override_mask": args.override_mask,
@@ -820,14 +856,19 @@ def run_wine_probe(args: argparse.Namespace, game_dir: Path, artifact_dir: Path)
     return report
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(
+    argv: list[str] | None = None,
+    *,
+    default_family: str = DEFAULT_FAMILY,
+) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Lower a boss-int symbolic witness into a TH07/TH08 retail DAT mutation."
+        description="Lower a boss-read symbolic witness into a TH07/TH08 retail DAT mutation."
     )
     parser.add_argument("title", choices=("th07", "th08"))
+    parser.add_argument("--family", choices=tuple(FAMILY_CONFIGS), default=default_family)
     parser.add_argument("--source-game-dir", type=Path)
     parser.add_argument("--artifact-dir", type=Path)
-    parser.add_argument("--symex-path", default=DEFAULT_SYMEX_PATH)
+    parser.add_argument("--symex-path")
     parser.add_argument("--active-mask", type=int, default=DEFAULT_ACTIVE_MASK)
     parser.add_argument("--override-mask", type=int, default=DEFAULT_OVERRIDE_MASK)
     parser.add_argument("--seed-name", default="ecldata1.ecl")
@@ -870,11 +911,13 @@ def parse_args() -> argparse.Namespace:
         default=["z", "z", "Down", "Down", "Down", "z", "z", "z", "z", "z", "z"],
         help="xdotool key sequence used by the generic new-game probe",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.symex_path is None:
+        args.symex_path = str(_family_config(args.family)["default_symex_path"])
     if args.source_game_dir is None:
         args.source_game_dir = DEFAULT_SOURCE_GAME_DIRS[args.title]
     if args.artifact_dir is None:
-        args.artifact_dir = _default_artifact_dir(args.title, args.symex_path)
+        args.artifact_dir = _default_artifact_dir(args.title, args.family, args.symex_path)
     if args.active_mask < 0 or args.active_mask > 255:
         raise ValueError("--active-mask must fit in a byte")
     if args.override_mask < 0 or args.override_mask > 255:
@@ -884,8 +927,12 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def main() -> int:
-    args = parse_args()
+def main(
+    argv: list[str] | None = None,
+    *,
+    default_family: str = DEFAULT_FAMILY,
+) -> int:
+    args = parse_args(argv, default_family=default_family)
     artifact_dir = args.artifact_dir.resolve()
     if (artifact_dir / "game").exists() or (artifact_dir / "source-result").exists():
         raise FileExistsError(f"artifact directory already contains a prepared case: {artifact_dir}")

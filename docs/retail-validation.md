@@ -239,3 +239,52 @@ retail process will immediately fault: an out-of-bounds read can land on mapped
 adjacent state. The TH07 null-deref result is also host-state dependent; the
 chosen early spawned context did not reproduce a null boss slot at the moment of
 execution.
+
+## TH07/TH08 boss float-read witness lowering
+
+`scripts/retail_confirm_boss_float_read.py` reuses the same boss-read lowering
+pipeline as boss-int:
+
+- ask `scripts/symex_materialize_boss_float_read.py` for a solver witness;
+- splice the resulting equal-sized 24-byte raw ECL instruction into a
+  timeline-spawned TH07/TH08 subroutine;
+- rebuild `th07.dat`/`th08.dat` with only `ecldata1.ecl` changed;
+- run the generic Wine title-menu probe in an isolated game copy.
+
+Commands used on 2026-09-01:
+
+```bash
+python3 scripts/retail_confirm_boss_float_read.py th07 \
+  --symex-path boss-float-null-deref \
+  --active-mask 8 \
+  --override-mask 0
+
+python3 scripts/retail_confirm_boss_float_read.py th08 \
+  --symex-path boss-float-null-guarded-skip \
+  --active-mask 8 \
+  --override-mask 0
+
+python3 scripts/retail_confirm_boss_float_read.py th08 \
+  --symex-path boss-float-index-at-or-past-array \
+  --active-mask 8 \
+  --override-mask 0
+
+python3 scripts/retail_confirm_boss_float_read.py th07 \
+  --symex-path boss-float-index-at-or-past-array \
+  --active-mask 8 \
+  --override-mask 0
+```
+
+Observed reports:
+
+| Case | Witness bytes | Placement | Patched archive SHA-256 | Artifact | Oracle |
+| --- | --- | --- | --- | --- | --- |
+| TH07 `boss-float-null-deref` | `000000002c001800000802000000008000501c4600000000` | `timeline1/instr0 -> sub1/instr1` | `49000c3748a68bf371d7e6adc3183fe0af03ded16142c1a843a0a27427405a2f` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z` | `game-window-live` |
+| TH07 `boss-float-index-at-or-past-array` | `000000002c00180000080200000000800000008008000000` | `timeline1/instr0 -> sub1/instr1` | `7f0c12f8df75b2a7c702cd1767f77194f9812f25b107271e59a9468a1f18fd60` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z` | `game-window-live` |
+| TH08 `boss-float-null-guarded-skip` | `000000005700180000080200000000800000008000000000` | `timeline0/instr0 -> sub14/instr1` | `9d56e04b9e83fc1a85ebbc83fc2e858b070ae629b19db22511576599917b545c` | `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z` | `game-window-live` |
+| TH08 `boss-float-index-at-or-past-array` | `000000005700180000080200000000800000008008000000` | `timeline0/instr0 -> sub14/instr1` | `419c24e1041b5d7de7a918b97c25cdf25256f436460d81c8e98e12593a83811f` | `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-index-at-or-past-array-20260901T034207Z` | `game-window-live` |
+
+These four runs are calibration evidence. The formal model is finding source
+memory-safety path classes at the opcode boundary. The current retail oracle
+then answers a different question: whether the selected stage-entry placement
+turns that path into an immediately visible process crash.

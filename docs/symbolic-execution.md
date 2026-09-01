@@ -183,6 +183,13 @@ Solve/materialize boss-indexed integer-read paths:
 ./scripts/symex_boss_int_candidate_queue.py
 ```
 
+Solve/materialize boss-indexed float-read paths:
+
+```bash
+./scripts/symex_materialize_boss_float_read.py th08 all 1 0
+./scripts/symex_boss_float_candidate_queue.py
+```
+
 Solve/materialize CALL/RET stack paths:
 
 ```bash
