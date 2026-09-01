@@ -349,6 +349,11 @@ SOURCE_COVERAGE = [
         "reason": "shared shooting effects cover ranked immediate/random intervals, timer initialization, suppress/defer gates, previous-pattern spawn requests, and resolved offsets with title-specific zero guards and Z writes",
     },
     {
+        "area": "bullet control host effects",
+        "status": "covered-by-model",
+        "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition clear variants, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
+    },
+    {
         "area": "ANM entry header/nextOffset profile",
         "status": "partially-covered",
         "reason": "entry table shape and nextOffset chain headers are modeled, but ANM opcode execution and resource side effects are not",

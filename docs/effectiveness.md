@@ -7,9 +7,12 @@ already better than the previous fuzzing lane?
 Short answer: it is already better than fuzzing for the modeled VM-core
 dispatch skeleton, the first shared opcode-body slice, the integer resolver,
 the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
-the CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the
-full ECL/ANM VM, because laser spawn/runtime behavior, item/enemy lifecycle,
-full ANM execution, and multi-context scheduling are not modeled yet.
+the CALL/RET/conditional-CALL slices. It also now source-models several
+gameplay-effect opcode families in Lean, including bullet-control host effects,
+but those families are not yet dedicated SMT/materializer lanes. It is not yet
+better than fuzzing for the full ECL/ANM VM, because full BulletManager and
+laser runtime behavior, item/enemy lifecycle, full ANM execution, and
+multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -40,13 +43,14 @@ summaries from `retail_validation/` when present.
 The current manual verification run on 2026-09-01 executed:
 
 ```bash
-./scripts/check.sh
+lake build
+lake exe check > /tmp/touhou_check_bullet_control.txt
+./scripts/check.sh > /tmp/touhou_full_check_bullet_control.txt
 python3 scripts/evaluate_symex_effectiveness.py \
-  --boss-float-queue-json /tmp/touhou_boss_float_queue_verify.json \
-  > /tmp/touhou_effectiveness_with_boss_float.json
+  > /tmp/touhou_effectiveness_bullet_control.json
 ```
 
-Both completed successfully on the raw-step, raw-body, resolver,
+All completed successfully on the raw-step, raw-body, resolver,
 integer-binary, boss-int, boss-float, CALL/RET, and conditional-CALL model.
 When previous queue results should be reused instead of recomputed, the
 equivalent assessment is:
@@ -562,8 +566,9 @@ generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
 movement state writes, timed direction/position interpolation, orbit movement,
 enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior, zero
-divisors, shooting-control state writes, primary bullet-pattern descriptor
-construction/gates, laser slot controls, animation-control state writes,
+divisors, shooting-control state writes, bullet-control host effects, primary
+bullet-pattern descriptor construction/gates, laser slot controls,
+animation-control state writes,
 callback configuration, interrupt entry, and signed idiv overflow. Most
 gameplay host effects and multi-instruction state composition remain outside
 the current model.
@@ -572,9 +577,9 @@ Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 108: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 28 |
-| TH07 | 159 `EclOpcode` symbols | 116: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 43 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 119: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 65 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 111: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, bullet-control, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 25 |
+| TH07 | 159 `EclOpcode` symbols | 121: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-control, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 38 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 122: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-control, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 62 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -593,9 +598,9 @@ Not covered:
 - exact signed add/sub/mul overflow behavior, exact IEEE-754 f32 result
   computation, float division/fmod edge cases, and other C/C++ arithmetic
   hazards;
-- BulletManager allocation/transform execution, laser spawn descriptors and
-  runtime laser simulation, enemy lifecycle, item, full ANM execution, sound,
-  and callback trigger side effects;
+- BulletManager allocation/runtime simulation, TH08 transform-table execution,
+  laser spawn descriptors and runtime laser simulation, enemy lifecycle, item,
+  full ANM execution, sound playback, and callback trigger side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
@@ -629,6 +634,8 @@ complete for the implemented TH06 conditional-CALL abstraction;
 complete for the implemented primary bullet-pattern descriptor/gate
   abstraction, with source-side f32 arithmetic supplied by the explicit host
   boundary;
+complete for the implemented bullet-control host-effect abstraction, including
+  source-ordered sound reads and signed-i16 rank-count truncation;
 complete for the implemented laser slot-control abstraction, including
   unchecked enemy laser pointer-slot reads, null guards before later operand
   reads, selected-slot writes, in-use tests, stop transitions, clear-all loops,
@@ -727,8 +734,9 @@ satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
 TH06/TH07/TH08 semantics.
 
 For the whole VM, it is not yet better. The model has to move down one layer
-into opcode bodies and bounded multi-step execution before we can honestly say
-formal is finding classes that DanmakuFuzz cannot find in practice.
+into the remaining opcode bodies, host runtime state, and bounded multi-step
+execution before we can honestly say formal is finding classes that
+DanmakuFuzz cannot find in practice across the whole VM.
 
 The next technically useful targets are:
 

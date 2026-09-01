@@ -106,6 +106,11 @@ The executable model currently covers these source-backed boundaries:
   while profiles retain TH06's unconditional zero-interval timer reset,
   TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
   TH08's forced-zero offset Z.
+- Shared bullet-control effects cover 11 cross-title opcodes: TH06's point
+  conversion, TH07 item/no-item/radius removal, TH08 transition clearing,
+  sound flag toggles and overrides, and bullet-rank influence writes. The model
+  preserves TH06 raw operands, TH07/TH08 `operandFlags` resolution, repeated
+  primary sound reads before override reads, and signed-i16 count truncation.
 - Shared laser slot controls cover 29 cross-title opcodes for selected-slot
   writes, indexed angle/position/start-length/offset/hide updates, active-state
   tests, stop transitions, and clear-all loops. The model preserves unchecked
@@ -233,10 +238,11 @@ output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate and timed movement effects, enemy-state
-effects, shooting-control effects, and animation-control effects currently have Lean
-executable controls for profile coverage and shared-step execution, but no dedicated
-solver/materializer lane yet. Bullet-pattern, callback-configuration, and
-interrupt effects have the same Lean-only status for now. The boss integer-read
+effects, shooting-control effects, bullet-control effects, laser slot controls,
+animation-control effects, bullet-pattern effects, callback-configuration
+effects, and interrupt effects currently have Lean executable controls for
+profile coverage and shared-step execution, but no dedicated
+solver/materializer lane yet. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses

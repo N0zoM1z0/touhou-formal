@@ -94,6 +94,14 @@ Integer rank interpolation uses `Int.tdiv`, not Lean's default integer `/`.
 This matches C/C++ truncation toward zero for negative intermediate values;
 the distinction is observable for small interval endpoints such as `-1 / 5`.
 
+Bullet-control semantics are modeled at the VM-to-host boundary. TH06 sound and
+rank-control operands are raw fields; TH07/TH08 resolve the same roles through
+operand flags. The primary sound operand is deliberately not memoized: in the
+enabled branch the source reads slot 0 for the condition, reads slot 0 again
+for the stored spawn sound, and only then reads slot 1 for the override. Rank
+counts pass through signed-i16 assignment, so values like `32768` and `65535`
+become `-32768` and `-1`.
+
 Callback array operands are not memoized unless the source is. TH07 and TH08
 spell out the indexed life-callback operand more than once, and their integer
 resolvers include RNG selectors. The model accepts one host value per read

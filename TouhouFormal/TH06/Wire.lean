@@ -71,6 +71,8 @@ def eclOpcodeDisableShooting : Int := 78
 def eclOpcodeEnableShooting : Int := 79
 def eclOpcodeSpawnPreviousPattern : Int := 80
 def eclOpcodeSetShootOffset : Int := 81
+def eclOpcodeBulletCancel : Int := 83
+def eclOpcodeBulletSound : Int := 84
 def eclOpcodeLaserCreate : Int := 85
 def eclOpcodeLaserCreateAimed : Int := 86
 def eclOpcodeLaserIndex : Int := 87
@@ -101,6 +103,7 @@ def eclOpcodeAnmFlagRotation : Int := 120
 def eclOpcodeAnmInterruptMain : Int := 128
 def eclOpcodeAnmInterruptSlot : Int := 129
 def eclOpcodeSetCallStackDisabled : Int := 130
+def eclOpcodeBulletRankInfluence : Int := 131
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
 def eclOpcodeLaserClearAll : Int := 134
 def enemyAnmScriptBase : Int := 0x100
@@ -243,6 +246,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 428
       endLine := 454
       claim := "Shoot-control opcodes 76 through 81 use a raw interval plus rank scaling, immediate/random timer initialization, a suppress-spawn bit, explicit previous-pattern spawn, and three GetVarFloat-resolved offset components." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 891
+      endLine := 915
+      claim := "Bullet-control opcodes clear all bullets into points, set or clear the bullet sound flag from a raw signed sound id, and copy raw bullet-rank influence fields into enemy state." },
     { path := "reference/th06/src/EclManager.cpp"
       startLine := 357
       endLine := 410
@@ -643,6 +650,23 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          bulletControlOps :=
+            [ { opcode := eclOpcodeBulletCancel
+                kind := .clear .turnAllIntoPoints },
+              { opcode := eclOpcodeBulletSound
+                kind := .setSound
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeBulletRankInfluence
+                kind := .setRankInfluence
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .rawBits },
+                    { operandIndex := 1, policy := .rawBits } ]
+                intInputs :=
+                  [ { operandIndex := 2, policy := .rawI32 },
+                    { operandIndex := 3, policy := .rawI32 },
+                    { operandIndex := 4, policy := .rawI32 },
+                    { operandIndex := 5, policy := .rawI32 } ] } ]
           laserOps :=
             [ { opcode := eclOpcodeLaserIndex
                 kind := .setSelectedSlot

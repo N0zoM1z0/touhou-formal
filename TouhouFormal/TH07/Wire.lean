@@ -76,6 +76,8 @@ def eclOpcodeDisableShooting : Int := 75
 def eclOpcodeEnableShooting : Int := 76
 def eclOpcodeSpawnPreviousPattern : Int := 77
 def eclOpcodeSetShootOffset : Int := 78
+def eclOpcodeRemoveAllBulletsSpawnItems : Int := 80
+def eclOpcodeSetBulletSound : Int := 81
 def eclOpcodeSpawnLaserPatternFixed : Int := 82
 def eclOpcodeSpawnLaserPatternMoving : Int := 83
 def eclOpcodeSetLaserIdx : Int := 84
@@ -112,7 +114,10 @@ def eclOpcodeRandomExitAngle : Int := 155
 def eclOpcodeSetVmAutoRotate : Int := 120
 def eclOpcodeSetPrimaryVmInterrupt : Int := 128
 def eclOpcodeSetVmInterrupt : Int := 129
+def eclOpcodeSetBulletRankParams : Int := 131
 def eclOpcodeClearLasers : Int := 134
+def eclOpcodeRemoveBulletsRadius : Int := 143
+def eclOpcodeRemoveAllBulletsNoItems : Int := 146
 def eclOpcodeSetLaserAngle : Int := 152
 def eclOpcodeSetLaserHideWarning : Int := 156
 def eclOpcodeSetLaserStartLen : Int := 157
@@ -272,6 +277,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
         startLine := 1345
         endLine := 1376
         claim := "Shoot-control opcodes 73 through 78 resolve nonzero intervals before rank scaling, initialize the interval timer immediately or randomly, toggle a suppress-spawn bit, spawn the previous pattern, and resolve three offset floats." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1866
+        endLine := 1893
+        claim := "Bullet-control opcodes remove all bullets with item mode, set or clear bullet sound plus an override from resolved integers, and resolve bullet-rank influence fields." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1934
+        endLine := 1946
+        claim := "Bullet-control radius/no-item opcodes remove bullets in a resolved radius or remove all bullets without spawning items." },
       { path := "reference/th07/src/th07/EclManager.cpp"
         startLine := 1265
         endLine := 1329
@@ -725,6 +738,32 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          bulletControlOps :=
+            [ { opcode := eclOpcodeRemoveAllBulletsSpawnItems
+                kind := .clear (.removeAll true) },
+              { opcode := eclOpcodeSetBulletSound
+                kind := .setSound
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue },
+                    { operandIndex := 1, policy := .intRValue } ]
+                soundHasOverride := true
+                soundRepeatsPrimaryOnEnable := true },
+              { opcode := eclOpcodeSetBulletRankParams
+                kind := .setRankInfluence
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                intInputs :=
+                  [ { operandIndex := 2, policy := .intRValue },
+                    { operandIndex := 3, policy := .intRValue },
+                    { operandIndex := 4, policy := .intRValue },
+                    { operandIndex := 5, policy := .intRValue } ] },
+              { opcode := eclOpcodeRemoveBulletsRadius
+                kind := .clear .removeRadius
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ] },
+              { opcode := eclOpcodeRemoveAllBulletsNoItems
+                kind := .clear (.removeAll false) } ]
           laserOps :=
             [ { opcode := eclOpcodeSetLaserIdx
                 kind := .setSelectedSlot

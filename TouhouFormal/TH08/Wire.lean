@@ -93,6 +93,8 @@ def eclOpcodeDisableShooting : Int := 107
 def eclOpcodeEnableShooting : Int := 108
 def eclOpcodeSpawnPreviousPattern : Int := 109
 def eclOpcodeSetShootOffset : Int := 110
+def eclOpcodeClearBulletsForTransition : Int := 112
+def eclOpcodeSetBulletSound : Int := 113
 def eclOpcodeSpawnLaserFixed : Int := 114
 def eclOpcodeSpawnLaserAimed : Int := 115
 def eclOpcodeSetLaserIdx : Int := 116
@@ -113,6 +115,7 @@ def eclOpcodeSetInterrupt : Int := 126
 def eclOpcodeSetPrimaryVmInterrupt : Int := 149
 def eclOpcodeSetSecondaryVmInterrupt : Int := 150
 def eclOpcodeSetCallStackDisabled : Int := 151
+def eclOpcodeSetBulletRankInfluence : Int := 152
 def eclOpcodeBindTimerCallbackToDeath : Int := 153
 def eclOpcodeClearLasers : Int := 154
 def eclOpcodeSetPrimaryVmRotZ : Int := 165
@@ -278,6 +281,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 210
       endLine := 258
       claim := "High opcodes 105 through 110 resolve nonzero intervals before rank scaling, initialize the timer immediately or randomly, toggle the defer-pattern flag, spawn the previous descriptor, and resolve XY offset while forcing Z to zero." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 789
+      endLine := 817
+      claim := "High bullet-control opcodes clear bullets for transition, set or clear descriptor spawn-sound flags plus transformSound from resolved integers, and write rank-influence fields with signed-i16 count truncation." },
     { path := "reference/th08/src/EclRunHigh.inl"
       startLine := 165
       endLine := 184
@@ -762,6 +769,27 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue } ]
                 zeroOffsetZ := true } ]
+          bulletControlOps :=
+            [ { opcode := eclOpcodeClearBulletsForTransition
+                kind := .clear .clearForTransition },
+              { opcode := eclOpcodeSetBulletSound
+                kind := .setSound
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue },
+                    { operandIndex := 1, policy := .intRValue } ]
+                soundTarget := .bulletSpawnDescriptor
+                soundHasOverride := true
+                soundRepeatsPrimaryOnEnable := true },
+              { opcode := eclOpcodeSetBulletRankInfluence
+                kind := .setRankInfluence
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                intInputs :=
+                  [ { operandIndex := 2, policy := .intRValue },
+                    { operandIndex := 3, policy := .intRValue },
+                    { operandIndex := 4, policy := .intRValue },
+                    { operandIndex := 5, policy := .intRValue } ] } ]
           laserOps :=
             [ { opcode := eclOpcodeSetLaserIdx
                 kind := .setSelectedSlot

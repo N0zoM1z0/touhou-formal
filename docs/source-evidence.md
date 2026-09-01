@@ -494,6 +494,29 @@ timer effects retain title-specific operand resolution and secondary writes.
 The model shares that interpolation and the u32 RNG range operation but keeps
 the timer guard and gate meaning in title profiles.
 
+## Bullet Control Evidence
+
+- `reference/th06/src/EclManager.cpp:891-915` clears all bullets into points,
+  toggles the enemy bullet-props sound flag from a raw signed sound id, and
+  copies raw speed/count rank-influence fields into enemy state.
+- `reference/th07/src/th07/EclManager.cpp:1866-1893` removes all bullets with
+  item spawning, resolves the primary sound operand once for the branch and
+  again for the enabled write, always resolves the override operand, and writes
+  resolved rank-influence fields.
+- `reference/th07/src/th07/EclManager.cpp:1934-1946` resolves the radius
+  operand for radius removal and separately removes all bullets without item
+  spawning.
+- `reference/th08/src/EclRunHigh.inl:789-817` clears bullets for transition,
+  uses the same repeated primary sound read plus override read pattern against
+  `bulletSpawnDescriptor`, and stores rank-influence count operands through
+  signed-i16 casts.
+
+The shared model keeps these as host effects rather than executing the whole
+`BulletManager`. That is enough to lock opcode ordering, operand resolution,
+flag toggles, and signed truncation while leaving bullet allocation,
+transforms, item spawning, and runtime bullet simulation as later host
+boundaries.
+
 ## Primary Bullet-Pattern Evidence
 
 - `reference/th06/src/EclManager.cpp:357-410` sends opcodes 67–75 through one

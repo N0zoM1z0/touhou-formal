@@ -265,6 +265,24 @@ private def describeShootingOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeBulletControlOutcome
+    (result :
+      Except TouhouFormal.Fault TouhouFormal.ECL.RawBulletControlOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "clear=" ++ reprStr effect.clear ++
+              " sound=" ++ reprStr effect.sound ++
+              " rank=" ++ reprStr effect.rankInfluence
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeLaserOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawLaserOutcome) :
     String :=
@@ -569,6 +587,17 @@ def main : IO Unit := do
   IO.println s!"TH08 random interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th08RandomIntervalOutcome}"
   IO.println s!"TH06 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th06OffsetOutcome}"
   IO.println s!"TH08 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th08OffsetOutcome}"
+  IO.println ""
+  IO.println "Bullet controls"
+  IO.println s!"TH06 bullet-control opcode count: {TouhouFormal.Search.BulletControl.bulletControlOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 bullet-control opcode count: {TouhouFormal.Search.BulletControl.bulletControlOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 bullet-control opcode count: {TouhouFormal.Search.BulletControl.bulletControlOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 cancel: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th06CancelOutcome}"
+  IO.println s!"TH06 rank: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th06RankOutcome}"
+  IO.println s!"TH07 sound: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th07SoundPositiveOutcome}"
+  IO.println s!"TH07 radius: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th07RadiusOutcome}"
+  IO.println s!"TH08 transition clear: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th08ClearTransitionOutcome}"
+  IO.println s!"TH08 sound: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th08SoundPositiveOutcome}"
   IO.println ""
   IO.println "Laser slot controls"
   IO.println s!"TH06 laser opcode count: {TouhouFormal.Search.Laser.laserOpcodeCount TouhouFormal.TH06.headerShape}"

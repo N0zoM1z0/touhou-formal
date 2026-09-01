@@ -753,6 +753,82 @@ structure RawShootingOpShape where
   zeroOffsetZ : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawBulletControlIntInputPolicy where
+  | intRValue
+  | rawI32
+deriving Repr, DecidableEq
+
+def RawBulletControlIntInputPolicy.name :
+    RawBulletControlIntInputPolicy -> String
+  | .intRValue => "int-rvalue"
+  | .rawI32 => "raw-i32"
+
+structure RawBulletControlIntInputShape where
+  operandIndex : Nat
+  policy : RawBulletControlIntInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawBulletControlFloatInputPolicy where
+  | floatRValue
+  | rawBits
+deriving Repr, DecidableEq
+
+def RawBulletControlFloatInputPolicy.name :
+    RawBulletControlFloatInputPolicy -> String
+  | .floatRValue => "float-rvalue"
+  | .rawBits => "raw-bits"
+
+structure RawBulletControlFloatInputShape where
+  operandIndex : Nat
+  policy : RawBulletControlFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawBulletClearMode where
+  | turnAllIntoPoints
+  | removeAll (awardItems : Bool)
+  | clearForTransition
+  | removeRadius
+deriving Repr, DecidableEq
+
+def RawBulletClearMode.name : RawBulletClearMode -> String
+  | .turnAllIntoPoints => "turn-all-into-points"
+  | .removeAll true => "remove-all-award-items"
+  | .removeAll false => "remove-all-no-items"
+  | .clearForTransition => "clear-for-transition"
+  | .removeRadius => "remove-radius"
+
+inductive RawBulletSoundTarget where
+  | enemyBulletProps
+  | bulletSpawnDescriptor
+deriving Repr, DecidableEq
+
+def RawBulletSoundTarget.name : RawBulletSoundTarget -> String
+  | .enemyBulletProps => "enemy-bullet-props"
+  | .bulletSpawnDescriptor => "bullet-spawn-descriptor"
+
+inductive RawBulletControlOpKind where
+  | clear (mode : RawBulletClearMode)
+  | setSound
+  | setRankInfluence
+deriving Repr, DecidableEq
+
+def RawBulletControlOpKind.name : RawBulletControlOpKind -> String
+  | .clear mode => "clear-" ++ mode.name
+  | .setSound => "set-sound"
+  | .setRankInfluence => "set-rank-influence"
+
+structure RawBulletControlOpShape where
+  opcode : Int
+  kind : RawBulletControlOpKind
+  intInputs : List RawBulletControlIntInputShape := []
+  floatInputs : List RawBulletControlFloatInputShape := []
+  soundTarget : RawBulletSoundTarget := .enemyBulletProps
+  soundHasOverride : Bool := false
+  soundRepeatsPrimaryOnEnable : Bool := false
+  soundFlagMask : Int := 0x200
+  rankIntValuesTruncateToI16 : Bool := true
+deriving Repr, DecidableEq
+
 inductive RawLaserIntInputPolicy where
   | intRValue
   | rawI32
@@ -1331,6 +1407,7 @@ structure RawInstrShape where
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
+  bulletControlOps : List RawBulletControlOpShape := []
   laserOps : List RawLaserOpShape := []
   animationOps : List RawAnimationOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
@@ -1414,6 +1491,11 @@ def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawShootingOpShape :=
   rawShape.shootingOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findBulletControlOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBulletControlOpShape :=
+  rawShape.bulletControlOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findLaserOp?
     (rawShape : RawInstrShape)
