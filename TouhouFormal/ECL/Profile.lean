@@ -61,7 +61,7 @@ structure RawIntDivisorHazard where
   divisorOperandIndex : Nat
 deriving Repr, DecidableEq
 
-inductive RawIntBinaryOpKind where
+inductive RawBinaryOpKind where
   | add
   | sub
   | mul
@@ -69,30 +69,43 @@ inductive RawIntBinaryOpKind where
   | mod
 deriving Repr, DecidableEq
 
-def RawIntBinaryOpKind.name : RawIntBinaryOpKind -> String
+abbrev RawIntBinaryOpKind := RawBinaryOpKind
+
+def RawBinaryOpKind.name : RawBinaryOpKind -> String
   | .add => "add"
   | .sub => "sub"
   | .mul => "mul"
   | .div => "div"
   | .mod => "mod"
 
-def RawIntBinaryOpKind.isDivisorHazard : RawIntBinaryOpKind -> Bool
+def RawBinaryOpKind.isDivisorHazard : RawBinaryOpKind -> Bool
   | .div | .mod => true
   | _ => false
 
-inductive RawIntBinaryOpMode where
+inductive RawBinaryOpMode where
   | assign
   | updateInPlace
 deriving Repr, DecidableEq
 
-def RawIntBinaryOpMode.name : RawIntBinaryOpMode -> String
+abbrev RawIntBinaryOpMode := RawBinaryOpMode
+
+def RawBinaryOpMode.name : RawBinaryOpMode -> String
   | .assign => "assign"
   | .updateInPlace => "update-in-place"
 
 structure RawIntBinaryOpShape where
   opcode : Int
-  kind : RawIntBinaryOpKind
-  mode : RawIntBinaryOpMode
+  kind : RawBinaryOpKind
+  mode : RawBinaryOpMode
+  outputOperandIndex : Nat
+  lhsOperandIndex : Nat
+  rhsOperandIndex : Nat
+deriving Repr, DecidableEq
+
+structure RawFloatBinaryOpShape where
+  opcode : Int
+  kind : RawBinaryOpKind
+  mode : RawBinaryOpMode
   outputOperandIndex : Nat
   lhsOperandIndex : Nat
   rhsOperandIndex : Nat
@@ -261,6 +274,7 @@ structure RawInstrShape where
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
   intBinaryOps : List RawIntBinaryOpShape := []
+  floatBinaryOps : List RawFloatBinaryOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -280,6 +294,11 @@ def RawInstrShape.findIntBinaryOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawIntBinaryOpShape :=
   rawShape.intBinaryOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findFloatBinaryOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawFloatBinaryOpShape :=
+  rawShape.floatBinaryOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

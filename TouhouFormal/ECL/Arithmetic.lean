@@ -41,6 +41,48 @@ structure RawIntBinaryOpOutcome where
   prepared : Option RawIntBinaryOpPrepared := none
 deriving Repr, DecidableEq
 
+structure RawFloatBinaryOpOperands where
+  outputRaw : Int
+  outputHostBefore : Int
+  lhsRaw : Int
+  rhsRaw : Int
+  lhsHost : Int
+  rhsHost : Int
+  resultBits : Int
+deriving Repr, DecidableEq
+
+structure RawFloatBinaryOpPrepared where
+  op : RawFloatBinaryOpShape
+  output : RawFloatLValueResolution
+  lhsResolution : Option RawFloatOperandResolution := none
+  rhsResolution : Option RawFloatOperandResolution := none
+  lhsBits : Option Int := none
+  rhsBits : Option Int := none
+deriving Repr, DecidableEq
+
+structure RawFloatBinaryOpResult where
+  kind : RawBinaryOpKind
+  lhsBits : Int
+  rhsBits : Int
+  resultBits : Int
+deriving Repr, DecidableEq
+
+inductive RawFloatBinaryOpAction where
+  | yielded
+  | skipped
+  | advanced
+  | nonFloatOutput
+  | vmError
+deriving Repr, DecidableEq
+
+structure RawFloatBinaryOpOutcome where
+  action : RawFloatBinaryOpAction
+  targetCursor : Option Int := none
+  cursorClass : Option TouhouFormal.CursorClass := none
+  result : Option RawFloatBinaryOpResult := none
+  prepared : Option RawFloatBinaryOpPrepared := none
+deriving Repr, DecidableEq
+
 private def missingRawInstrShapeFault (shape : HeaderShape) : Fault :=
   { kind := .invalidInstruction
     title := shape.title
@@ -82,8 +124,20 @@ private def rawIntBinaryCursorOutcome
     result := result
     prepared := prepared }
 
-private def RawIntBinaryOpKind.evalUnchecked
-    (kind : RawIntBinaryOpKind)
+private def rawFloatBinaryCursorOutcome
+    (action : RawFloatBinaryOpAction)
+    (rawPrefix : RawInstrPrefix)
+    (bufferSize : Nat)
+    (result : Option RawFloatBinaryOpResult := none)
+    (prepared : Option RawFloatBinaryOpPrepared := none) : RawFloatBinaryOpOutcome :=
+  { action := action
+    targetCursor := some rawPrefix.nextCursor
+    cursorClass := some (TouhouFormal.classifyCursorTransfer rawPrefix.fileOffset rawPrefix.nextCursor bufferSize)
+    result := result
+    prepared := prepared }
+
+private def RawBinaryOpKind.evalUnchecked
+    (kind : RawBinaryOpKind)
     (lhs rhs : Int) : Int :=
   match kind with
   | .add => lhs + rhs
@@ -149,6 +203,63 @@ def rawIntBinaryPrepare
         lhsValue := some lhsValue
         rhsValue := some rhs.value }
 
+def rawFloatBinaryPrepare
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (op : RawFloatBinaryOpShape)
+    (operands : RawFloatBinaryOpOperands) :
+    Except Fault RawFloatBinaryOpPrepared := do
+  let output <-
+    resolveFloatLValue
+      shape
+      rawPrefix
+      op.outputOperandIndex
+      operands.outputRaw
+      operands.outputHostBefore
+  if output.kind == .nonFloatOutput then
+    .ok
+      { op := op
+        output := output
+        lhsResolution := none
+        rhsResolution := none
+        lhsBits := none
+        rhsBits := none }
+  else
+    let (lhsResolution, lhsBits) <-
+      match op.mode with
+      | .assign => do
+          let lhs <-
+            resolveFloatRValue
+              shape
+              rawPrefix
+              op.lhsOperandIndex
+              operands.lhsRaw
+              operands.lhsHost
+          .ok (some lhs, lhs.value)
+      | .updateInPlace =>
+          match output.valueBefore with
+          | some value => .ok (none, value)
+          | none =>
+              .error
+                { kind := .invalidInstruction
+                  title := shape.title
+                  component := "EclRun.arithmetic.floatBinary"
+                  detail := "in-place float opcode has no writable output value" }
+    let rhs <-
+      resolveFloatRValue
+        shape
+        rawPrefix
+        op.rhsOperandIndex
+        operands.rhsRaw
+        operands.rhsHost
+    .ok
+      { op := op
+        output := output
+        lhsResolution := lhsResolution
+        rhsResolution := some rhs
+        lhsBits := some lhsBits
+        rhsBits := some rhs.value }
+
 def rawIntBinaryStep
     (shape : HeaderShape)
     (currentTime : Int)
@@ -202,5 +313,58 @@ def rawIntBinaryStep
                         title := shape.title
                         component := "EclRun.arithmetic.intBinary"
                         detail := "integer binary opcode reached without resolved operands" }
+
+def rawFloatBinaryStep
+    (shape : HeaderShape)
+    (currentTime : Int)
+    (activeMask overrideMask maxBits bufferSize : Nat)
+    (rawPrefix : RawInstrPrefix)
+    (operands : RawFloatBinaryOpOperands) :
+    Except Fault RawFloatBinaryOpOutcome :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      if currentTime != rawPrefix.time then
+        .ok { action := .yielded }
+      else do
+        let difficultyPass <- rawDifficultyPass shape rawShape rawPrefix activeMask overrideMask maxBits
+        if !difficultyPass then
+          .ok (rawFloatBinaryCursorOutcome .skipped rawPrefix bufferSize)
+        else if rawShape.unimplementedOpcode == some rawPrefix.opcode then
+          .ok { action := .vmError }
+        else
+          match rawShape.findFloatBinaryOp? rawPrefix.opcode with
+          | none =>
+              .ok (rawFloatBinaryCursorOutcome .advanced rawPrefix bufferSize)
+          | some op => do
+              let prepared <- rawFloatBinaryPrepare shape rawPrefix op operands
+              if prepared.output.kind == .nonFloatOutput then
+                .ok
+                  (rawFloatBinaryCursorOutcome
+                    .nonFloatOutput
+                    rawPrefix
+                    bufferSize
+                    none
+                    (some prepared))
+              else
+                match prepared.lhsBits, prepared.rhsBits with
+                | some lhsBits, some rhsBits =>
+                    .ok
+                      (rawFloatBinaryCursorOutcome
+                        .advanced
+                        rawPrefix
+                        bufferSize
+                        (some
+                          { kind := op.kind
+                            lhsBits := lhsBits
+                            rhsBits := rhsBits
+                            resultBits := operands.resultBits })
+                        (some prepared))
+                | _, _ =>
+                    .error
+                      { kind := .invalidInstruction
+                        title := shape.title
+                        component := "EclRun.arithmetic.floatBinary"
+                        detail := "float binary opcode reached without resolved operands" }
 
 end TouhouFormal.ECL

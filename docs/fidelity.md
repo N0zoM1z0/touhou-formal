@@ -22,6 +22,13 @@ is non-progressing; a signed negative size can move the next decode cursor befor
 the ECL buffer. The model reports the next invalid decode boundary instead of
 pretending the instruction stream is a safe array of records.
 
+Float arithmetic is currently faithful at the VM boundary that matters for
+opcode dispatch: output lvalue resolution, operand-flag-controlled rvalue
+resolution, title-specific slot layouts, and the selected operation
+`ADD/SUB/MUL/DIV/MOD`. Lean records the lhs/rhs bit patterns and accepts
+`resultBits` from the host/SMT float-theory boundary; it does not yet claim to
+implement IEEE-754 single-precision arithmetic or `fmodf` internally.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

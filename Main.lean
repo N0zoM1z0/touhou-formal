@@ -64,6 +64,20 @@ private def describeRawDifficultyProbe
     " overrideMask=" ++ toString probe.overrideMask ++
     " executes=" ++ toString probe.executes
 
+private def describeFloatBinaryOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawFloatBinaryOpOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let resultBits :=
+        match outcome.result with
+        | none => "none"
+        | some value => toString value.resultBits
+      "action=" ++ reprStr outcome.action ++
+        " resultBits=" ++ resultBits
+        ++ " cursor=" ++ toString outcome.targetCursor
+
 private def describeAnmEntry : Except Fault TouhouFormal.ANM.EntryHeader -> String
   | .ok entry =>
       "ok sprites=" ++ toString entry.numSprites ++
@@ -118,6 +132,14 @@ def main : IO Unit := do
   IO.println "Raw difficulty-mask controls"
   for probe in TouhouFormal.Search.Difficulty.rawDifficultyOverrideDeltaSweep do
     IO.println s!"{describeRawDifficultyProbe probe}"
+  IO.println ""
+  IO.println "Float arithmetic controls"
+  IO.println s!"TH06 float binary opcode count: {TouhouFormal.Search.FloatArithmetic.floatBinaryOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 float binary opcode count: {TouhouFormal.Search.FloatArithmetic.floatBinaryOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 float binary opcode count: {TouhouFormal.Search.FloatArithmetic.floatBinaryOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 float add: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th06FloatAddOutcome}"
+  IO.println s!"TH07 float add: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th07FloatAddOutcome}"
+  IO.println s!"TH08 float add in-place: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th08FloatAddInPlaceOutcome}"
   IO.println ""
   IO.println "Relative jump controls"
   IO.println s!"TH06 jump operands: {describeJumpOperands TouhouFormal.TH06.rawJumpMinusOneOperands}"

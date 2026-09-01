@@ -56,16 +56,33 @@ relative to `/home/yann/yann/touhou/formal`.
   uses active-bit intersection.
 - `reference/th06/src/EclManager.cpp:183`: `MATHINTADD` dispatches into the
   shared `MathAdd` helper with output slot 0 and operand slots 1 and 2.
+- `reference/th06/src/EclManager.cpp:184`: `MATHFLOATADD` uses the same
+  `MathAdd` helper and slot layout as the integer add opcode.
 - `reference/th06/src/EclManager.cpp:195`: `MATHINTSUB` dispatches into
   `MathSub` with the same output/lhs/rhs slot layout.
+- `reference/th06/src/EclManager.cpp:196`: `MATHFLOATSUB` shares that
+  output/lhs/rhs slot layout through `MathSub`.
 - `reference/th06/src/EclManager.cpp:199`: `MATHINTMUL` dispatches into
   `MathMul`; the helper performs extra initial lhs/rhs reads before output
   classification, which is a known future precision target.
+- `reference/th06/src/EclManager.cpp:200`: `MATHFLOATMUL` dispatches through
+  `MathMul`, so the extra initial reads are also a future precision target for
+  float multiplication.
+- `reference/th06/src/EclManager.cpp:203`: `MATHINTDIV` and `MATHFLOATDIV`
+  both use `MathDiv` with output slot 0 and operand slots 1 and 2.
+- `reference/th06/src/EclManager.cpp:207`: `MATHINTMOD` and `MATHFLOATMOD`
+  both use `MathMod` with output slot 0 and operand slots 1 and 2.
+- `reference/th06/src/EnemyEclInstr.cpp:238`: `GetVarFloat` casts the raw f32
+  operand to an integer `EclVarId`, delegates to `GetVar`, and falls back to
+  the original f32 operand cell only for `GetVar`'s default pointer.
 - `reference/th06/src/EnemyEclInstr.cpp:252`: `SetVar` only writes when the
   resolved output is classified as int or float.
 - `reference/th06/src/EnemyEclInstr.cpp:272`: integer `MathAdd`, `MathSub`, and
   `MathMul` classify the output, then read lhs/rhs through `GetVar` before
   writing the resolved output.
+- `reference/th06/src/EnemyEclInstr.cpp:288`: float `MathAdd`, `MathSub`,
+  `MathMul`, `MathDiv`, and `MathMod` write only after the output is classified
+  as FLOAT, read lhs/rhs through `GetVarFloat`, and use `fmodf` for float modulo.
 - `reference/th06/src/EnemyEclInstr.cpp:348`: integer division assigns
   `*outPtr = *lhsPtr / *rhsPtr` without a zero-divisor guard.
 - `reference/th06/src/EnemyEclInstr.cpp:372`: integer modulo assigns
@@ -111,6 +128,12 @@ relative to `/home/yann/yann/touhou/formal`.
   `GET_INT_VALUE(enemy, 1)`/`GET_INT_VALUE(enemy, 2)`.
 - `reference/th07/src/th07/EclManager.hpp:114`: the integer binary arithmetic
   opcodes are numbered `ECL_ADD = 12` through `ECL_MOD = 16`.
+- `reference/th07/src/th07/EclManager.hpp:115`: float binary arithmetic opcodes
+  are numbered `ECL_ADD_FLOAT = 19` through `ECL_MOD_FLOAT = 23`.
+- `reference/th07/src/th07/EclManager.cpp:1015`: `ECL_ADD_FLOAT`,
+  `ECL_SUB_FLOAT`, `ECL_MUL_FLOAT`, `ECL_DIV_FLOAT`, and `ECL_MOD_FLOAT` write
+  `GET_FLOAT_PTR(enemy, 0)` and read `GET_FLOAT_VALUE(enemy, 1)` and
+  `GET_FLOAT_VALUE(enemy, 2)`; float modulo uses `fmodf`.
 - `reference/th07/src/th07/EclManager.hpp:112`: `ECL_GET_BOSS_INT` is opcode
   43.
 - `reference/th07/src/th07/EclManager.cpp:1001`: `ECL_GET_BOSS_INT` writes
@@ -190,6 +213,15 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclRunLow.inl:291`: TH08 low opcodes 20 through 24 assign
   to `WriteInt(enemy, instruction, 0)` using `ReadInt(..., 1)` and
   `ReadInt(..., 2)`.
+- `reference/th08/src/EclRunLow.inl:265`: TH08 low opcodes 15 through 18 update
+  `WriteFloat(enemy, instruction, 0)` in place using resolved/raw float operand
+  slot 1.
+- `reference/th08/src/EclRunLow.inl:281`: TH08 low opcode 19 writes
+  `fmodf(slot0, slot1)` back to `WriteFloat(..., 0)`, with operand flags
+  applied to both slot 0 and slot 1 reads.
+- `reference/th08/src/EclRunLow.inl:292`: TH08 low opcodes 25 through 29 assign
+  float arithmetic results to `WriteFloat(..., 0)` using resolved/raw float
+  operand slots 1 and 2; opcode 29 uses `fmodf`.
 - `reference/th08/src/EclRunLow.inl:694`: TH08 low opcode 86 writes slot 0
   from raw slot 1 when `operandFlags & 2U` is clear, otherwise it resolves slot
   1 against `g_EnemyManager.bosses[ReadInt(..., 2)]`.

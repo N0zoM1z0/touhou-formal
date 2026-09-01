@@ -88,6 +88,7 @@ when `enemy->eclDifficultyMaskOverride` is nonzero.
 | `ECL-RAW-BODY-JUMPDEC` | symbolic execution baseline | shared body semantics models source-backed `JUMPDEC`: decrement operand slot 2, jump iff the decremented value is positive, otherwise advance | 40 satisfiable materialized `decjump-*` candidates across five title/difficulty environments; taken/not-taken × four cursor classes per environment |
 | `ECL-RAW-OPERAND-INT-RESOLVER` | symbolic execution baseline | shared integer rvalue resolver models TH06 always-resolve behavior and TH07/TH08 operand-mask raw/resolve/default-raw branches from title profile selector sets | 8 satisfiable materialized resolver candidates on 2026-08-31; TH06 has 2 feasible branches, TH07/TH08 have 3 each |
 | `ECL-RAW-BODY-INT-BINARY-LVALUE` | symbolic execution baseline | shared integer binary-op semantics model ADD/SUB/MUL/DIV/MOD over title-profiled assign/in-place layouts, output lvalue resolution, rvalue resolution, and byte materialization | 39 satisfiable materialized candidates on 2026-08-31 across five title/difficulty environments; all replay with `matchesPath=true` |
+| `ECL-RAW-BODY-FLOAT-BINARY-LVALUE` | executable model extension | shared float binary-op semantics model ADD/SUB/MUL/DIV/MOD dispatch over title-profiled assign/in-place layouts, output lvalue resolution, rvalue resolution, and externally supplied result bit patterns | Lean theorems check 5 TH06 opcodes, 5 TH07 opcodes, 10 TH08 low-run opcodes, plus TH06 assign, TH07 assign, and TH08 in-place shared-step controls; no CE or retail mutation generated for this lane yet |
 | `ECL-RAW-BODY-INT-RESOLVED-DIVISOR` | symbolic execution finding | integer div/mod RHS can be raw, resolved host state, or default-raw fallback depending on title-specific resolver policy | 13 satisfiable materialized `arithmetic-fault` candidates across the default environments |
 | `ECL-RAW-BODY-INT-IDIV-OVERFLOW` | symbolic execution finding | signed i32 div/mod can reach the machine overflow case `INT_MIN / -1`, not just divisor zero | 13 satisfiable materialized `arithmetic-overflow` candidates across the default environments |
 | `ECL-RAW-BODY-BOSS-INT-READ` | symbolic execution finding | TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` read `g_EnemyManager.bosses[index]` when the value operand mask bit is set, with no index bound check and no null guard on the integer path | 18 satisfiable materialized boss-int candidates on 2026-08-31; 9 high-priority counterexamples: 6 `bosses[8]` OOB reads and 3 null boss dereferences; TH08 normal-difficulty null-deref lowered into `th08.dat` and retail-confirmed as `crash-dialog` on 2026-09-01 |
@@ -121,9 +122,12 @@ responsible for discovering that those path classes exist.
 The current effectiveness assessment is deliberately scoped. Lean + SMT is now
 stronger than fuzzing for the implemented raw-step dispatch abstraction, the
 first shared body slice, the integer rvalue/lvalue resolver and binary
-arithmetic slice, the TH07/TH08 boss integer-read slice, and the plain CALL/RET
-stack plus TH06 conditional-CALL slices
+arithmetic slice, the TH07/TH08 boss integer/float-read slices, and the plain
+CALL/RET stack plus TH06 conditional-CALL slices
 because it exhaustively covers all modeled path classes.
+Float binary arithmetic is now modeled at the dispatch/resolver/lvalue level,
+but it is not yet part of that stronger-than-fuzzing claim because the SMT
+float-result relation and path queue have not been added.
 It is not yet stronger than fuzzing for the full ECL/ANM VM because most opcode
 bodies, writes into host state, and multi-context scheduling remain outside the
 formal semantics. See [`docs/effectiveness.md`](effectiveness.md).

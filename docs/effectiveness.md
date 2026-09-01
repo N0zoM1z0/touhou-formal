@@ -555,31 +555,34 @@ controls rather than missing queue entries.
 The current executor still does not cover the full game semantics of each
 instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer rvalue/lvalue resolver branches,
-integer ADD/SUB/MUL/DIV/MOD single-step behavior, TH07/TH08 boss integer
-reads, plain CALL/RET stack behavior, zero divisors, and signed idiv overflow,
-but not most gameplay host effects.
+integer ADD/SUB/MUL/DIV/MOD single-step behavior, float
+ADD/SUB/MUL/DIV/MOD dispatch/resolver/lvalue behavior, TH07/TH08 boss
+integer/float reads, plain CALL/RET stack behavior, zero divisors, and signed
+idiv overflow, but not most gameplay host effects.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD` | 114 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD`, `GET_BOSS_INT` | 142 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, integer arithmetic cases `10..14` and `20..24`, integer condition cases `40/42/44/46/48/50`, CALL/RET cases `52/53`, and boss integer-read `case 86` | 69 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD`, `MATHFLOATADD/SUB/MUL/DIV/MOD` | 109 |
+| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD`, `ADD_FLOAT/SUB_FLOAT/MUL_FLOAT/DIV_FLOAT/MOD_FLOAT`, `GET_BOSS_INT` | 137 |
+| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, integer arithmetic cases `10..14` and `20..24`, float arithmetic cases `15..19` and `25..29`, integer condition cases `40/42/44/46/48/50`, CALL/RET cases `52/53`, and boss integer-read `case 86` | 59 |
 
 The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer resolver branches, integer binary
-arithmetic, boss integer reads, plain CALL/RET stack edges, and integer div/mod
-fault hazards are now modeled; "ordinary advance" for the remaining opcodes
-still does not prove their internal branches.
+arithmetic, float binary arithmetic dispatch/resolver/lvalue behavior, boss
+integer reads, plain CALL/RET stack edges, and integer div/mod fault hazards are
+now modeled; "ordinary advance" for the remaining opcodes still does not prove
+their internal branches.
 
 Not covered:
 
 - interrupts, callback stacks, and TH08 high-opcode pending-sub dispatch;
 - persistent host-state mutation, aliasing across multiple instructions, and
   non-integer operand-mask branches into variable reads/writes;
-- exact signed add/sub/mul overflow behavior, float division/fmod edge cases,
-  and other C/C++ arithmetic hazards;
+- exact signed add/sub/mul overflow behavior, exact IEEE-754 f32 result
+  computation, float division/fmod edge cases, and other C/C++ arithmetic
+  hazards;
 - bullet, laser, enemy, item, ANM, sound, and callback side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
@@ -604,6 +607,8 @@ complete for the implemented raw-step abstraction;
 complete for the first implemented raw-body abstraction;
 complete for the implemented integer rvalue resolver abstraction;
 complete for the implemented integer binary-op/lvalue abstraction;
+complete for the implemented float binary-op dispatch/resolver/lvalue
+  abstraction, with result bits supplied by the external float theory boundary;
 complete for the implemented TH07/TH08 boss integer-read abstraction;
 complete for the implemented plain CALL/RET stack abstraction;
 complete for the implemented TH06 conditional-CALL abstraction;
