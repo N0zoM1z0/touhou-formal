@@ -689,6 +689,31 @@ private def describeInterruptOutcome
         " " ++ effectSummary ++ faultSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeExtensionOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawExtensionOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "guard=" ++ reprStr effect.guardIndex ++
+              " table=" ++ reprStr effect.tableIndex ++
+              " call=" ++ toString effect.calledNow ++
+              " install=" ++ toString effect.callbackInstalled ++
+              " instruction=" ++
+                toString effect.perFrameInstructionStored ++
+              " clear=" ++ toString effect.callbackCleared
+      let faultSummary :=
+        match outcome.fault with
+        | none => ""
+        | some fault => " fault=" ++ fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -1028,6 +1053,15 @@ def main : IO Unit := do
   IO.println s!"TH08 signed table write: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th08SetTableOutcome}"
   IO.println s!"TH08 negative-sub interrupt: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th08NegativeSubNoOpOutcome}"
   IO.println s!"TH08 signed run-index fault: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th08TruncatedRunIndexFaultOutcome}"
+  IO.println ""
+  IO.println "Extension instruction controls"
+  IO.println s!"TH06 extension opcode count: {TouhouFormal.Search.Extension.extensionOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 extension opcode count: {TouhouFormal.Search.Extension.extensionOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 extension opcode count: {TouhouFormal.Search.Extension.extensionOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 extension index fault: {describeExtensionOutcome TouhouFormal.Search.Extension.th06Index17Outcome}"
+  IO.println s!"TH07 repeated extension index fault: {describeExtensionOutcome TouhouFormal.Search.Extension.th07SecondRead24Outcome}"
+  IO.println s!"TH08 extension clear: {describeExtensionOutcome TouhouFormal.Search.Extension.th08NegativeClearOutcome}"
+  IO.println s!"TH08 extension call: {describeExtensionOutcome TouhouFormal.Search.Extension.th08Index31Outcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

@@ -824,6 +824,24 @@ The shared interrupt effect records writes completed before an unchecked table
 or subTable fault and deliberately does not reuse ordinary CALL's differently
 guarded depth transition.
 
+## EX Instruction Dispatch Evidence
+
+- `reference/th06/src/EclManager.cpp:26-42` defines `g_EclExInsn[17]`;
+  `:829-840` indexes it directly for opcode 121 and installs or clears its
+  per-frame callback for opcode 122 using the raw integer field.
+- `reference/th07/src/th07/EnemyEclInstr.cpp:15-40` defines
+  `g_EclExInstr[24]`; `EclManager.cpp:1799-1812` resolves slot 0 once for the
+  sign guard and again for the table access before storing the instruction
+  pointer.
+- `reference/th08/src/EclGlobals.cpp:65-98` defines `g_EclExInsn[32]`;
+  `EclRunHigh.inl:688-704` has the same immediate/install split and repeated
+  resolver read as TH07.
+
+The executable model treats each unchecked callback-table lookup as the first
+host boundary and records immediate calls or installation writes only after a
+valid lookup. Negative install indices clear the callback without reading the
+table; the stage-specific callback bodies remain explicit host behavior.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

@@ -137,6 +137,13 @@ out-of-range write after the index read alone and suppresses all later operand
 resolution. TH07 uses six legacy command records; TH08 uses 18 transform
 records and stores the signed kind through its 32-bit representation.
 
+EX instruction dispatch stops at the callback boundary. Lean models selection
+from the source's fixed 17/24/32-entry function tables, immediate invocation
+requests, and per-frame callback/instruction-pointer writes, but does not claim
+to execute all title- and stage-specific callback bodies. TH07/TH08 repeat the
+resolver read after the nonnegative guard; TH06 reuses one raw field. A
+negative install index clears only the callback pointer.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

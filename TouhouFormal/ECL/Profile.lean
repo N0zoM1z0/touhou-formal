@@ -1379,6 +1379,32 @@ structure RawInterruptOpShape where
   truncateRunIndexToI16 : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawExtensionOpKind where
+  | callNow
+  | installPerFrame
+deriving Repr, DecidableEq
+
+def RawExtensionOpKind.name : RawExtensionOpKind -> String
+  | .callNow => "call-now"
+  | .installPerFrame => "install-per-frame"
+
+inductive RawExtensionIntPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawExtensionIntPolicy.name : RawExtensionIntPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+structure RawExtensionOpShape where
+  opcode : Int
+  kind : RawExtensionOpKind
+  intPolicy : RawExtensionIntPolicy
+  tableEntryCount : Nat
+  repeatIndexReadOnInstall : Bool := false
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -2297,6 +2323,7 @@ structure RawInstrShape where
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
   callbackConfigOps : List RawCallbackConfigOpShape := []
   interruptOps : List RawInterruptOpShape := []
+  extensionOps : List RawExtensionOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -2460,6 +2487,11 @@ def RawInstrShape.findInterruptOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawInterruptOpShape :=
   rawShape.interruptOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findExtensionOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawExtensionOpShape :=
+  rawShape.extensionOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

@@ -183,6 +183,11 @@ The executable model currently covers these source-backed boundaries:
   stack-disable opcodes. They preserve unchecked table accesses, TH08 signed
   i16 storage, context-advance/save ordering, subTable policy, and the original
   asymmetry where a disabled save still permits stack-depth increment.
+- Shared extension-dispatch semantics covers immediate and per-frame EX
+  instruction opcodes in all three titles. It preserves the 17/24/32-entry
+  callback-table bounds, TH06 raw indices, TH07/TH08 resolver reads, negative
+  callback clearing, repeated condition/table-index reads, and the boundary
+  between callback installation and later scheduler execution.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector

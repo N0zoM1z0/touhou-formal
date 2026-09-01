@@ -404,9 +404,9 @@ SOURCE_COVERAGE = [
         "reason": "the Lean title profiles now provide the authoritative modeled-opcode set used by this report; unprofiled opcode bodies still collapse to prefix-level ordinary advance",
     },
     {
-        "area": "interrupts, callbacks, pending-sub dispatch",
+        "area": "interrupts, callbacks, extension dispatch, pending-sub dispatch",
         "status": "partially-covered",
-        "reason": "callback configuration and explicit interrupt entry are modeled with partial-write/fault ordering; automatic callback triggers, high-opcode pending-sub dispatch, and their bounded multi-context lifecycles remain",
+        "reason": "callback configuration, explicit interrupt entry, and fixed-table EX dispatch/install are modeled with partial-write/fault ordering; automatic callback triggers, high-opcode pending-sub dispatch, and their bounded multi-context lifecycles remain",
     },
     {
         "area": "remaining arithmetic body faults",

@@ -52,7 +52,8 @@ movement, time/wait controls, primary bullet patterns, bullet-control
 host effects, laser spawn descriptors, laser slot controls, enemy state, enemy
 lifecycle spawn/remove requests, item/drop requests, boss/spellcard lifecycle
 controls, effect/sound/particle host requests, callbacks, interrupts, boss
-reads, and the first ECL-to-ANM bridge layer. ANM bridge coverage
+reads, fixed EX instruction dispatch/install tables, and the first ECL-to-ANM
+bridge layer. ANM bridge coverage
 currently records
 primary VM host calls, packed move/death animation fields, TH08 primary script
 tables, bank flag writes, primary/secondary pending interrupts, secondary slot
