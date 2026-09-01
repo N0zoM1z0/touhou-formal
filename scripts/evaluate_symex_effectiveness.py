@@ -400,18 +400,28 @@ SOURCE_COVERAGE = [
     },
     {
         "area": "full raw ECL opcode bodies",
-        "status": "partially-covered",
-        "reason": "the Lean title profiles now provide the authoritative modeled-opcode set used by this report; unprofiled opcode bodies still collapse to prefix-level ordinary advance",
+        "status": "covered-by-model",
+        "reason": "every source opcode value is now assigned to an explicit shared/profiled body family (TH06 136/136, TH07 159/159, TH08 184/184); this is complete source-handler coverage, while host calls and exact external arithmetic remain typed boundaries rather than full engine simulations",
     },
     {
         "area": "interrupts, callbacks, extension dispatch, pending-sub dispatch",
         "status": "partially-covered",
-        "reason": "callback configuration, explicit interrupt entry, and fixed-table EX dispatch/install are modeled with partial-write/fault ordering; automatic callback triggers, high-opcode pending-sub dispatch, and their bounded multi-context lifecycles remain",
+        "reason": "callback configuration, explicit interrupt entry, fixed-table EX dispatch/install, and opcode-level pending-sub writes are modeled with partial-write/fault ordering; automatic trigger scheduling and bounded multi-context lifecycles remain",
     },
     {
         "area": "TH08 child ECL block installation",
         "status": "covered-by-model",
         "reason": "opcode 135 models the unchecked 4-slot table, release/clear ordering, allocator outcome, 0x24b0 zeroing, repeated sub-id reads, i16 CallEclSub boundary, partial lookup faults, and 0x78-byte variable copy",
+    },
+    {
+        "area": "TH08 cross-enemy boss dispatch",
+        "status": "covered-by-model",
+        "reason": "opcodes 88/89 model unchecked bosses[8] reads, null behavior, repeated boss-index resolution, target-context advance and call-stack writes, i16 sub ids, CallEclSub lookup, parameter copy, and pending-sub stores",
+    },
+    {
+        "area": "TH08 linked-child construction",
+        "status": "covered-by-model",
+        "reason": "opcodes 90--92 share one model for attachment-tail traversal/divergence, parent-state spawn gates, 480-slot SpawnEnemy2 requests, 0x78 context copy, repeated alignment reads, effect null faults, parent links, inherited positions, and unconditional sound",
     },
     {
         "area": "remaining arithmetic body faults",
@@ -421,7 +431,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate/timed enemy movement, hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove requests, item/drop requests, boss/spellcard lifecycle requests, effect/sound/particle requests, shooting controls, and primary bullet-pattern construction now have typed host-effect boundaries; full laser/effect/audio runtime, full EnemyManager/ItemManager state, full GUI/Spellcard/Catk runtime, and ANM execution still require additional game-state models and invariants",
+        "reason": "all ECL handlers now reach typed state/effect boundaries, including linked children, boss dispatch, trails, GUI/clock calls, movement, bullets, lasers, items, spellcards, and effects; full laser/effect/audio runtime, full persistent EnemyManager/ItemManager/GUI/Spellcard/Catk state, and ANM execution still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",
@@ -1710,7 +1720,7 @@ def fuzz_comparison() -> dict[str, Any]:
         ],
         "fuzzCurrentlyBeatsFormalFor": [
             "full gameplay side effects through bullets, lasers, EnemyManager/ItemManager runtime state, ANM, rendering, input, and callbacks",
-            "unknown opcode-body behavior that has not yet been source-modeled",
+            "persistent host-runtime interactions beyond the typed boundary of each source-modeled opcode body",
             "large multi-resource interactions where a retail oracle is easier to observe than to prove",
             "empirical prioritization of which formally reachable witnesses are retail-visible bugs",
         ],
@@ -1719,14 +1729,14 @@ def fuzz_comparison() -> dict[str, Any]:
             "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
             "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
             "are solved and materialized for the default environments. "
-            "Several additional gameplay-effect opcode families are source-modeled and Lean-checked, including enemy lifecycle, item/drop, boss/spellcard lifecycle, and effect/sound/particle effects, but they are not yet dedicated solver/materializer lanes. "
-            "It is not yet stronger than fuzzing for the full ECL/ANM VM, because remaining opcode bodies and host-state branches "
-            "remain outside the semantics."
+            "All 479 source opcode symbols/case labels now map to explicit Lean body profiles, including the TH08 boss-dispatch and linked-child tail; most gameplay-effect families are Lean-checked but are not yet dedicated solver/materializer lanes. "
+            "It is not yet stronger than fuzzing for the full ECL/ANM runtime, because persistent host-state branches, bounded multi-step composition, and ANM execution remain outside the semantics."
         ),
         "nextHighValueFormalWork": [
             "compose integer arithmetic writes with bounded multi-step execution to see which self-writes and host writes become later control/state hazards",
             "improve retail ranking for boss-read OOB/null candidates by selecting execution sites whose host boss-slot state is forced by the stage timeline",
             "add bounded multi-step raw ECL contexts for nested CALL/RET reachability, callbacks, and stacked jumps",
+            "generate solver/materializer lanes from the new trail, boss-dispatch, and linked-child relations instead of relying only on Lean controls",
             "model float division/fmod preconditions and C/C++-faithful non-finite behavior",
             "extend the reusable retail lowering pipeline to the next host-boundary opcode family",
         ],

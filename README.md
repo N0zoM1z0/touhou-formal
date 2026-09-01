@@ -194,6 +194,26 @@ The executable model currently covers these source-backed boundaries:
   sub-id resolution, i16 `CallEclSub` conversion, partial state before lookup
   faults, and the exact `0x78`-byte variable-region copy. Multi-context frame
   scheduling remains a separate transition layer.
+- One miscellaneous state-control family closes 29 small but nontrivial
+  handlers across the three titles: raw bitfield/u8/i16 stores, ZunTimer
+  assignment, trail-strip division, TH06 stage unpause, TH07 cherry requests,
+  and TH08 background, pause-mode, GUI, minimum-distance, and signed-i8 clock
+  behavior. Partial trail writes survive a zero-stride fault, exactly as in the
+  source.
+- TH08 cross-enemy boss dispatch models opcodes 88/89 through the unchecked
+  `bosses[8]` table, including null behavior, repeated index resolution,
+  mutation of the target boss's active instruction/call stack, i16 subroutine
+  conversion, partial `CallEclSub` faults, and pending-sub writes.
+- TH08 linked-child opcodes 90--92 share one constructor semantics. It records
+  attachment-tail traversal (including a nonterminating chain), parent-state
+  spawn suppression, the 480-slot child request and `0x78` context copy,
+  three distinct player-alignment reads, effect allocation/null behavior,
+  chain links, inherited positions, and the unconditional spawn sound.
+- The source-surface audit now maps every named/case-labeled raw ECL opcode to
+  an explicit profile family: TH06 136/136, TH07 159/159, and TH08 184/184.
+  That is complete opcode-handler coverage, not a claim that BulletManager,
+  EnemyManager, GUI, audio, rendering, ANM, or multi-frame scheduling has been
+  reimplemented inside Lean; those remain explicit host boundaries.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -297,9 +317,10 @@ effects, enemy-lifecycle effects, item/drop effects, boss/spellcard lifecycle
 effects, shooting-control effects, time-control effects, bullet-control
 effects, laser slot controls, laser-spawn descriptor effects,
 animation-control effects, bullet-pattern effects, callback-configuration
-effects, and interrupt effects currently have Lean executable controls for
-profile coverage and shared-step execution, but no dedicated solver/materializer
-lane yet. The boss integer-read
+effects, interrupt effects, miscellaneous state controls, cross-enemy boss
+dispatch, and linked-child construction currently have Lean executable controls
+for profile coverage and shared-step execution, but no dedicated
+solver/materializer lane yet. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses
@@ -310,8 +331,9 @@ child-context RET exits. The conditional-CALL materializer covers TH06
 guard-false fallthrough and guard-true reuse of the same CALL stack/subTable
 body.
 `scripts/evaluate_symex_effectiveness.py` reruns the symbolic candidate queues
-and reports which modeled branches are covered versus which source opcode/body
-branches remain outside the current semantics. `scripts/retail_inventory.sh` is
+and reports which modeled branches have solver/materializer coverage alongside
+the automatically derived source-opcode profile coverage.
+`scripts/retail_inventory.sh` is
 read-only and records archive
 hashes plus executable/data CRCs before any Wine validation. Retail validation
 scripts operate on isolated copies under

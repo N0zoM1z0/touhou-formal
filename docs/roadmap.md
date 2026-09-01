@@ -52,10 +52,12 @@ movement, time/wait controls, primary bullet patterns, bullet-control
 host effects, laser spawn descriptors, laser slot controls, enemy state, enemy
 lifecycle spawn/remove requests, item/drop requests, boss/spellcard lifecycle
 controls, effect/sound/particle host requests, callbacks, interrupts, boss
-reads, fixed EX instruction dispatch/install tables, and the first ECL-to-ANM
-bridge layer. TH08 child-context block installation is modeled through
-allocation, subroutine initialization, and variable copying; frame-level
-main/child scheduling remains. ANM bridge coverage
+reads, fixed EX instruction dispatch/install tables, miscellaneous state/GUI
+controls, TH08 cross-enemy boss dispatch, linked-child construction, and the
+first ECL-to-ANM bridge layer. The source-opcode audit is now closed at TH06
+136/136, TH07 159/159, and TH08 184/184 explicit profiles. TH08 child-context
+block installation is modeled through allocation, subroutine initialization,
+and variable copying; frame-level main/child scheduling remains. ANM bridge coverage
 currently records
 primary VM host calls, packed move/death animation fields, TH08 primary script
 tables, bank flag writes, primary/secondary pending interrupts, secondary slot

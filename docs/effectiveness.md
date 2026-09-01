@@ -4,20 +4,17 @@ This note answers the narrow question: what does the current Lean + SMT
 symbolic execution baseline cover, where does it fail to cover, and is it
 already better than the previous fuzzing lane?
 
-Short answer: it is already better than fuzzing for the modeled VM-core
-dispatch skeleton, the first shared opcode-body slice, the integer resolver,
-the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
-the CALL/RET/conditional-CALL slices. It also now source-models several
-gameplay-effect opcode families in Lean, including bullet-control host effects,
-time/wait controls, enemy lifecycle spawn/remove requests, item/drop requests,
-boss/spellcard lifecycle controls, laser-spawn descriptors, laser slot controls,
-special numeric/interpolation controls, effect/sound/particle host effects,
-animation controls, and primary bullet
-patterns, but those families are not yet
-dedicated SMT/materializer lanes. It is not yet better than fuzzing for the full
-ECL/ANM VM, because full BulletManager/EnemyManager/ItemManager runtime
-behavior, full GUI/Spellcard/Catk runtime, full ANM execution, and multi-context
-scheduling are not modeled yet.
+Short answer: it is already better than fuzzing for the path families that have
+dedicated symbolic queues: the VM-core dispatch skeleton, first shared body
+slice, integer resolver/binary arithmetic, TH07/TH08 boss reads, and
+CALL/RET/conditional-CALL. Separately, the Lean source model now assigns every
+raw ECL opcode value to an explicit body family—TH06 136/136, TH07 159/159,
+TH08 184/184—including gameplay effects, cross-enemy boss dispatch, and linked
+children. Most of those families do not yet have dedicated SMT/materializer
+lanes. Formal therefore does not yet beat fuzzing for the full ECL/ANM runtime:
+persistent BulletManager/EnemyManager/ItemManager/GUI/audio state, exact host
+arithmetic, full ANM execution, and bounded multi-context scheduling remain
+outside the current relation.
 
 ## Reproducible evaluation
 
@@ -49,15 +46,14 @@ The current manual verification run on 2026-09-01 executed:
 
 ```bash
 lake build
-lake exe check > /tmp/touhou_check_boss_lifecycle.txt
-./scripts/check.sh > /tmp/touhou_full_check_boss_lifecycle.txt
-python3 scripts/evaluate_symex_effectiveness.py \
-  > /tmp/touhou_effectiveness_boss_lifecycle.json
+lake exe check
+./scripts/check.sh
+python3 scripts/evaluate_symex_effectiveness.py
 ```
 
-All completed successfully on the raw-step, raw-body, resolver,
-integer-binary, boss-int, boss-float, CALL/RET, conditional-CALL, and
-boss/spellcard lifecycle model.
+All completed successfully on the complete source-profiled raw ECL model and
+the raw-step, raw-body, resolver, integer-binary, boss-int, boss-float,
+CALL/RET, and conditional-CALL symbolic queues.
 When previous queue results should be reused instead of recomputed, the
 equivalent assessment is:
 
@@ -562,8 +558,9 @@ controls rather than missing queue entries.
 
 ## What this does not cover yet
 
-The current executor still does not cover the full game semantics of each
-instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
+The dedicated symbolic executor still does not enumerate every branch in every
+source-modeled instruction family. The Lean body model covers dispatch,
+`JUMP`, `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer rvalue/lvalue resolver branches,
 SET_INT/SET_FLOAT scalar assignment, INC/DEC integer unary updates, integer
 ADD/SUB/MUL/DIV/MOD single-step behavior, float ADD/SUB/MUL/DIV/MOD
@@ -577,26 +574,29 @@ requests, item/drop requests and state writes, boss/spellcard lifecycle
 controls, effect/sound/particle requests, plain CALL/RET stack behavior, zero divisors, shooting-control state
 writes, time/wait controls, bullet-control host effects, laser spawn descriptor
 construction, primary bullet-pattern descriptor construction/gates, laser slot controls,
-animation-control state writes, callback configuration, interrupt entry, and
-signed idiv overflow. Most gameplay host effects and multi-instruction state
-composition remain outside the current model.
+animation-control state writes, callback/EX configuration, interrupt entry,
+miscellaneous state/GUI controls, cross-enemy boss dispatch, linked-child
+construction, and signed idiv overflow. Persistent gameplay host-state
+composition and multi-instruction reachability remain outside the current
+model.
 
 Source opcode surface from the local reference clones:
 
-| Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
+| Title | Source surface | Explicitly profiled | Not-yet-profiled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 133: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic and special numeric operations, float functions, compare-register producers, CALL/RET, conditional CALL, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, interrupt, and EX-dispatch families | 3 |
-| TH07 | 159 `EclOpcode` symbols | 151: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic/branches/special numeric operations, interpolation and bullet-command tables, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, interrupt, and EX-dispatch families | 8 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 161: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic/branches/special numeric operations, interpolation and bullet-transform tables, CALL/RET, child-context installation, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, interrupt, and EX-dispatch families | 23 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 136 | 0 |
+| TH07 | 159 `EclOpcode` symbols | 159 | 0 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 184 | 0 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
 profile, maps those numeric values
 back to the local source enum or TH08's integrated low/high `case` labels, and computes the
-remaining lower bound from the set difference. This makes new profile entries
-count automatically and flags unresolved or source-absent profile values.
-"Ordinary advance" for the remaining opcodes still does not prove their
-internal branches.
+remaining lower bound from the set difference. The current set difference is
+empty, with no unresolved constants and no profile opcode absent from source.
+This metric proves source-surface assignment, not full runtime closure: a
+profiled body may deliberately terminate at a typed host request or accept an
+external binary32 result at the exact C++ boundary.
 
 Not covered:
 
@@ -609,24 +609,26 @@ Not covered:
 - BulletManager allocation/runtime simulation, TH08 transform-table execution,
   runtime laser simulation, full EnemyManager spawn/removal runtime after the
   VM request boundary, full ItemManager allocation/runtime after the VM request
-  boundary, full GUI/Spellcard/Catk runtime after the VM request boundary, full
+  boundary, full GUI/Spellcard/Catk runtime after the VM request boundary,
   full effect/audio runtime after the typed request boundary, ANM execution,
   and callback trigger side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
-- TH07/TH08 retail DAT lowering and Wine validation.
+- general TH07/TH08 retail DAT lowering and Wine validation beyond the retained
+  boss-read validation lanes.
 
 Why those branches are not covered:
 
 - they need a symbolic host state, not just raw bytes;
 - operand flags can turn the same raw field into an immediate, local variable,
   global variable, enemy field, player-derived value, or RNG-derived value;
-- nested `CALL`/`RET`, interrupts, and callbacks need bounded stack/context
-  semantics;
+- nested `CALL`/`RET`, interrupts, callbacks, child contexts, and linked enemies
+  need bounded composition of the existing one-step relations;
 - gameplay-visible effects need object invariants for bullets, lasers, enemies,
   items, resources, and render state;
-- retail validation needs title-specific archive adapters and stage-selection
-  harnesses, which currently exist only for TH06.
+- retail validation still needs general title-specific archive/stage adapters;
+  TH07/TH08 currently have focused boss-read lowering rather than a generic
+  mutation pipeline.
 
 So the current coverage claim is strong but scoped:
 
@@ -678,7 +680,17 @@ complete for the implemented callback-configuration abstraction, including
   partial effects before indexed host-write faults;
 complete for the implemented explicit interrupt table/entry abstraction,
   including partial context effects before host faults;
-incomplete for full ECL/ANM VM opcode semantics.
+complete for the miscellaneous state-control abstraction, including C-width
+  stores, timer assignment, trail partial faults, pause flags, GUI requests,
+  and signed-i8/u8 clock behavior;
+complete for TH08 cross-enemy boss dispatch, including target-context CALL
+  partial effects and repeated pending-sub boss selection;
+complete for TH08 linked-child opcode bodies, including attachment divergence,
+  spawn/effect outcomes, repeated alignment reads, links, sound, and inherited
+  position writes;
+complete source-opcode assignment at 136/136, 159/159, and 184/184;
+incomplete for the full persistent ECL/ANM game runtime and multi-step
+  composition beyond typed host boundaries.
 ```
 
 ## Comparison against DanmakuFuzz
@@ -755,6 +767,15 @@ Concrete advantages already demonstrated:
 - TH08 child-context controls cover unchecked four-slot access, allocator
   failure, repeated sub-id reads, i16 call conversion, subTable partial faults,
   and the exact `0x78`-byte post-call state copy;
+- the source-surface audit closes at 479/479 named/case-labeled opcodes with no
+  unresolved or source-absent profile constants;
+- 29 shared miscellaneous-state controls cover width truncation, timers,
+  trails, pause flags, GUI requests, and the signed TH08 clock edge;
+- TH08 boss-dispatch controls cover both cross-enemy handlers, including the
+  target boss's partial CALL state and a second resolver-selected boss pointer;
+- TH08 linked-child controls cover all three constructors, attachment-chain
+  divergence, parent/spawn/effect early exits, repeated player-alignment reads,
+  inherited positions, parent linking, and sound ordering;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a
@@ -781,14 +802,18 @@ is already better than fuzzing: it gives exhaustive path-class coverage,
 satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
 TH06/TH07/TH08 semantics.
 
-Boss/spellcard lifecycle and effect/sound/particle coverage improve the model baseline, but they do not
-change the stronger-than-fuzzing claim until they also have dedicated solver
-queue or is composed into a bounded multi-step symbolic host state.
+The now-complete opcode-profile surface is a stronger modeling baseline, but it
+does not by itself expand the stronger-than-fuzzing claim. Each additional body
+family needs a generated solver queue (or composition into bounded symbolic
+host state) before its paths are exhaustively searched rather than only checked
+by representative Lean theorems.
 
-For the whole VM, it is not yet better. The model has to move down one layer into
-the remaining opcode bodies, host runtime state, and bounded multi-step execution
-before we can honestly say formal is finding classes that DanmakuFuzz cannot
-find in practice across the whole VM.
+For the whole game runtime, formal is not yet better. The next layer is no
+longer “remaining opcode bodies”; it is persistent host state, generated path
+enumeration for the newly modeled bodies, bounded multi-step execution, and ANM
+opcode execution. That is where the project can test whether complete
+source-backed one-step semantics translates into findings DanmakuFuzz cannot
+reach reliably.
 
 The next technically useful targets are:
 
@@ -796,9 +821,11 @@ The next technically useful targets are:
    and default-raw self-writes can feed later VM transitions;
 2. add bounded multi-step reachability for nested `CALL`, `RET`, conditional
    `CALL`, callbacks, and stacked jumps;
-3. refine arithmetic to exact machine behavior for signed add/sub/mul overflow
+3. generate solver/materializer lanes for trail, cross-enemy boss dispatch,
+   and linked-child construction from the Lean relations;
+4. refine arithmetic to exact machine behavior for signed add/sub/mul overflow
    and float divide/fmod edge cases;
-4. lower the boss integer-read OOB/null witnesses into TH07/TH08 retail batches;
-5. lower the top raw-step queue entries into TH06 retail batches;
-6. add TH07/TH08 archive adapters so the same shared witnesses can be validated
+5. lower the boss integer-read OOB/null witnesses into TH07/TH08 retail batches;
+6. lower the top raw-step queue entries into TH06 retail batches;
+7. add TH07/TH08 archive adapters so the same shared witnesses can be validated
    without TH06-specific mutation code.

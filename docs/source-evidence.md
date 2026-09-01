@@ -866,6 +866,71 @@ The model preserves allocator failure and all writes before a subTable fault.
 The main/child context selection loop in `EclRun.cpp:179-205` is evidence for a
 later scheduler transition rather than hidden inside this opcode body.
 
+## Miscellaneous State and Host-Control Evidence
+
+- `reference/th06/src/EclManager.cpp:849-850,916-917` supplies the stage
+  unpause write and raw invisible-bit assignment. `DEBUGWATCH` exists in the
+  enum but has no switch case, so its source behavior is an explicit ordinary
+  advance.
+- `reference/th07/src/th07/EclManager.cpp:1505-1506,1892-1932,1980-1984`
+  supplies the manager integer, raw collision/projectile/OOB bytes, resolved
+  trail/timer values, cherry request, and bomb-freeze bit. The trail fields are
+  signed i16; the source stores all four fields before dividing history length
+  by sample stride.
+- `reference/th08/src/EclRunLow.inl:690-692` identifies opcodes 84/85 as
+  ordinary advance. `EclRunHigh.inl:425-475,711,832-934,953-970` supplies the
+  remaining manager/background/draw-group writes, trail and timer behavior,
+  pause-mode game flags, squared minimum distance, GUI calls, and clock logic.
+  Clock time is a u8 cast to i8 for both comparisons, so values 128--255 enter
+  the `< 12` branch and increment with u8 wrap.
+
+The shared model distinguishes raw i32, raw low-byte, resolved integer, and
+resolved float inputs. It applies the original one-bit/u8/i16 store boundaries,
+records complete ZunTimer assignment state, uses C-style truncating division,
+and preserves trail writes on divide-by-zero. Binary32 multiplication for the
+minimum-distance square remains an explicit host-result-bit boundary.
+
+## TH08 Cross-Enemy Boss Dispatch Evidence
+
+- `reference/th08/src/EclRunLow.inl:712-727` indexes `bosses[8]` without a
+  range check for both handlers. Opcode 88 dereferences the selected boss
+  unconditionally. Opcode 89 guards the first boss pointer but resolves slot 0
+  again for the target store, so the two selections need not agree when the
+  resolver observes changing host/RNG state.
+- `reference/th08/src/EclDependencies.cpp:466-494` shows that
+  `CallSubOnEnemy` advances the target boss's instruction, saves through its
+  active stack pointer before the depth-increment guard, i16-truncates the sub
+  id at `CallEclSub`, copies `0x20` bytes of global call parameters, and only
+  increments depth below 15.
+
+The model retains target-enemy partial state across stack, subTable, and null
+faults rather than treating opcode 88 as an ordinary local CALL.
+
+## TH08 Linked-Child Evidence
+
+- `reference/th08/src/EclRunLow.inl:729-918` contains the three nearly
+  identical bodies. All find the attachment tail, initialize successful child
+  spawns, call `IsYoukai` twice or three times without memoization, clear
+  collision, optionally allocate an unchecked alignment effect, link parent
+  and tail pointers, increment `linkedChildCount`, and play sound `0x24` even
+  when child creation reports failure.
+- `reference/th08/src/EclDependencies.cpp:570-644` shows the unbounded
+  next-pointer walk and the two constructors. Both gate operand reads on
+  positive parent life and a clear suppress-death-effects bit. The alternate
+  constructor adds parent world position; opcode 92 instead writes the parent
+  position as a child offset and recomputes child world position afterward.
+- `reference/th08/src/EnemyTimeline.cpp:64-115` fixes the pool scan at 480,
+  i16-truncates the sub id, copies the `0x78` active integer-variable region,
+  immediately runs the spawned ECL, i8-truncates item drop, and exposes the
+  result through `lastSpawnFailed`.
+
+The executable relation represents whether the observed host attachment chain
+terminates; a cyclic chain produces a divergent opcode outcome before spawn or
+sound. It also preserves the effect-manager null dereference before parent
+linking and sound. Vector additions and pool/ECL execution outcomes remain
+explicit host observations, while all VM operand reads and subsequent writes
+are ordered in Lean.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

@@ -151,6 +151,31 @@ state copy are ordered exactly as in opcode 135. Lean records an allocated,
 partially initialized block if subTable lookup faults; it does not invent the
 later per-frame interleaving of main and child contexts.
 
+Small state-control handlers are width-faithful rather than normalized into
+safe booleans or unbounded integers. Raw bytes feed one-bit fields through
+low-bit truncation, draw groups truncate to u8, trail lengths/strides become
+signed i16, and timer assignment resets subframe/history fields. Trail strip
+initialization happens after all stores; a zero truncated stride therefore
+returns a divide-by-zero fault with the partial writes intact. TH08 clock logic
+likewise retains the source's signed-i8 comparison over u8 storage, including
+`0xff -> 0` wrap and the slow-flash branch.
+
+TH08 boss dispatch mutates another enemy's context. The model does not reduce
+opcode 88 to the caller's ordinary CALL transition: it keeps the unchecked
+boss-table/null boundary, target instruction advance, target active-stack
+write, i16 `CallEclSub`, parameter copy, and guarded target-depth increment in
+source order. Opcode 89 receives a separate host value for each occurrence of
+its repeated boss-index resolver call.
+
+Linked-child construction exposes attachment traversal as an explicit host
+observation. A nonterminating chain yields a divergent transition with no
+fallthrough cursor. For terminating chains, Lean orders the parent-state gate,
+two float reads, four integer reads, SpawnEnemy2 request/result, repeated player
+alignment reads, effect allocation/dereference, position inheritance, chain
+links, count increment, and sound. Host vector-add result bits and spawned-ECL
+success are inputs at their actual engine boundaries; they are not silently
+recomputed with non-binary32 arithmetic or assumed successful.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies
