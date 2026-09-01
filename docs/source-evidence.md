@@ -530,6 +530,65 @@ resolution, loop count, spread constants, item-selection policy, and TH08 state
 fields are source-backed, while actual item allocation and RNG samples remain
 host behavior.
 
+## Boss/Spellcard Lifecycle Evidence
+
+- `reference/th06/src/EnemyManager.hpp:40`,
+  `reference/th07/src/th07/EnemyManager.hpp:378`, and
+  `reference/th08/src/EnemyManager.hpp:447` define `bosses[8]`.
+- `reference/th06/src/EclManager.cpp:536-550`,
+  `reference/th07/src/th07/EclManager.cpp:1508-1528`, and
+  `reference/th08/src/EclRunHigh.inl:426-456` implement boss slot assignment.
+  All three write `g_EnemyManager.bosses[slot]` for nonnegative slots without
+  an opcode-level upper-bound check. TH08 then stores `enemy->bossSlot` as u8
+  and only opens GUI boss presence for slot 0; TH06/TH07 set GUI presence for
+  every nonnegative slot. TH07/TH08 hide GUI presence on clear only when the
+  stored/current boss slot is below 4.
+- `reference/th06/src/EclManager.hpp:228-233`,
+  `reference/th07/src/th07/EclManager.cpp:667-692`, and
+  `reference/th08/src/EclDependencies.cpp:18-36` define spellcard-start
+  argument layout: TH06 has signed i16 sprite/id plus an inline tail name, TH07
+  decodes a 48-byte xor-0xaa name and uses signed sprite/unsigned id packed in
+  the first operand, and TH08 forwards i16 enemy face, u16 spell number, i32
+  bonus, encoded owner/name bytes, and two comment lines.
+- `reference/th06/src/EclManager.cpp:710-725` and
+  `reference/th07/src/th07/EclManager.cpp:667-692` show the legacy spellcard
+  start path: GUI presentation, bullet clear, legacy `spellcardInfo`
+  activation, stage timer reset, and bullet-rank reset. TH07 additionally runs
+  spellcard background VMs and computes a score-drain rate from
+  `timerCallbackThreshold`. `reference/th08/src/EclRunHigh.inl:541-548` and
+  `reference/th08/src/EclDependencies.cpp:38-56` show that TH08 delegates the
+  opcode boundary to `g_Spellcard.StartSpell`/`EndSpell`.
+- `reference/th06/src/EclManager.cpp:749-783` and
+  `reference/th07/src/th07/EclManager.cpp:767-852` gate legacy spellcard-end
+  cleanup on active spell state, then deactivate `spellcardInfo` and mark the
+  stage inactive. TH07 also removes enemies and plays the spell-end sound.
+- `reference/th07/src/th07/EclManager.cpp:1704-1711` and
+  `reference/th08/src/EclRunHigh.inl:530-538` write boss gauge slot start/stop
+  ratios divided by `enemy->maxLife` and write gauge color. The opcode bodies
+  do not bound the gauge index.
+- `reference/th06/src/EclManager.cpp:852-854`,
+  `reference/th07/src/th07/EclManager.cpp:1824-1826`, and
+  `reference/th08/src/EclRunHigh.inl:712-715` write boss life marker counts;
+  TH06/TH07 add 1800 to time counters, and TH08 increments one spellcard
+  history bonus field by `0x708`.
+- `reference/th06/src/EclManager.cpp:923-924`,
+  `reference/th07/src/th07/EclManager.cpp:1899-1900`, and
+  `reference/th08/src/EclRunHigh.inl:826-830` cover timeout/survival flags.
+  TH08 timeout additionally writes `g_Spellcard.scoreLimit = 99999990`.
+- `reference/th07/src/th07/EclManager.cpp:1938-1941` reads `bosses[slot]` with
+  no opcode-level slot bound check and writes `runInterrupt` only when the boss
+  pointer is non-null.
+- `reference/th08/src/EclRunHigh.inl:856-862`,
+  `reference/th08/src/EclRunHigh.inl:954`, and
+  `reference/th08/src/EclRunHigh.inl:972` cover TH08 spellcard effect tracking,
+  phase-starting-life, and bonus-update controls. Opcode 164 resolves/stores
+  its vector only when the first resolved flag value is zero.
+
+The shared boss/spellcard lifecycle model stays at the VM-to-host boundary:
+unchecked boss/gauge slot accesses become formal faults, source-visible
+truncation and branch gates are explicit, and deep GUI/Spellcard/Catk scoring
+state remains an opaque host subsystem for later modeling.
+
 ## Shooting Control Evidence
 
 - `reference/th06/src/EclManager.cpp:428-454` uses raw interval operands,

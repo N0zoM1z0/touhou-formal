@@ -364,6 +364,11 @@ SOURCE_COVERAGE = [
         "reason": "shared item/drop effects cover looped power-or-point drops, point-only drops, single item spawns, and TH08 item-drop state writes while preserving raw/resolved counts, item ids, spread constants, power-threshold policy, and default item-state use",
     },
     {
+        "area": "boss/spellcard lifecycle host effects",
+        "status": "covered-by-model",
+        "reason": "shared boss/spellcard lifecycle effects cover unchecked boss-slot/gauge boundaries, legacy TH06/TH07 spellcard start/end, TH08 StartSpell/EndSpell host calls, life markers, timeout/survival flags, run interrupts, and TH08 spellcard effect/bonus controls while preserving title deltas such as u8 bossSlot truncation and primary-slot-only GUI presence",
+    },
+    {
         "area": "bullet control host effects",
         "status": "covered-by-model",
         "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition clear variants, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
@@ -396,7 +401,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate/timed enemy movement, hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove requests, item/drop requests, shooting controls, and primary bullet-pattern construction now have typed host-effect boundaries; full laser runtime, full EnemyManager/ItemManager state, ANM execution, and sound effects still require additional game-state models and invariants",
+        "reason": "immediate/timed enemy movement, hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove requests, item/drop requests, boss/spellcard lifecycle requests, shooting controls, and primary bullet-pattern construction now have typed host-effect boundaries; full laser runtime, full EnemyManager/ItemManager state, full GUI/Spellcard/Catk runtime, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",
@@ -1694,7 +1699,7 @@ def fuzz_comparison() -> dict[str, Any]:
             "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
             "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
             "are solved and materialized for the default environments. "
-            "Several additional gameplay-effect opcode families are source-modeled and Lean-checked, including enemy lifecycle and item/drop effects, but they are not yet dedicated solver/materializer lanes. "
+            "Several additional gameplay-effect opcode families are source-modeled and Lean-checked, including enemy lifecycle, item/drop, and boss/spellcard lifecycle effects, but they are not yet dedicated solver/materializer lanes. "
             "It is not yet stronger than fuzzing for the full ECL/ANM VM, because remaining opcode bodies and host-state branches "
             "remain outside the semantics."
         ),

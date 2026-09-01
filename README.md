@@ -112,6 +112,13 @@ The executable model currently covers these source-backed boundaries:
   TH07/TH08's 128/64 spread, the power-under-128 branch that selects power
   items versus point items, point-only loops, single-item spawns, and TH08's
   item-drop state fields without simulating the full `ItemManager`.
+- Shared boss/spellcard lifecycle effects cover 21 cross-title opcodes. The
+  model records unchecked `bosses[8]` slot writes, TH08's u8 `bossSlot`
+  truncation after the full-int array access, primary-slot-only GUI presence in
+  TH08, legacy TH06/TH07 spellcard start/end state, TH08 `StartSpell`/`EndSpell`
+  host calls, boss gauge ratios, life-marker side effects, timeout/survival
+  flags, boss run-interrupt writes, and TH08 spellcard effect/bonus control
+  flags without expanding the full GUI/Spellcard/Catk runtimes.
 - Shared shooting-control effects cover 18 interval, gate, previous-pattern,
   and offset opcodes. One rank-scaling function is reused across all titles,
   while profiles retain TH06's unconditional zero-interval timer reset,
@@ -260,6 +267,7 @@ output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate and timed movement effects, enemy-state
+effects, enemy-lifecycle effects, item/drop effects, boss/spellcard lifecycle
 effects, shooting-control effects, time-control effects, bullet-control
 effects, laser slot controls, laser-spawn descriptor effects,
 animation-control effects, bullet-pattern effects, callback-configuration

@@ -10,11 +10,12 @@ the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
 the CALL/RET/conditional-CALL slices. It also now source-models several
 gameplay-effect opcode families in Lean, including bullet-control host effects,
 time/wait controls, enemy lifecycle spawn/remove requests, item/drop requests,
-laser-spawn descriptors, laser slot controls, animation controls, and primary
-bullet patterns, but those families are not yet dedicated SMT/materializer
-lanes. It is not yet better than fuzzing for the full ECL/ANM VM, because full
-BulletManager/EnemyManager/ItemManager runtime behavior, full ANM execution,
-and multi-context scheduling are not modeled yet.
+boss/spellcard lifecycle controls, laser-spawn descriptors, laser slot controls,
+animation controls, and primary bullet patterns, but those families are not yet
+dedicated SMT/materializer lanes. It is not yet better than fuzzing for the full
+ECL/ANM VM, because full BulletManager/EnemyManager/ItemManager runtime
+behavior, full GUI/Spellcard/Catk runtime, full ANM execution, and multi-context
+scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -46,14 +47,15 @@ The current manual verification run on 2026-09-01 executed:
 
 ```bash
 lake build
-lake exe check > /tmp/touhou_check_item.txt
-./scripts/check.sh > /tmp/touhou_full_check_item.txt
+lake exe check > /tmp/touhou_check_boss_lifecycle.txt
+./scripts/check.sh > /tmp/touhou_full_check_boss_lifecycle.txt
 python3 scripts/evaluate_symex_effectiveness.py \
-  > /tmp/touhou_effectiveness_item.json
+  > /tmp/touhou_effectiveness_boss_lifecycle.json
 ```
 
 All completed successfully on the raw-step, raw-body, resolver,
-integer-binary, boss-int, boss-float, CALL/RET, and conditional-CALL model.
+integer-binary, boss-int, boss-float, CALL/RET, conditional-CALL, and
+boss/spellcard lifecycle model.
 When previous queue results should be reused instead of recomputed, the
 equivalent assessment is:
 
@@ -568,10 +570,10 @@ generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
 movement state writes, timed direction/position interpolation, orbit movement,
 enemy hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove
-requests, item/drop requests and state writes, plain CALL/RET stack behavior,
-zero divisors, shooting-control state writes, time/wait controls,
-bullet-control host effects, laser spawn descriptor construction, primary
-bullet-pattern descriptor construction/gates, laser slot controls,
+requests, item/drop requests and state writes, boss/spellcard lifecycle
+controls, plain CALL/RET stack behavior, zero divisors, shooting-control state
+writes, time/wait controls, bullet-control host effects, laser spawn descriptor
+construction, primary bullet-pattern descriptor construction/gates, laser slot controls,
 animation-control state writes, callback configuration, interrupt entry, and
 signed idiv overflow. Most gameplay host effects and multi-instruction state
 composition remain outside the current model.
@@ -580,9 +582,9 @@ Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 119: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, enemy-lifecycle, item/drop, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 17 |
-| TH07 | 159 `EclOpcode` symbols | 132: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, enemy-lifecycle, item/drop, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 27 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 135: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, enemy-lifecycle, item/drop, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 49 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 124: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, enemy-lifecycle, item/drop, boss/spellcard lifecycle, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 12 |
+| TH07 | 159 `EclOpcode` symbols | 139: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, enemy-lifecycle, item/drop, boss/spellcard lifecycle, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 20 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 144: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, enemy-lifecycle, item/drop, boss/spellcard lifecycle, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 40 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -604,8 +606,8 @@ Not covered:
 - BulletManager allocation/runtime simulation, TH08 transform-table execution,
   runtime laser simulation, full EnemyManager spawn/removal runtime after the
   VM request boundary, full ItemManager allocation/runtime after the VM request
-  boundary, full ANM execution, sound playback, and callback trigger side
-  effects;
+  boundary, full GUI/Spellcard/Catk runtime after the VM request boundary, full
+  ANM execution, sound playback, and callback trigger side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
@@ -724,6 +726,10 @@ Concrete advantages already demonstrated:
   including 7 high-priority OOB/null-deref counterexamples and TH08
   guarded-skip positive controls, then lowers representative TH07/TH08
   witnesses into isolated retail DAT mutations;
+- shared Lean controls now cover 21 boss/spellcard lifecycle opcodes across
+  TH06/TH07/TH08, including unchecked positive `bosses[8]` writes, TH08 u8
+  clear-slot truncation, gauge division-by-zero boundaries, and conditional
+  vector reads in TH08 opcode 164;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a
@@ -745,15 +751,19 @@ Fuzz is still better outside the current formal model:
 
 For the implemented VM-core skeleton, first shared body slice, integer resolver
 slice, integer binary-op slice, TH07/TH08 boss integer-read and boss float-read
-slices, plain CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT is already
-better than fuzzing: it gives exhaustive path-class coverage,
+slices, plain CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT
+is already better than fuzzing: it gives exhaustive path-class coverage,
 satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
 TH06/TH07/TH08 semantics.
 
-For the whole VM, it is not yet better. The model has to move down one layer
-into the remaining opcode bodies, host runtime state, and bounded multi-step
-execution before we can honestly say formal is finding classes that
-DanmakuFuzz cannot find in practice across the whole VM.
+Boss/spellcard lifecycle coverage improves the model baseline, but it does not
+change the stronger-than-fuzzing claim until it also has a dedicated solver
+queue or is composed into a bounded multi-step symbolic host state.
+
+For the whole VM, it is not yet better. The model has to move down one layer into
+the remaining opcode bodies, host runtime state, and bounded multi-step execution
+before we can honestly say formal is finding classes that DanmakuFuzz cannot
+find in practice across the whole VM.
 
 The next technically useful targets are:
 

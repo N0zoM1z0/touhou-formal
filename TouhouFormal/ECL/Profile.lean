@@ -1800,6 +1800,220 @@ def rawItemDropCountsOp
     kind := .setItemDropCounts
     intInputs := intInputs }
 
+inductive RawBossLifecycleIntInputPolicy where
+  | rawI32
+  | rawI16
+  | rawU16
+  | rawU8
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawBossLifecycleIntInputPolicy.name :
+    RawBossLifecycleIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .rawI16 => "raw-i16"
+  | .rawU16 => "raw-u16"
+  | .rawU8 => "raw-u8"
+  | .intRValue => "int-rvalue"
+
+inductive RawBossLifecycleFloatInputPolicy where
+  | rawBits
+  | floatRValue
+deriving Repr, DecidableEq
+
+def RawBossLifecycleFloatInputPolicy.name :
+    RawBossLifecycleFloatInputPolicy -> String
+  | .rawBits => "raw-bits"
+  | .floatRValue => "float-rvalue"
+
+inductive RawBossLifecycleIntRole where
+  | bossSlot
+  | spellSprite
+  | spellId
+  | spellBonus
+  | lifeMarkerCount
+  | gaugeSlot
+  | gaugeStart
+  | gaugeStop
+  | gaugeColor
+  | flagValue
+  | runInterruptSlot
+  | runInterruptSub
+  | phaseStartingLife
+deriving Repr, DecidableEq
+
+def RawBossLifecycleIntRole.name : RawBossLifecycleIntRole -> String
+  | .bossSlot => "boss-slot"
+  | .spellSprite => "spell-sprite"
+  | .spellId => "spell-id"
+  | .spellBonus => "spell-bonus"
+  | .lifeMarkerCount => "life-marker-count"
+  | .gaugeSlot => "gauge-slot"
+  | .gaugeStart => "gauge-start"
+  | .gaugeStop => "gauge-stop"
+  | .gaugeColor => "gauge-color"
+  | .flagValue => "flag-value"
+  | .runInterruptSlot => "run-interrupt-slot"
+  | .runInterruptSub => "run-interrupt-sub"
+  | .phaseStartingLife => "phase-starting-life"
+
+inductive RawBossLifecycleFloatRole where
+  | storedVectorX
+  | storedVectorY
+  | storedVectorZ
+deriving Repr, DecidableEq
+
+def RawBossLifecycleFloatRole.name : RawBossLifecycleFloatRole -> String
+  | .storedVectorX => "stored-vector-x"
+  | .storedVectorY => "stored-vector-y"
+  | .storedVectorZ => "stored-vector-z"
+
+structure RawBossLifecycleIntInputShape where
+  role : RawBossLifecycleIntRole
+  operandIndex : Nat
+  policy : RawBossLifecycleIntInputPolicy
+  byteIndex : Nat := 0
+  halfIndex : Nat := 0
+deriving Repr, DecidableEq
+
+structure RawBossLifecycleFloatInputShape where
+  role : RawBossLifecycleFloatRole
+  operandIndex : Nat
+  policy : RawBossLifecycleFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawBossSlotStoragePolicy where
+  | i32
+  | u8
+deriving Repr, DecidableEq
+
+def RawBossSlotStoragePolicy.name : RawBossSlotStoragePolicy -> String
+  | .i32 => "i32"
+  | .u8 => "u8"
+
+inductive RawBossPresentSetPolicy where
+  | everyNonnegativeSlot
+  | primarySlotOnly
+deriving Repr, DecidableEq
+
+def RawBossPresentSetPolicy.name : RawBossPresentSetPolicy -> String
+  | .everyNonnegativeSlot => "every-nonnegative-slot"
+  | .primarySlotOnly => "primary-slot-only"
+
+inductive RawBossPresentClearPolicy where
+  | always
+  | currentSlotBelowGuiSlots
+deriving Repr, DecidableEq
+
+def RawBossPresentClearPolicy.name : RawBossPresentClearPolicy -> String
+  | .always => "always"
+  | .currentSlotBelowGuiSlots => "current-slot-below-gui-slots"
+
+inductive RawBossSpellTextPolicy where
+  | th06InlineTail
+  | xorInline (byteCount : Nat) (xorValue : Nat)
+  | th08EncodedRecord (nameBytes ownerBytes commentBytes : Nat)
+deriving Repr, DecidableEq
+
+def RawBossSpellTextPolicy.name : RawBossSpellTextPolicy -> String
+  | .th06InlineTail => "th06-inline-tail"
+  | .xorInline byteCount xorValue =>
+      "xor-inline-" ++ toString byteCount ++ "-xor-" ++ toString xorValue
+  | .th08EncodedRecord nameBytes ownerBytes commentBytes =>
+      "th08-encoded-record-" ++ toString nameBytes ++ "-" ++
+        toString ownerBytes ++ "-" ++ toString commentBytes
+
+inductive RawBossSpellBulletClear where
+  | turnAllIntoPoints
+  | removeAllWithItems
+  | despawnWithItems (scoreMax : Int)
+deriving Repr, DecidableEq
+
+def RawBossSpellBulletClear.name : RawBossSpellBulletClear -> String
+  | .turnAllIntoPoints => "turn-all-into-points"
+  | .removeAllWithItems => "remove-all-with-items"
+  | .despawnWithItems scoreMax =>
+      "despawn-with-items-" ++ toString scoreMax
+
+inductive RawBossSpellStageState where
+  | running
+  | starting
+  | inactive
+deriving Repr, DecidableEq
+
+def RawBossSpellStageState.name : RawBossSpellStageState -> String
+  | .running => "running"
+  | .starting => "starting"
+  | .inactive => "inactive"
+
+inductive RawBossLifecycleOpKind where
+  | setBoss
+  | beginSpellcard
+  | endSpellcard
+  | setBossGauge
+  | setLifeMarkerCount
+  | setTimeoutSpell
+  | setSurvivalSpellcard
+  | setBossRunInterrupt
+  | setSpellcardEffectTracking
+  | setSpellcardBonusUpdatesDisabled
+  | setPhaseStartingLife
+deriving Repr, DecidableEq
+
+def RawBossLifecycleOpKind.name : RawBossLifecycleOpKind -> String
+  | .setBoss => "set-boss"
+  | .beginSpellcard => "begin-spellcard"
+  | .endSpellcard => "end-spellcard"
+  | .setBossGauge => "set-boss-gauge"
+  | .setLifeMarkerCount => "set-life-marker-count"
+  | .setTimeoutSpell => "set-timeout-spell"
+  | .setSurvivalSpellcard => "set-survival-spellcard"
+  | .setBossRunInterrupt => "set-boss-run-interrupt"
+  | .setSpellcardEffectTracking => "set-spellcard-effect-tracking"
+  | .setSpellcardBonusUpdatesDisabled =>
+      "set-spellcard-bonus-updates-disabled"
+  | .setPhaseStartingLife => "set-phase-starting-life"
+
+structure RawBossLifecycleOpShape where
+  opcode : Int
+  kind : RawBossLifecycleOpKind
+  intInputs : List RawBossLifecycleIntInputShape := []
+  floatInputs : List RawBossLifecycleFloatInputShape := []
+  bossSlotCount : Nat := 8
+  guiBossSlotCount : Nat := 4
+  bossGaugeSlotCount : Nat := 8
+  bossSlotStoragePolicy : RawBossSlotStoragePolicy := .i32
+  setBossPresentPolicy : RawBossPresentSetPolicy := .everyNonnegativeSlot
+  clearBossPresentPolicy : RawBossPresentClearPolicy := .always
+  setHealthBarToFull : Bool := false
+  resetMinimumPlayerDistance : Bool := false
+  markerInterruptOnSet : Option Int := none
+  markerInterruptOnClear : Option Int := none
+  resetEffectArrayOnClear : Bool := false
+  releaseAttachedEffectsOnClear : Bool := false
+  moveMarkerOffscreenOnClear : Bool := false
+  spellTextPolicy : Option RawBossSpellTextPolicy := none
+  beginBulletClear : Option RawBossSpellBulletClear := none
+  beginStageState : Option RawBossSpellStageState := none
+  beginSetsLegacySpellInfo : Bool := false
+  beginResetsStageSpellTimer : Bool := false
+  beginResetsBulletRank : Bool := false
+  beginSetsScoreDrainRate : Bool := false
+  beginRunsSpellcardBackgroundVms : Bool := false
+  beginHostStartSpell : Bool := false
+  endRequiresActiveSpell : Bool := false
+  endStageState : Option RawBossSpellStageState := none
+  endBulletClear : Option RawBossSpellBulletClear := none
+  endRemovesEnemies : Bool := false
+  endDeactivatesLegacySpellInfo : Bool := false
+  endPlaysSound : Bool := false
+  endHostEndSpell : Bool := false
+  lifeMarkerTimeBonus : Int := 0
+  lifeMarkerHistoryBonusDelta : Option Int := none
+  timeoutScoreLimit : Option Int := none
+  effectTrackingStoresVectorWhenZero : Bool := false
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -1838,6 +2052,7 @@ structure RawInstrShape where
   enemyStateOps : List RawEnemyStateOpShape := []
   enemyLifecycleOps : List RawEnemyLifecycleOpShape := []
   itemOps : List RawItemOpShape := []
+  bossLifecycleOps : List RawBossLifecycleOpShape := []
   shootingOps : List RawShootingOpShape := []
   timeControlOps : List RawTimeControlOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
@@ -1930,6 +2145,11 @@ def RawInstrShape.findItemOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawItemOpShape :=
   rawShape.itemOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findBossLifecycleOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBossLifecycleOpShape :=
+  rawShape.bossLifecycleOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)

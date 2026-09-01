@@ -107,6 +107,16 @@ coordinates. The power-under-128 branch is retained as policy because it is a
 source-visible branch in the opcode body, but the concrete player power and item
 pool state are later host inputs.
 
+Boss/spellcard lifecycle opcodes stop at the VM-to-host boundary for the same
+reason. Lean records the source-visible `bosses[8]` slot writes/reads, GUI boss
+presence policy, marker interrupts, spellcard start/end host calls, gauge
+ratio inputs, life-marker effects, and TH08 spellcard effect/bonus control
+writes. If an opcode indexes `g_EnemyManager.bosses` or the GUI gauge table
+without checking the upper bound, the model reports the first unchecked access
+as a structured fault before trying to simulate whatever C++ memory corruption
+would follow. The full GUI, `Spellcard`, `Catk`, score-drain, and presentation
+runtime remain host-side state to model later.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

@@ -327,6 +327,99 @@ private def describeItemOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeBossLifecycleOutcome
+    (result :
+      Except TouhouFormal.Fault TouhouFormal.ECL.RawBossLifecycleOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            let setSummary :=
+              match effect.bossSet with
+              | none => "set=none"
+              | some set =>
+                  "set=slot " ++ toString set.requestedSlot ++
+                    " stored=" ++ toString set.storedBossSlot ++
+                    " class=" ++ set.slotBoundary.name ++
+                    " gui=" ++ reprStr set.bossPresentWrite
+            let clearSummary :=
+              match effect.bossClear with
+              | none => "clear=none"
+              | some clear =>
+                  "clear=slot " ++ toString clear.currentBossSlot ++
+                    " class=" ++ clear.slotBoundary.name ++
+                    " gui=" ++ reprStr clear.bossPresentWrite
+            let spellSummary :=
+              match effect.spellStart, effect.spellEnd with
+              | some start, _ =>
+                  "spell=start id=" ++ reprStr start.spellId ++
+                    " sprite=" ++ reprStr start.spellSprite ++
+                    " text=" ++ reprStr
+                      (start.textPolicy.map (fun policy => policy.name)) ++
+                    " clear=" ++ reprStr
+                      (start.bulletClear.map (fun mode => mode.name)) ++
+                    " host=" ++ toString start.hostStartSpell
+              | _, some stop =>
+                  "spell=end activeBody=" ++ toString stop.activeBodyRuns ++
+                    " stage=" ++ reprStr
+                      (stop.stageState.map (fun state => state.name)) ++
+                    " clear=" ++ reprStr
+                      (stop.bulletClear.map (fun mode => mode.name)) ++
+                    " host=" ++ toString stop.hostEndSpell
+              | none, none => "spell=none"
+            let gaugeSummary :=
+              match effect.bossGauge with
+              | none => "gauge=none"
+              | some gauge =>
+                  "gauge=slot " ++ toString gauge.gaugeSlot ++
+                    " class=" ++ gauge.slotBoundary.name ++
+                    " ratio=" ++ toString gauge.startNumerator ++
+                    "/" ++ toString gauge.maxLifeDenominator ++
+                    ".." ++ toString gauge.stopNumerator ++
+                    "/" ++ toString gauge.maxLifeDenominator ++
+                    " nonfinite=" ++
+                      toString gauge.maxLifeZeroProducesNonfinite
+            let markerSummary :=
+              match effect.lifeMarker with
+              | none => "marker=none"
+              | some marker =>
+                  "marker=count " ++ toString marker.count ++
+                    " timeBonus=" ++ toString marker.timeBonus ++
+                    " history=" ++ reprStr marker.historyBonusDelta
+            let flagSummary :=
+              match effect.flagWrite with
+              | none => "flag=none"
+              | some flag =>
+                  "flag=" ++ flag.field.name ++
+                    " value=" ++ toString flag.value ++
+                    " scoreLimit=" ++ reprStr flag.scoreLimitWrite
+            let interruptSummary :=
+              match effect.runInterrupt with
+              | none => "runInterrupt=none"
+              | some write =>
+                  "runInterrupt=slot " ++ toString write.requestedSlot ++
+                    " class=" ++ write.slotBoundary.name ++
+                    " present=" ++ toString write.bossPointerPresent ++
+                    " writes=" ++ toString write.writesRunInterrupt
+            let vectorSummary :=
+              match effect.storedVector with
+              | none => "vector=none"
+              | some vector =>
+                  "vector=" ++ reprStr
+                    (vector.xBits, vector.yBits, vector.zBits)
+            setSummary ++ " " ++ clearSummary ++ " " ++ spellSummary ++
+              " " ++ gaugeSummary ++ " " ++ markerSummary ++ " " ++
+              flagSummary ++ " " ++ interruptSummary ++ " " ++
+              vectorSummary ++ " phaseLife=" ++
+              reprStr effect.phaseStartingLifeWrite
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeShootingOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawShootingOutcome) :
     String :=
@@ -721,6 +814,22 @@ def main : IO Unit := do
   IO.println s!"TH07 point items: {describeItemOutcome TouhouFormal.Search.Item.th07PointItemsOutcome}"
   IO.println s!"TH08 drop counts: {describeItemOutcome TouhouFormal.Search.Item.th08DropCountsOutcome}"
   IO.println s!"TH08 spawn item: {describeItemOutcome TouhouFormal.Search.Item.th08SpawnItemOutcome}"
+  IO.println ""
+  IO.println "Boss/spellcard lifecycle controls"
+  IO.println s!"TH06 boss-lifecycle opcode count: {TouhouFormal.Search.BossLifecycle.bossLifecycleOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 boss-lifecycle opcode count: {TouhouFormal.Search.BossLifecycle.bossLifecycleOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 boss-lifecycle opcode count: {TouhouFormal.Search.BossLifecycle.bossLifecycleOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 begin spell: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th06BeginSpellOutcome}"
+  IO.println s!"TH07 set boss: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th07SetBossOutcome}"
+  IO.println s!"TH07 clear boss: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th07ClearBossOutcome}"
+  IO.println s!"TH07 boss run interrupt: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th07RunInterruptOutcome}"
+  IO.println s!"TH08 set boss slot 8: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08SetBossSlot8Outcome}"
+  IO.println s!"TH08 set boss slot 0: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08SetBossSlot0Outcome}"
+  IO.println s!"TH08 clear boss truncated slot: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08ClearBossTruncatedOutcome}"
+  IO.println s!"TH08 zero-life boss gauge: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08GaugeZeroMaxLifeOutcome}"
+  IO.println s!"TH08 effect tracking nonzero: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08EffectTrackingNonzeroOutcome}"
+  IO.println s!"TH08 effect tracking zero: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08EffectTrackingZeroOutcome}"
+  IO.println s!"TH08 life marker: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08LifeMarkerOutcome}"
   IO.println ""
   IO.println "Shooting controls"
   IO.println s!"TH06 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH06.headerShape}"
