@@ -1,0 +1,57 @@
+{
+  "schema": "danmakufuzz-retail-confirmation-repeat-v1",
+  "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z",
+  "source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/result.json",
+  "repeat": 2,
+  "require": 2,
+  "expected_oracle": {
+    "classification": "crash-dialog",
+    "retail_signature_key": null
+  },
+  "passed_attempts": 2,
+  "expectation_passed": true,
+  "attempts": [
+    {
+      "attempt": 1,
+      "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-001",
+      "report": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-001/report.json",
+      "classification": "crash-dialog",
+      "retail_signature_key": "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...",
+      "expectation": {
+        "enabled": true,
+        "passed": true,
+        "checks": [
+          {
+            "field": "classification",
+            "expected": "crash-dialog",
+            "observed": "crash-dialog",
+            "passed": true
+          }
+        ],
+        "observed_classification": "crash-dialog",
+        "observed_retail_signature_key": "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger..."
+      }
+    },
+    {
+      "attempt": 2,
+      "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002",
+      "report": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/report.json",
+      "classification": "crash-dialog",
+      "retail_signature_key": "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...",
+      "expectation": {
+        "enabled": true,
+        "passed": true,
+        "checks": [
+          {
+            "field": "classification",
+            "expected": "crash-dialog",
+            "observed": "crash-dialog",
+            "passed": true
+          }
+        ],
+        "observed_classification": "crash-dialog",
+        "observed_retail_signature_key": "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger..."
+      }
+    }
+  ]
+}

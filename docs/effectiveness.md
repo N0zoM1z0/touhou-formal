@@ -35,7 +35,7 @@ The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_condcall_candidate_queue.py`, summarizes path coverage, reads
 the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
-summaries from `../retail_validation` when present.
+summaries from `retail_validation/` when present.
 
 The current manual verification run on 2026-09-01 executed:
 

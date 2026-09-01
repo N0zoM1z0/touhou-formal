@@ -19,3 +19,12 @@ build/
 .analysis/
 reports/
 tmp/
+
+# Retail validation runs live in-repo so their small, reviewable evidence is
+# durable.  Game copies, Wine prefixes, mutated archives, screenshots, and
+# other proprietary/runtime artifacts remain ignored.
+retail_validation/**
+!retail_validation/**/
+!retail_validation/**/result.json
+!retail_validation/**/report.json
+!retail_validation/README.md

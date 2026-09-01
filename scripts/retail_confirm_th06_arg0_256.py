@@ -16,7 +16,7 @@ WORKSPACE_ROOT = FORMAL_ROOT.parent
 DANMAKUFUZZ_ROOT = WORKSPACE_ROOT / "reference" / "DanmakuFuzz"
 DANMAKUFUZZ_SRC = DANMAKUFUZZ_ROOT / "src"
 DEFAULT_SOURCE_GAME_DIR = WORKSPACE_ROOT / "retail_extract" / "th06-20260831-unar" / "th06"
-DEFAULT_RETAIL_ROOT = WORKSPACE_ROOT / "retail_validation"
+DEFAULT_RETAIL_ROOT = FORMAL_ROOT / "retail_validation"
 
 ST_ARCHIVE_NAME = "紅魔郷ST.DAT"
 SEED_NAME = "ecldata5.ecl"

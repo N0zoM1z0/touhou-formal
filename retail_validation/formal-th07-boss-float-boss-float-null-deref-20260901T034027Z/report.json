@@ -1,0 +1,205 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z",
+  "source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/game/th07.dat",
+      "archive_kind": "th07-pbg4",
+      "sha256": "49000c3748a68bf371d7e6adc3183fe0af03ded16142c1a843a0a27427405a2f",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 44920
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/game/th07.cfg",
+    "source": "generated-source-backed-default",
+    "size": 56,
+    "sha256": "0f769f0fdcc26548b4a34e113599f060cacaf53a8b131d70d3bc8ddab30ddeec",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 52,
+    "opts": 1,
+    "safe_video_flags": false,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 52
+    }
+  },
+  "prepare_only": false,
+  "wine_probe": {
+    "mode": "generic-new-game-key-probe",
+    "title": "th07",
+    "command": [
+      "wine",
+      "th07.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/game",
+    "display": ":210",
+    "wine_prefix": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/prefix",
+    "wineboot_log": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/wineboot.log",
+    "wine_log": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/wine.log",
+    "keys": [
+      "z",
+      "z",
+      "Down",
+      "Down",
+      "Down",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "control_error": null,
+    "screenshots": [
+      "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/probe-00-launch-window.png",
+      "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/probe-01-after-input.png",
+      "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/probe-02-final.png"
+    ],
+    "screenshot_summary": {
+      "count": 3,
+      "decoded_count": 3,
+      "all_decoded_black": false,
+      "captures": [
+        {
+          "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/probe-00-launch-window.png",
+          "sha256": "8696aa4b3ea26f20f2f769919382a0a018b04c3574266dee81f00b2c8b945f60",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307186,
+          "black_ratio": 0.609392801920573,
+          "max_byte": 255,
+          "mean_byte": 53.16316435072157
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/probe-01-after-input.png",
+          "sha256": "63e0895b8e091dd3cc47747f3003bd376477efc36d3583868a287a1e735de4b6",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307038,
+          "black_ratio": 0.6095809936523438,
+          "max_byte": 255,
+          "mean_byte": 60.502294328477646
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/probe-02-final.png",
+          "sha256": "1b0c99915cf40ae7e665e4b1731c913f1337c3f9c77f0967054733c147a7ddad",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307024,
+          "black_ratio": 0.6095987955729167,
+          "max_byte": 255,
+          "mean_byte": 43.999371422661675
+        }
+      ]
+    },
+    "elapsed_seconds": 42.24416708946228,
+    "window_census": {
+      "display": ":210",
+      "windows": [
+        {
+          "window_id": "1293",
+          "name": ""
+        },
+        {
+          "window_id": "8388609",
+          "name": ""
+        },
+        {
+          "window_id": "2097192",
+          "name": ""
+        },
+        {
+          "window_id": "8388611",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "8388610",
+          "name": ""
+        },
+        {
+          "window_id": "10485761",
+          "name": ""
+        },
+        {
+          "window_id": "8388612",
+          "name": ""
+        },
+        {
+          "window_id": "8388613",
+          "name": ""
+        },
+        {
+          "window_id": "8388614",
+          "name": ""
+        },
+        {
+          "window_id": "8388615",
+          "name": ""
+        },
+        {
+          "window_id": "4194336",
+          "name": ""
+        },
+        {
+          "window_id": "4194346",
+          "name": ""
+        },
+        {
+          "window_id": "6291460",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "6291459",
+          "name": "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b"
+        },
+        {
+          "window_id": "4194387",
+          "name": ""
+        }
+      ],
+      "window_names_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/window-names.txt"
+    },
+    "wine_summary": {
+      "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/wine.log",
+      "classification": "no-crash-signature",
+      "primary_signature": null,
+      "crash_lines": [],
+      "error_lines": []
+    },
+    "oracle": {
+      "classification": "game-window-live",
+      "interesting": false,
+      "window_names": [
+        "",
+        "",
+        "",
+        "Default IME",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Default IME",
+        "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b",
+        ""
+      ],
+      "crash_titles": [],
+      "wine_log_classification": "no-crash-signature",
+      "wine_log_primary_signature": null,
+      "returncode": null,
+      "timed_out": true
+    }
+  }
+}

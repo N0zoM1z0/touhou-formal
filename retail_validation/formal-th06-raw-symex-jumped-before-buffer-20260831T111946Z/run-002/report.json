@@ -1,0 +1,1110 @@
+{
+  "source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/result.json",
+  "semantic_source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/result.json",
+  "source_game_dir": "/home/yann/yann/touhou/formal/retail_extract/th06-20260831-unar/th06",
+  "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002",
+  "game_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game",
+  "wine_prefix": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/prefix",
+  "display": ":190",
+  "xvfb_screen_size": "1024x768x24",
+  "seed_name": "ecldata5.ecl",
+  "payload_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/override/data/ecldata5.ecl",
+  "payload_size": 30392,
+  "payload_sha256": "f98076878c4cd7d3f30c210c3eaa559b85ba42479a199db6076f3c171a593ba1",
+  "config": {
+    "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game/\u6771\u65b9\u7d05\u9b54\u90f7.cfg",
+    "initialized": true,
+    "changed": true,
+    "sha256_before": "b4165072c6d53dd8c04a9eb94c21ab2b69fe887b0b1105763252bdf559943e04",
+    "sha256_after": "52d03befd0258e371a8c22168ff9a57243a653f7345bb50738f558ceac2e6b0b",
+    "windowed_before": 0,
+    "windowed_after": 1,
+    "color_mode_16bit_before": 255,
+    "color_mode_16bit_after": 0,
+    "color_mode_16bit_requested": 0
+  },
+  "unlock_score": {
+    "source": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game/\u5168\u5f00\u6863/score.dat",
+    "destination": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game/score.dat",
+    "sha256": "54cd436d5d8a7a904190c792a977bf270ab1cb759fd72101e51e94d26b749c71",
+    "restored": true
+  },
+  "patched_archives": [
+    {
+      "archive": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game/\u7d05\u9b54\u90f7ST.DAT",
+      "sha256": "1f721f629c4fcba2e45a2dbdf65c7d1e3d2dd5f44f8e3f4323f9f94e6a144a96",
+      "entry_name": "ecldata5.ecl",
+      "entry_size": 30392
+    },
+    {
+      "archive": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game/\u5ce0\u677a\u5affST.DAT",
+      "sha256": "1f721f629c4fcba2e45a2dbdf65c7d1e3d2dd5f44f8e3f4323f9f94e6a144a96",
+      "entry_name": "ecldata5.ecl",
+      "entry_size": 30392
+    }
+  ],
+  "wineboot": null,
+  "run": {
+    "mode": "practice-stage",
+    "command": [
+      "/usr/bin/wine",
+      "\u6771\u65b9\u7d05\u9b54\u90f7.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/game",
+    "display": ":190",
+    "xvfb": {
+      "command": [
+        "/usr/bin/Xvfb",
+        ":190",
+        "-screen",
+        "0",
+        "1024x768x24",
+        "-nolisten",
+        "tcp"
+      ],
+      "display": ":190",
+      "log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/xvfb.log"
+    },
+    "log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/wine.log",
+    "prefix_log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/wineboot.log",
+    "returncode": -9,
+    "observed_returncode": null,
+    "cleanup_killed_process": true,
+    "timed_out": false,
+    "elapsed_seconds": 43.78752017021179,
+    "dry_run": false,
+    "startup_normalization": {
+      "mode": "auto",
+      "attempted": true,
+      "normalized": true,
+      "required": false,
+      "command": [
+        "/usr/bin/sudo",
+        "-n",
+        "/usr/bin/gdb",
+        "-q",
+        "-nx",
+        "-batch",
+        "-p",
+        "2360658",
+        "-x",
+        "/home/yann/yann/touhou/formal/reference/DanmakuFuzz/src/danmakufuzz/retail/normalize_th06_startup.py"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.7591307163238525,
+      "marker": "DANMAKUFUZZ_TH06_STARTUP_NORMALIZED=1",
+      "log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/gdb-startup-normalization.log"
+    },
+    "termination_reason": "crash-dialog",
+    "retail_signature_key": "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...",
+    "oracle": {
+      "classification": "crash-dialog",
+      "interesting": true,
+      "sources": [
+        "window-census",
+        "wine-log",
+        "baseline-compare"
+      ],
+      "window_oracle_classification": "crash-dialog",
+      "wine_log_classification": "wine-crash-log",
+      "wine_log_primary_signature": "wine: Unhandled page fault on read access to 0000002C at address 00412499 (thread 0148), starting debugger...",
+      "wine_log_normalized_primary_signature": "wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...",
+      "observed_returncode": null,
+      "timed_out": false,
+      "baseline_comparison": {
+        "classification": "baseline-oracle-drift",
+        "interesting": true,
+        "baseline_termination_reason": "game-window-live",
+        "mutant_termination_reason": "crash-dialog",
+        "baseline_control_oracle_classification": "game-window-live",
+        "mutant_control_oracle_classification": "crash-dialog",
+        "entered_stage_diff_ratio": 0.09375,
+        "progress_probe_diff_ratio": 0.4015159606933594,
+        "max_diff_ratio": 0.4015159606933594,
+        "thresholds": {
+          "equivalent_ratio": 0.001,
+          "visual_drift_ratio": 0.05
+        },
+        "comparisons": {
+          "entered_stage": {
+            "baseline_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline/control-06-after-stage-start.png",
+            "mutant_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-06-after-stage-start.png",
+            "baseline_pixel_sha256": "6cbf8821d2f16c69b63da04ccefb67b5774fc3f15c91ff7339e78fcbaee25ff7",
+            "mutant_pixel_sha256": "22afa31bc305a8bf0ebe74c7a6f787478503b2dbdd9e3f5232b3d2977465cba2",
+            "baseline_pixel_profile": {
+              "total_pixels": 786432,
+              "unique_colors": 15909,
+              "top_color_ratio": 0.6344706217447916,
+              "top_two_color_ratio": 0.6787897745768229,
+              "top_colors": [
+                {
+                  "rgb_hex": "000000",
+                  "count": 498968,
+                  "ratio": 0.6344706217447916
+                },
+                {
+                  "rgb_hex": "292939",
+                  "count": 34854,
+                  "ratio": 0.04431915283203125
+                },
+                {
+                  "rgb_hex": "252536",
+                  "count": 29893,
+                  "ratio": 0.03801091512044271
+                },
+                {
+                  "rgb_hex": "2c2d3b",
+                  "count": 28745,
+                  "ratio": 0.03655115763346354
+                }
+              ]
+            },
+            "mutant_pixel_profile": {
+              "total_pixels": 786432,
+              "unique_colors": 15808,
+              "top_color_ratio": 0.6344515482584635,
+              "top_two_color_ratio": 0.6787605285644531,
+              "top_colors": [
+                {
+                  "rgb_hex": "000000",
+                  "count": 498953,
+                  "ratio": 0.6344515482584635
+                },
+                {
+                  "rgb_hex": "292939",
+                  "count": 34846,
+                  "ratio": 0.044308980305989586
+                },
+                {
+                  "rgb_hex": "252536",
+                  "count": 29931,
+                  "ratio": 0.038059234619140625
+                },
+                {
+                  "rgb_hex": "2c2d3b",
+                  "count": 28768,
+                  "ratio": 0.036580403645833336
+                }
+              ]
+            },
+            "total_pixels": 786432,
+            "changed_pixels": 73728,
+            "pixel_change_ratio": 0.09375,
+            "identical_pixels": false
+          },
+          "progress_probe": {
+            "baseline_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline/control-07-progress-probe.png",
+            "mutant_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-07-progress-probe.png",
+            "baseline_pixel_sha256": "127fab47d4024703a5687a7bcd8f9e7cfc2d166416f2e90df036fa6d0bf28db7",
+            "mutant_pixel_sha256": "0d90293c9d802770310fa45b423f7cb1de4ab6112d937e9b9cd32ef5b14d5654",
+            "baseline_pixel_profile": {
+              "total_pixels": 786432,
+              "unique_colors": 19700,
+              "top_color_ratio": 0.6259231567382812,
+              "top_two_color_ratio": 0.6685473124186198,
+              "top_colors": [
+                {
+                  "rgb_hex": "000000",
+                  "count": 492246,
+                  "ratio": 0.6259231567382812
+                },
+                {
+                  "rgb_hex": "292939",
+                  "count": 33521,
+                  "ratio": 0.04262415568033854
+                },
+                {
+                  "rgb_hex": "252536",
+                  "count": 28770,
+                  "ratio": 0.03658294677734375
+                },
+                {
+                  "rgb_hex": "2c2d3b",
+                  "count": 27619,
+                  "ratio": 0.03511937459309896
+                }
+              ]
+            },
+            "mutant_pixel_profile": {
+              "total_pixels": 786432,
+              "unique_colors": 1402,
+              "top_color_ratio": 0.780127207438151,
+              "top_two_color_ratio": 0.9176712036132812,
+              "top_colors": [
+                {
+                  "rgb_hex": "000000",
+                  "count": 613517,
+                  "ratio": 0.780127207438151
+                },
+                {
+                  "rgb_hex": "f5f5f5",
+                  "count": 108169,
+                  "ratio": 0.13754399617513022
+                },
+                {
+                  "rgb_hex": "ffffff",
+                  "count": 43438,
+                  "ratio": 0.055234273274739586
+                },
+                {
+                  "rgb_hex": "292939",
+                  "count": 2123,
+                  "ratio": 0.0026995340983072915
+                }
+              ]
+            },
+            "total_pixels": 786432,
+            "changed_pixels": 315765,
+            "pixel_change_ratio": 0.4015159606933594,
+            "identical_pixels": false
+          }
+        },
+        "baseline_artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline"
+      }
+    },
+    "wine_log": {
+      "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/wine.log",
+      "classification": "wine-crash-log",
+      "interesting": true,
+      "primary_signature": "wine: Unhandled page fault on read access to 0000002C at address 00412499 (thread 0148), starting debugger...",
+      "normalized_primary_signature": "wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger...",
+      "crash_lines": [
+        "wine: Unhandled page fault on read access to 0000002C at address 00412499 (thread 0148), starting debugger..."
+      ],
+      "error_lines": []
+    },
+    "control": {
+      "mode": "practice-stage",
+      "practice_stage": 5,
+      "difficulty": 3,
+      "window_id": "8388611",
+      "process_id": 2360658,
+      "stage_entry_wait_seconds": 4.0,
+      "stage_entry_min_frame": 60,
+      "progress_probe_seconds": 12.0,
+      "progress_probe_frames": 450,
+      "screen_size": "1024x768",
+      "entered_stage_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-06-after-stage-start.png",
+      "stage_entry_verification": {
+        "verified": true,
+        "expected_stage": 5,
+        "expected_difficulty": 3,
+        "minimum_frame": 60,
+        "reasons": [],
+        "runtime": {
+          "readable": true,
+          "frame": 60,
+          "stage": 5,
+          "difficulty": 3,
+          "time_stopped": false,
+          "in_menu": false,
+          "flags": {
+            "game_menu": 0,
+            "retry_menu": 0,
+            "gameplay_active": 1,
+            "completed": 0,
+            "practice": 1,
+            "demo_mode": 0
+          },
+          "supervisor": {
+            "wanted": 2,
+            "current": 2
+          }
+        },
+        "timed_out": false,
+        "wait_elapsed_seconds": 0.9914741740212776
+      },
+      "progress_verification": {
+        "verified": false,
+        "expected_stage": 5,
+        "expected_difficulty": 3,
+        "minimum_frame": 510,
+        "reasons": [
+          "frame-before-minimum"
+        ],
+        "runtime": {
+          "readable": true,
+          "frame": 441,
+          "stage": 5,
+          "difficulty": 3,
+          "time_stopped": false,
+          "in_menu": false,
+          "flags": {
+            "game_menu": 0,
+            "retry_menu": 0,
+            "gameplay_active": 1,
+            "completed": 0,
+            "practice": 1,
+            "demo_mode": 0
+          },
+          "supervisor": {
+            "wanted": 2,
+            "current": 2
+          }
+        },
+        "timed_out": true,
+        "wait_elapsed_seconds": 12.002676959033124
+      },
+      "progress_runtime": {
+        "readable": true,
+        "frame": 441,
+        "stage": 5,
+        "difficulty": 3,
+        "time_stopped": false,
+        "in_menu": false,
+        "flags": {
+          "game_menu": 0,
+          "retry_menu": 0,
+          "gameplay_active": 1,
+          "completed": 0,
+          "practice": 1,
+          "demo_mode": 0
+        },
+        "supervisor": {
+          "wanted": 2,
+          "current": 2
+        }
+      },
+      "window_census": {
+        "display": ":190",
+        "windows": [
+          {
+            "window_id": "10485761",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "12582938",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "1293",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "14680065",
+            "name": "Wine Debugger",
+            "wm_class": "\"conhost.exe\", \"conhost.exe\"",
+            "pid": 2361460
+          },
+          {
+            "window_id": "14680066",
+            "name": "Default IME",
+            "wm_class": "\"conhost.exe\", \"conhost.exe\"",
+            "pid": 2361460
+          },
+          {
+            "window_id": "16777235",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "18874369",
+            "name": "\u30d7\u30ed\u30b0\u30e9\u30e0 \u30a8\u30e9\u30fc",
+            "wm_class": "\"winedbg.exe\", \"winedbg.exe\"",
+            "pid": 2361458
+          },
+          {
+            "window_id": "18874370",
+            "name": "Default IME",
+            "wm_class": "\"winedbg.exe\", \"winedbg.exe\"",
+            "pid": 2361458
+          },
+          {
+            "window_id": "2097191",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "4194336",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "4194346",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "4194387",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "6291457",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "6291458",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2360337
+          },
+          {
+            "window_id": "6291459",
+            "name": "Default IME",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2360337
+          },
+          {
+            "window_id": "6291460",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2360337
+          },
+          {
+            "window_id": "6291461",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2360337
+          },
+          {
+            "window_id": "6291462",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2360337
+          },
+          {
+            "window_id": "6291463",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2360337
+          },
+          {
+            "window_id": "8388611",
+            "name": "\u6771\u65b9\u7d05\u9b54\u90f7\u3000\uff5e the Embodiment of Scarlet Devil",
+            "wm_class": "\"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\", \"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\"",
+            "pid": 2360658
+          },
+          {
+            "window_id": "8388612",
+            "name": "Default IME",
+            "wm_class": "\"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\", \"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\"",
+            "pid": 2360658
+          }
+        ],
+        "window_names_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-window-names.txt",
+        "xwininfo_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-xwininfo.txt",
+        "census_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-window-census.json"
+      },
+      "progress_probe": {
+        "probe_seconds": 12.002676959033124,
+        "first_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-06-after-stage-start.png",
+        "second_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-07-progress-probe.png",
+        "first_pixel_sha256": "22afa31bc305a8bf0ebe74c7a6f787478503b2dbdd9e3f5232b3d2977465cba2",
+        "second_pixel_sha256": "0d90293c9d802770310fa45b423f7cb1de4ab6112d937e9b9cd32ef5b14d5654",
+        "first_pixel_profile": {
+          "total_pixels": 786432,
+          "unique_colors": 15808,
+          "top_color_ratio": 0.6344515482584635,
+          "top_two_color_ratio": 0.6787605285644531,
+          "top_colors": [
+            {
+              "rgb_hex": "000000",
+              "count": 498953,
+              "ratio": 0.6344515482584635
+            },
+            {
+              "rgb_hex": "292939",
+              "count": 34846,
+              "ratio": 0.044308980305989586
+            },
+            {
+              "rgb_hex": "252536",
+              "count": 29931,
+              "ratio": 0.038059234619140625
+            },
+            {
+              "rgb_hex": "2c2d3b",
+              "count": 28768,
+              "ratio": 0.036580403645833336
+            }
+          ]
+        },
+        "second_pixel_profile": {
+          "total_pixels": 786432,
+          "unique_colors": 1402,
+          "top_color_ratio": 0.780127207438151,
+          "top_two_color_ratio": 0.9176712036132812,
+          "top_colors": [
+            {
+              "rgb_hex": "000000",
+              "count": 613517,
+              "ratio": 0.780127207438151
+            },
+            {
+              "rgb_hex": "f5f5f5",
+              "count": 108169,
+              "ratio": 0.13754399617513022
+            },
+            {
+              "rgb_hex": "ffffff",
+              "count": 43438,
+              "ratio": 0.055234273274739586
+            },
+            {
+              "rgb_hex": "292939",
+              "count": 2123,
+              "ratio": 0.0026995340983072915
+            }
+          ]
+        },
+        "total_pixels": 786432,
+        "changed_pixels": 311705,
+        "pixel_change_ratio": 0.39635340372721356,
+        "identical_pixels": false
+      },
+      "oracle": {
+        "classification": "crash-dialog",
+        "interesting": true,
+        "crash_titles": [
+          "Wine Debugger",
+          "\u30d7\u30ed\u30b0\u30e9\u30e0 \u30a8\u30e9\u30fc"
+        ],
+        "error_titles": [],
+        "game_titles": [
+          "\u6771\u65b9\u7d05\u9b54\u90f7\u3000\uff5e the Embodiment of Scarlet Devil"
+        ],
+        "progress_probe": {
+          "probe_seconds": 12.002676959033124,
+          "first_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-06-after-stage-start.png",
+          "second_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-07-progress-probe.png",
+          "first_pixel_sha256": "22afa31bc305a8bf0ebe74c7a6f787478503b2dbdd9e3f5232b3d2977465cba2",
+          "second_pixel_sha256": "0d90293c9d802770310fa45b423f7cb1de4ab6112d937e9b9cd32ef5b14d5654",
+          "first_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 15808,
+            "top_color_ratio": 0.6344515482584635,
+            "top_two_color_ratio": 0.6787605285644531,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 498953,
+                "ratio": 0.6344515482584635
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 34846,
+                "ratio": 0.044308980305989586
+              },
+              {
+                "rgb_hex": "252536",
+                "count": 29931,
+                "ratio": 0.038059234619140625
+              },
+              {
+                "rgb_hex": "2c2d3b",
+                "count": 28768,
+                "ratio": 0.036580403645833336
+              }
+            ]
+          },
+          "second_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 1402,
+            "top_color_ratio": 0.780127207438151,
+            "top_two_color_ratio": 0.9176712036132812,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 613517,
+                "ratio": 0.780127207438151
+              },
+              {
+                "rgb_hex": "f5f5f5",
+                "count": 108169,
+                "ratio": 0.13754399617513022
+              },
+              {
+                "rgb_hex": "ffffff",
+                "count": 43438,
+                "ratio": 0.055234273274739586
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 2123,
+                "ratio": 0.0026995340983072915
+              }
+            ]
+          },
+          "total_pixels": 786432,
+          "changed_pixels": 311705,
+          "pixel_change_ratio": 0.39635340372721356,
+          "identical_pixels": false
+        }
+      },
+      "steps": [
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 1,
+            "state_name": "pre-input",
+            "cursor": 0,
+            "timer": 328
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 0,
+            "timer": 10
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 0,
+            "timer": 33
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 1,
+            "timer": 43
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 1,
+            "timer": 43
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 2,
+            "timer": 53
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 2,
+            "timer": 53
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 6,
+            "state_name": "unknown",
+            "cursor": 2,
+            "timer": 10
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 1,
+            "timer": 75
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 2,
+            "timer": 85
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 2,
+            "timer": 85
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 3,
+            "timer": 95
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 3,
+            "timer": 95
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 9,
+            "state_name": "character-select",
+            "cursor": 0,
+            "timer": 9
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 9,
+            "state_name": "character-select",
+            "cursor": 0,
+            "timer": 43
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 11,
+            "state_name": "shot-select",
+            "cursor": 0,
+            "timer": 9
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 11,
+            "state_name": "shot-select",
+            "cursor": 0,
+            "timer": 44
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 0,
+            "timer": 9
+          }
+        },
+        {
+          "key": "Up",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 0,
+            "timer": 44
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 5,
+            "timer": 54
+          }
+        },
+        {
+          "key": "Up",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 5,
+            "timer": 54
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 4,
+            "timer": 64
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 4,
+            "timer": 64
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 4,
+            "timer": 64
+          }
+        }
+      ],
+      "menu_observations": [
+        {
+          "label": "main-menu",
+          "readable": true,
+          "state": 2,
+          "state_name": "main-menu",
+          "cursor": 0,
+          "timer": 20
+        },
+        {
+          "label": "difficulty-select",
+          "readable": true,
+          "state": 7,
+          "state_name": "difficulty-select",
+          "cursor": 1,
+          "timer": 62
+        },
+        {
+          "label": "character-select",
+          "readable": true,
+          "state": 9,
+          "state_name": "character-select",
+          "cursor": 0,
+          "timer": 30
+        },
+        {
+          "label": "shot-select",
+          "readable": true,
+          "state": 11,
+          "state_name": "shot-select",
+          "cursor": 0,
+          "timer": 30
+        },
+        {
+          "label": "practice-stage-select",
+          "readable": true,
+          "state": 17,
+          "state_name": "practice-stage-select",
+          "cursor": 0,
+          "timer": 31
+        }
+      ],
+      "screenshots": [
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-00-title.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-01-main-menu.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-02-difficulty.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-03-character.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-04-shot.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-05-stage-select.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-06-after-stage-start.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-07-progress-probe.png"
+      ]
+    }
+  },
+  "baseline": {
+    "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline",
+    "report": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline/report.json",
+    "comparison": {
+      "classification": "baseline-oracle-drift",
+      "interesting": true,
+      "baseline_termination_reason": "game-window-live",
+      "mutant_termination_reason": "crash-dialog",
+      "baseline_control_oracle_classification": "game-window-live",
+      "mutant_control_oracle_classification": "crash-dialog",
+      "entered_stage_diff_ratio": 0.09375,
+      "progress_probe_diff_ratio": 0.4015159606933594,
+      "max_diff_ratio": 0.4015159606933594,
+      "thresholds": {
+        "equivalent_ratio": 0.001,
+        "visual_drift_ratio": 0.05
+      },
+      "comparisons": {
+        "entered_stage": {
+          "baseline_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline/control-06-after-stage-start.png",
+          "mutant_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-06-after-stage-start.png",
+          "baseline_pixel_sha256": "6cbf8821d2f16c69b63da04ccefb67b5774fc3f15c91ff7339e78fcbaee25ff7",
+          "mutant_pixel_sha256": "22afa31bc305a8bf0ebe74c7a6f787478503b2dbdd9e3f5232b3d2977465cba2",
+          "baseline_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 15909,
+            "top_color_ratio": 0.6344706217447916,
+            "top_two_color_ratio": 0.6787897745768229,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 498968,
+                "ratio": 0.6344706217447916
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 34854,
+                "ratio": 0.04431915283203125
+              },
+              {
+                "rgb_hex": "252536",
+                "count": 29893,
+                "ratio": 0.03801091512044271
+              },
+              {
+                "rgb_hex": "2c2d3b",
+                "count": 28745,
+                "ratio": 0.03655115763346354
+              }
+            ]
+          },
+          "mutant_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 15808,
+            "top_color_ratio": 0.6344515482584635,
+            "top_two_color_ratio": 0.6787605285644531,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 498953,
+                "ratio": 0.6344515482584635
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 34846,
+                "ratio": 0.044308980305989586
+              },
+              {
+                "rgb_hex": "252536",
+                "count": 29931,
+                "ratio": 0.038059234619140625
+              },
+              {
+                "rgb_hex": "2c2d3b",
+                "count": 28768,
+                "ratio": 0.036580403645833336
+              }
+            ]
+          },
+          "total_pixels": 786432,
+          "changed_pixels": 73728,
+          "pixel_change_ratio": 0.09375,
+          "identical_pixels": false
+        },
+        "progress_probe": {
+          "baseline_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline/control-07-progress-probe.png",
+          "mutant_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/control-07-progress-probe.png",
+          "baseline_pixel_sha256": "127fab47d4024703a5687a7bcd8f9e7cfc2d166416f2e90df036fa6d0bf28db7",
+          "mutant_pixel_sha256": "0d90293c9d802770310fa45b423f7cb1de4ab6112d937e9b9cd32ef5b14d5654",
+          "baseline_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 19700,
+            "top_color_ratio": 0.6259231567382812,
+            "top_two_color_ratio": 0.6685473124186198,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 492246,
+                "ratio": 0.6259231567382812
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 33521,
+                "ratio": 0.04262415568033854
+              },
+              {
+                "rgb_hex": "252536",
+                "count": 28770,
+                "ratio": 0.03658294677734375
+              },
+              {
+                "rgb_hex": "2c2d3b",
+                "count": 27619,
+                "ratio": 0.03511937459309896
+              }
+            ]
+          },
+          "mutant_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 1402,
+            "top_color_ratio": 0.780127207438151,
+            "top_two_color_ratio": 0.9176712036132812,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 613517,
+                "ratio": 0.780127207438151
+              },
+              {
+                "rgb_hex": "f5f5f5",
+                "count": 108169,
+                "ratio": 0.13754399617513022
+              },
+              {
+                "rgb_hex": "ffffff",
+                "count": 43438,
+                "ratio": 0.055234273274739586
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 2123,
+                "ratio": 0.0026995340983072915
+              }
+            ]
+          },
+          "total_pixels": 786432,
+          "changed_pixels": 315765,
+          "pixel_change_ratio": 0.4015159606933594,
+          "identical_pixels": false
+        }
+      },
+      "baseline_artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/baseline"
+    }
+  },
+  "limitations": [
+    "Launch-only mode still stops at process startup and does not prove stage ECL reached.",
+    "Practice automation currently covers only Reimu A via X11 keyboard injection.",
+    "Route play and dialogue skipping are not implemented yet."
+  ],
+  "expected_oracle": {
+    "classification": "crash-dialog",
+    "retail_signature_key": null
+  },
+  "expectation": {
+    "enabled": true,
+    "passed": true,
+    "checks": [
+      {
+        "field": "classification",
+        "expected": "crash-dialog",
+        "observed": "crash-dialog",
+        "passed": true
+      }
+    ],
+    "observed_classification": "crash-dialog",
+    "observed_retail_signature_key": "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger..."
+  }
+}

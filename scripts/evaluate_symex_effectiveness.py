@@ -24,7 +24,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REFERENCE_ROOT = REPO_ROOT.parent / "reference"
-DEFAULT_RETAIL_ROOT = REPO_ROOT.parent / "retail_validation"
+DEFAULT_RETAIL_ROOT = REPO_ROOT / "retail_validation"
 
 MODELED_RAW_STEP_PATHS = [
     "yielded",

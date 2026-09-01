@@ -1,0 +1,730 @@
+{
+  "source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/source-result/result.json",
+  "semantic_source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/source-result/result.json",
+  "source_game_dir": "/home/yann/yann/touhou/formal/retail_extract/th06-20260831-unar/th06",
+  "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline",
+  "game_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/game",
+  "wine_prefix": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/prefix",
+  "display": ":190",
+  "xvfb_screen_size": "1024x768x24",
+  "seed_name": "ecldata5.ecl",
+  "payload_path": null,
+  "payload_size": null,
+  "payload_sha256": null,
+  "config": {
+    "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/game/\u6771\u65b9\u7d05\u9b54\u90f7.cfg",
+    "initialized": true,
+    "changed": true,
+    "sha256_before": "b4165072c6d53dd8c04a9eb94c21ab2b69fe887b0b1105763252bdf559943e04",
+    "sha256_after": "52d03befd0258e371a8c22168ff9a57243a653f7345bb50738f558ceac2e6b0b",
+    "windowed_before": 0,
+    "windowed_after": 1,
+    "color_mode_16bit_before": 255,
+    "color_mode_16bit_after": 0,
+    "color_mode_16bit_requested": 0
+  },
+  "unlock_score": {
+    "source": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/game/\u5168\u5f00\u6863/score.dat",
+    "destination": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/game/score.dat",
+    "sha256": "54cd436d5d8a7a904190c792a977bf270ab1cb759fd72101e51e94d26b749c71",
+    "restored": true
+  },
+  "patched_archives": [],
+  "wineboot": null,
+  "run": {
+    "mode": "practice-stage",
+    "command": [
+      "/usr/bin/wine",
+      "\u6771\u65b9\u7d05\u9b54\u90f7.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/game",
+    "display": ":190",
+    "xvfb": {
+      "command": [
+        "/usr/bin/Xvfb",
+        ":190",
+        "-screen",
+        "0",
+        "1024x768x24",
+        "-nolisten",
+        "tcp"
+      ],
+      "display": ":190",
+      "log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/xvfb.log"
+    },
+    "log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/wine.log",
+    "prefix_log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/wineboot.log",
+    "returncode": -9,
+    "observed_returncode": null,
+    "cleanup_killed_process": true,
+    "timed_out": true,
+    "elapsed_seconds": 40.41436266899109,
+    "dry_run": false,
+    "startup_normalization": {
+      "mode": "auto",
+      "attempted": true,
+      "normalized": true,
+      "required": false,
+      "command": [
+        "/usr/bin/sudo",
+        "-n",
+        "/usr/bin/gdb",
+        "-q",
+        "-nx",
+        "-batch",
+        "-p",
+        "2276942",
+        "-x",
+        "/home/yann/yann/touhou/formal/reference/DanmakuFuzz/src/danmakufuzz/retail/normalize_th06_startup.py"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 4.522007703781128,
+      "marker": "DANMAKUFUZZ_TH06_STARTUP_NORMALIZED=1",
+      "log": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/gdb-startup-normalization.log"
+    },
+    "termination_reason": "game-window-live",
+    "retail_signature_key": "game-window-live",
+    "oracle": {
+      "classification": "game-window-live",
+      "interesting": false,
+      "sources": [
+        "window-census"
+      ],
+      "window_oracle_classification": "game-window-live",
+      "wine_log_classification": "no-crash-signature",
+      "wine_log_primary_signature": null,
+      "wine_log_normalized_primary_signature": null,
+      "observed_returncode": null,
+      "timed_out": true
+    },
+    "wine_log": {
+      "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/wine.log",
+      "classification": "no-crash-signature",
+      "interesting": false,
+      "primary_signature": null,
+      "normalized_primary_signature": null,
+      "crash_lines": [],
+      "error_lines": []
+    },
+    "control": {
+      "mode": "practice-stage",
+      "practice_stage": 5,
+      "difficulty": 3,
+      "window_id": "6291459",
+      "process_id": 2276942,
+      "stage_entry_wait_seconds": 3.0,
+      "stage_entry_min_frame": 60,
+      "progress_probe_seconds": 2.0,
+      "progress_probe_frames": 120,
+      "screen_size": "1024x768",
+      "entered_stage_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-06-after-stage-start.png",
+      "stage_entry_verification": {
+        "verified": true,
+        "expected_stage": 5,
+        "expected_difficulty": 3,
+        "minimum_frame": 60,
+        "reasons": [],
+        "runtime": {
+          "readable": true,
+          "frame": 61,
+          "stage": 5,
+          "difficulty": 3,
+          "time_stopped": false,
+          "in_menu": false,
+          "flags": {
+            "game_menu": 0,
+            "retry_menu": 0,
+            "gameplay_active": 1,
+            "completed": 0,
+            "practice": 1,
+            "demo_mode": 0
+          },
+          "supervisor": {
+            "wanted": 2,
+            "current": 2
+          }
+        },
+        "timed_out": false,
+        "wait_elapsed_seconds": 0.9925246720085852
+      },
+      "progress_verification": {
+        "verified": true,
+        "expected_stage": 5,
+        "expected_difficulty": 3,
+        "minimum_frame": 181,
+        "reasons": [],
+        "runtime": {
+          "readable": true,
+          "frame": 181,
+          "stage": 5,
+          "difficulty": 3,
+          "time_stopped": false,
+          "in_menu": false,
+          "flags": {
+            "game_menu": 0,
+            "retry_menu": 0,
+            "gameplay_active": 1,
+            "completed": 0,
+            "practice": 1,
+            "demo_mode": 0
+          },
+          "supervisor": {
+            "wanted": 2,
+            "current": 2
+          }
+        },
+        "timed_out": false,
+        "wait_elapsed_seconds": 1.7218490760424174
+      },
+      "progress_runtime": {
+        "readable": true,
+        "frame": 181,
+        "stage": 5,
+        "difficulty": 3,
+        "time_stopped": false,
+        "in_menu": false,
+        "flags": {
+          "game_menu": 0,
+          "retry_menu": 0,
+          "gameplay_active": 1,
+          "completed": 0,
+          "practice": 1,
+          "demo_mode": 0
+        },
+        "supervisor": {
+          "wanted": 2,
+          "current": 2
+        }
+      },
+      "window_census": {
+        "display": ":190",
+        "windows": [
+          {
+            "window_id": "10485761",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "1293",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "2097184",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "2097194",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "2097235",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "4194343",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "6291459",
+            "name": "\u6771\u65b9\u7d05\u9b54\u90f7\u3000\uff5e the Embodiment of Scarlet Devil",
+            "wm_class": "\"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\", \"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\"",
+            "pid": 2276942
+          },
+          {
+            "window_id": "6291460",
+            "name": "Default IME",
+            "wm_class": "\"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\", \"\\346\\235\\261\\346\\226\\271\\347\\264\\205\\351\\255\\224\\351\\203\\267.exe\"",
+            "pid": 2276942
+          },
+          {
+            "window_id": "8388609",
+            "name": "",
+            "wm_class": null,
+            "pid": null
+          },
+          {
+            "window_id": "8388610",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2276574
+          },
+          {
+            "window_id": "8388611",
+            "name": "Default IME",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2276574
+          },
+          {
+            "window_id": "8388612",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2276574
+          },
+          {
+            "window_id": "8388613",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2276574
+          },
+          {
+            "window_id": "8388614",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2276574
+          },
+          {
+            "window_id": "8388615",
+            "name": "",
+            "wm_class": "\"explorer.exe\", \"explorer.exe\"",
+            "pid": 2276574
+          }
+        ],
+        "window_names_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-window-names.txt",
+        "xwininfo_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-xwininfo.txt",
+        "census_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-window-census.json"
+      },
+      "progress_probe": {
+        "probe_seconds": 1.7218490760424174,
+        "first_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-06-after-stage-start.png",
+        "second_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-07-progress-probe.png",
+        "first_pixel_sha256": "3d598147d8daa3e502b22df2cbb9b8ad8b78cb909a1833498c2063fa54821244",
+        "second_pixel_sha256": "6d5d9512f5c9555042c5b106d73a3b5ea87a61d58585350b888d49cfa2817ca7",
+        "first_pixel_profile": {
+          "total_pixels": 786432,
+          "unique_colors": 15805,
+          "top_color_ratio": 0.634454091389974,
+          "top_two_color_ratio": 0.6787579854329427,
+          "top_colors": [
+            {
+              "rgb_hex": "000000",
+              "count": 498955,
+              "ratio": 0.634454091389974
+            },
+            {
+              "rgb_hex": "292939",
+              "count": 34842,
+              "ratio": 0.04430389404296875
+            },
+            {
+              "rgb_hex": "252536",
+              "count": 29915,
+              "ratio": 0.03803888956705729
+            },
+            {
+              "rgb_hex": "2c2d3b",
+              "count": 28770,
+              "ratio": 0.03658294677734375
+            }
+          ]
+        },
+        "second_pixel_profile": {
+          "total_pixels": 786432,
+          "unique_colors": 16201,
+          "top_color_ratio": 0.6345532735188802,
+          "top_two_color_ratio": 0.6771036783854166,
+          "top_colors": [
+            {
+              "rgb_hex": "000000",
+              "count": 499033,
+              "ratio": 0.6345532735188802
+            },
+            {
+              "rgb_hex": "292939",
+              "count": 33463,
+              "ratio": 0.04255040486653646
+            },
+            {
+              "rgb_hex": "252536",
+              "count": 28725,
+              "ratio": 0.036525726318359375
+            },
+            {
+              "rgb_hex": "2c2d3b",
+              "count": 27590,
+              "ratio": 0.035082499186197914
+            }
+          ]
+        },
+        "total_pixels": 786432,
+        "changed_pixels": 142252,
+        "pixel_change_ratio": 0.18088277180989584,
+        "identical_pixels": false
+      },
+      "oracle": {
+        "classification": "game-window-live",
+        "interesting": false,
+        "crash_titles": [],
+        "error_titles": [],
+        "game_titles": [
+          "\u6771\u65b9\u7d05\u9b54\u90f7\u3000\uff5e the Embodiment of Scarlet Devil"
+        ],
+        "progress_probe": {
+          "probe_seconds": 1.7218490760424174,
+          "first_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-06-after-stage-start.png",
+          "second_screenshot": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-07-progress-probe.png",
+          "first_pixel_sha256": "3d598147d8daa3e502b22df2cbb9b8ad8b78cb909a1833498c2063fa54821244",
+          "second_pixel_sha256": "6d5d9512f5c9555042c5b106d73a3b5ea87a61d58585350b888d49cfa2817ca7",
+          "first_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 15805,
+            "top_color_ratio": 0.634454091389974,
+            "top_two_color_ratio": 0.6787579854329427,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 498955,
+                "ratio": 0.634454091389974
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 34842,
+                "ratio": 0.04430389404296875
+              },
+              {
+                "rgb_hex": "252536",
+                "count": 29915,
+                "ratio": 0.03803888956705729
+              },
+              {
+                "rgb_hex": "2c2d3b",
+                "count": 28770,
+                "ratio": 0.03658294677734375
+              }
+            ]
+          },
+          "second_pixel_profile": {
+            "total_pixels": 786432,
+            "unique_colors": 16201,
+            "top_color_ratio": 0.6345532735188802,
+            "top_two_color_ratio": 0.6771036783854166,
+            "top_colors": [
+              {
+                "rgb_hex": "000000",
+                "count": 499033,
+                "ratio": 0.6345532735188802
+              },
+              {
+                "rgb_hex": "292939",
+                "count": 33463,
+                "ratio": 0.04255040486653646
+              },
+              {
+                "rgb_hex": "252536",
+                "count": 28725,
+                "ratio": 0.036525726318359375
+              },
+              {
+                "rgb_hex": "2c2d3b",
+                "count": 27590,
+                "ratio": 0.035082499186197914
+              }
+            ]
+          },
+          "total_pixels": 786432,
+          "changed_pixels": 142252,
+          "pixel_change_ratio": 0.18088277180989584,
+          "identical_pixels": false
+        }
+      },
+      "steps": [
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 1,
+            "state_name": "pre-input",
+            "cursor": 0,
+            "timer": 357
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 0,
+            "timer": 10
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 0,
+            "timer": 36
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 1,
+            "timer": 46
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 1,
+            "timer": 46
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 2,
+            "timer": 56
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 2,
+            "state_name": "main-menu",
+            "cursor": 2,
+            "timer": 56
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 6,
+            "state_name": "unknown",
+            "cursor": 2,
+            "timer": 10
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 1,
+            "timer": 76
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 2,
+            "timer": 86
+          }
+        },
+        {
+          "key": "Down",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 2,
+            "timer": 86
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 3,
+            "timer": 96
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 7,
+            "state_name": "difficulty-select",
+            "cursor": 3,
+            "timer": 96
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 9,
+            "state_name": "character-select",
+            "cursor": 0,
+            "timer": 10
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 9,
+            "state_name": "character-select",
+            "cursor": 0,
+            "timer": 45
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 11,
+            "state_name": "shot-select",
+            "cursor": 0,
+            "timer": 10
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 11,
+            "state_name": "shot-select",
+            "cursor": 0,
+            "timer": 44
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 0,
+            "timer": 9
+          }
+        },
+        {
+          "key": "Up",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 0,
+            "timer": 44
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 5,
+            "timer": 54
+          }
+        },
+        {
+          "key": "Up",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 5,
+            "timer": 54
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 4,
+            "timer": 64
+          }
+        },
+        {
+          "key": "z",
+          "hold_seconds": 0.02,
+          "settle_seconds": 0.1,
+          "menu_before": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 4,
+            "timer": 64
+          },
+          "menu_after": {
+            "readable": true,
+            "state": 17,
+            "state_name": "practice-stage-select",
+            "cursor": 4,
+            "timer": 64
+          }
+        }
+      ],
+      "menu_observations": [
+        {
+          "label": "main-menu",
+          "readable": true,
+          "state": 2,
+          "state_name": "main-menu",
+          "cursor": 0,
+          "timer": 20
+        },
+        {
+          "label": "difficulty-select",
+          "readable": true,
+          "state": 7,
+          "state_name": "difficulty-select",
+          "cursor": 1,
+          "timer": 62
+        },
+        {
+          "label": "character-select",
+          "readable": true,
+          "state": 9,
+          "state_name": "character-select",
+          "cursor": 0,
+          "timer": 30
+        },
+        {
+          "label": "shot-select",
+          "readable": true,
+          "state": 11,
+          "state_name": "shot-select",
+          "cursor": 0,
+          "timer": 30
+        },
+        {
+          "label": "practice-stage-select",
+          "readable": true,
+          "state": 17,
+          "state_name": "practice-stage-select",
+          "cursor": 0,
+          "timer": 30
+        }
+      ],
+      "screenshots": [
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-00-title.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-01-main-menu.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-02-difficulty.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-03-character.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-04-shot.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-05-stage-select.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-06-after-stage-start.png",
+        "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run2/baseline/control-07-progress-probe.png"
+      ]
+    }
+  },
+  "limitations": [
+    "This is a clean retail control run under the same practice automation and timing.",
+    "Practice automation currently covers only Reimu A via X11 keyboard injection.",
+    "Route play and dialogue skipping are not implemented yet."
+  ]
+}

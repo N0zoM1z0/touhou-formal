@@ -1,0 +1,89 @@
+{
+  "schema": "touhou-formal-retail-raw-symex-candidate-v1",
+  "formal_result_id": "ECL-RAW-STEP-WITNESS-MATERIALIZATION",
+  "lean_model": "TouhouFormal.ECL.rawStep",
+  "symex_command": [
+    "scripts/symex_materialize_raw_step.py",
+    "th06",
+    "jumped-before-buffer",
+    "1",
+    "0"
+  ],
+  "case_name": "formal-th06-raw-symex-jumped-before-buffer",
+  "mutant_name": "raw-symex-jumped-before-buffer-s00-i0000",
+  "source_archive": "/home/yann/yann/touhou/formal/retail_extract/th06-20260831-unar/th06/紅魔郷ST.DAT",
+  "source_payload_sha256": "50b5c4777a56910148466c7e5ea1c8dadc126e706420604d52421a49bf861d1b",
+  "seed_name": "ecldata5.ecl",
+  "override_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111636Z/source-result/override",
+  "payload_sha256": "27e923256d984fac3c2d811eacc2ccd00e42a4719ca032d34be5b680959084e3",
+  "symex": {
+    "activeMask": 1,
+    "fixture": {
+      "action": "jumped",
+      "cursorClass": "before-buffer",
+      "decodedDifficultyMask": "1",
+      "decodedNextOffset": "0",
+      "decodedOpcode": "2",
+      "decodedOperandMask": "-",
+      "decodedTime": "0",
+      "hex": "00000000020000000001000000000000ffffffff",
+      "matchesPath": "true",
+      "size": "20",
+      "targetCursor": "-1",
+      "targetTime": "0"
+    },
+    "overrideMask": 0,
+    "path": "jumped-before-buffer",
+    "status": "sat",
+    "title": "th06",
+    "witness": {
+      "activeMask": 1,
+      "bufferSize": 20,
+      "currentTime": 0,
+      "difficultyPass": true,
+      "instrTime": 0,
+      "instructionMask": 1,
+      "jumpDisplacement": -1,
+      "jumpTargetTime": 0,
+      "nextOffset": 0,
+      "opcode": 2,
+      "operandMask": 0,
+      "overrideMask": 0,
+      "requiredDifficultyMask": 1
+    }
+  },
+  "mutation_metadata": {
+    "family": "raw-ecl-symbolic-step",
+    "symex_path": "jumped-before-buffer",
+    "active_mask": 1,
+    "override_mask": 0,
+    "fixture_hex": "00000000020000000001000000000000ffffffff",
+    "fixture_size": 20,
+    "site_key": "sub:0000:instr:0000",
+    "old_instruction": {
+      "time": 0,
+      "opcode": 97,
+      "offset_to_next": 16,
+      "skip_for_difficulty": 255,
+      "args_hex": "0c000000"
+    },
+    "new_instruction": {
+      "time": 0,
+      "opcode": 2,
+      "offset_to_next": 0,
+      "skip_for_difficulty": 1,
+      "args_hex": "00000000ffffffff"
+    }
+  },
+  "sites": [
+    {
+      "site_kind": "raw-sub-instruction",
+      "sub_index": 0,
+      "instruction_index": 0
+    }
+  ],
+  "limitations": [
+    "This lowers a symbolic raw-step witness into a reachable TH06 ECL site; it is not a retail finding until confirm_case records a stable oracle.",
+    "The current DanmakuFuzz ECL serializer is TH06-shaped; TH07/TH08 retail lowering needs separate tooling."
+  ]
+}

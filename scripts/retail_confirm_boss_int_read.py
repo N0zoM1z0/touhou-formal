@@ -25,7 +25,7 @@ from retail_pbg import (
 
 FORMAL_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_ROOT = FORMAL_ROOT.parent
-DEFAULT_RETAIL_ROOT = WORKSPACE_ROOT / "retail_validation"
+DEFAULT_RETAIL_ROOT = FORMAL_ROOT / "retail_validation"
 DEFAULT_SOURCE_GAME_DIRS = {
     "th07": WORKSPACE_ROOT / "retail_extract" / "th07-20260901-unar" / "[th07] 东方妖妖梦 (日文版)",
     "th08": WORKSPACE_ROOT / "retail_extract" / "th08-20260901-unar" / "[th08] 东方永夜抄 (日文版)",

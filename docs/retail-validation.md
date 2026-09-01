@@ -62,7 +62,7 @@ Prepare only:
 ```bash
 python3 scripts/retail_confirm_th06_arg0_256.py \
   --source-game-dir /home/yann/yann/touhou/formal/retail_extract/th06-20260831-unar/th06 \
-  --artifact-dir /home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-prepare \
+  --artifact-dir retail_validation/formal-th06-stage5-arg0-256-prepare \
   --prepare-only
 ```
 
@@ -71,7 +71,7 @@ Full confirmation command used on 2026-08-31:
 ```bash
 python3 scripts/retail_confirm_th06_arg0_256.py \
   --source-game-dir /home/yann/yann/touhou/formal/retail_extract/th06-20260831-unar/th06 \
-  --artifact-dir /home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run3-long-probe \
+  --artifact-dir retail_validation/formal-th06-stage5-arg0-256-run3-long-probe \
   --repeat 1 \
   --timeout-seconds 28 \
   --stage-entry-wait-seconds 4 \
@@ -83,9 +83,9 @@ python3 scripts/retail_confirm_th06_arg0_256.py \
 Observed report:
 
 - result JSON:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/result.json`
+  `retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/result.json`
 - override payload:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/override/data/ecldata5.ecl`
+  `retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/override/data/ecldata5.ecl`
 - mutated payload SHA-256:
   `2ff0c53669575690e60298536be0f43d32affa7be1e6f9073f793c5488d02304`
 - patched archive SHA-256:
@@ -138,13 +138,13 @@ python3 scripts/retail_confirm_th06_raw_symex.py \
 Observed report:
 
 - result JSON:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/result.json`
+  `retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/source-result/result.json`
 - repeated summary:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/report.json`
+  `retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/report.json`
 - run reports:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-001/report.json`
+  `retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-001/report.json`
   and
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/report.json`
+  `retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/run-002/report.json`
 - Lean/Z3 materialized raw instruction:
   `00000000020000000008000000000000ffffffff`
 - mutated payload SHA-256:
@@ -199,11 +199,11 @@ python3 scripts/retail_confirm_boss_int_read.py th08 \
 Observed report:
 
 - artifact:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z`
+  `retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z`
 - root report:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/report.json`
+  `retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/report.json`
 - source result:
-  `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/source-result/result.json`
+  `retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/source-result/result.json`
 - witness bytes:
   `000000005600180000020200000000801027000000000000`
 - selected placement:
@@ -229,9 +229,9 @@ generic Wine oracle did not classify them as crashes:
 
 | Case | Artifact | Oracle |
 | --- | --- | --- |
-| TH07 `boss-int-null-deref`, active mask `2` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024506Z` | `game-window-live` |
-| TH07 `boss-int-index-at-or-past-array`, active mask `2` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
-| TH08 `boss-int-index-at-or-past-array`, active mask `2` | `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
+| TH07 `boss-int-null-deref`, active mask `2` | `retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024506Z` | `game-window-live` |
+| TH07 `boss-int-index-at-or-past-array`, active mask `2` | `retail_validation/formal-th07-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
+| TH08 `boss-int-index-at-or-past-array`, active mask `2` | `retail_validation/formal-th08-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
 
 These are still useful calibration cases. The formal OOB property is a memory
 safety statement about `g_EnemyManager.bosses[index]`, not a guarantee that the
@@ -279,10 +279,10 @@ Observed reports:
 
 | Case | Witness bytes | Placement | Patched archive SHA-256 | Artifact | Oracle |
 | --- | --- | --- | --- | --- | --- |
-| TH07 `boss-float-null-deref` | `000000002c001800000802000000008000501c4600000000` | `timeline1/instr0 -> sub1/instr1` | `49000c3748a68bf371d7e6adc3183fe0af03ded16142c1a843a0a27427405a2f` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z` | `game-window-live` |
-| TH07 `boss-float-index-at-or-past-array` | `000000002c00180000080200000000800000008008000000` | `timeline1/instr0 -> sub1/instr1` | `7f0c12f8df75b2a7c702cd1767f77194f9812f25b107271e59a9468a1f18fd60` | `/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z` | `game-window-live` |
-| TH08 `boss-float-null-guarded-skip` | `000000005700180000080200000000800000008000000000` | `timeline0/instr0 -> sub14/instr1` | `9d56e04b9e83fc1a85ebbc83fc2e858b070ae629b19db22511576599917b545c` | `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z` | `game-window-live` |
-| TH08 `boss-float-index-at-or-past-array` | `000000005700180000080200000000800000008008000000` | `timeline0/instr0 -> sub14/instr1` | `419c24e1041b5d7de7a918b97c25cdf25256f436460d81c8e98e12593a83811f` | `/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-index-at-or-past-array-20260901T034207Z` | `game-window-live` |
+| TH07 `boss-float-null-deref` | `000000002c001800000802000000008000501c4600000000` | `timeline1/instr0 -> sub1/instr1` | `49000c3748a68bf371d7e6adc3183fe0af03ded16142c1a843a0a27427405a2f` | `retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z` | `game-window-live` |
+| TH07 `boss-float-index-at-or-past-array` | `000000002c00180000080200000000800000008008000000` | `timeline1/instr0 -> sub1/instr1` | `7f0c12f8df75b2a7c702cd1767f77194f9812f25b107271e59a9468a1f18fd60` | `retail_validation/formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z` | `game-window-live` |
+| TH08 `boss-float-null-guarded-skip` | `000000005700180000080200000000800000008000000000` | `timeline0/instr0 -> sub14/instr1` | `9d56e04b9e83fc1a85ebbc83fc2e858b070ae629b19db22511576599917b545c` | `retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z` | `game-window-live` |
+| TH08 `boss-float-index-at-or-past-array` | `000000005700180000080200000000800000008008000000` | `timeline0/instr0 -> sub14/instr1` | `419c24e1041b5d7de7a918b97c25cdf25256f436460d81c8e98e12593a83811f` | `retail_validation/formal-th08-boss-float-boss-float-index-at-or-past-array-20260901T034207Z` | `game-window-live` |
 
 These four runs are calibration evidence. The formal model is finding source
 memory-safety path classes at the opcode boundary. The current retail oracle

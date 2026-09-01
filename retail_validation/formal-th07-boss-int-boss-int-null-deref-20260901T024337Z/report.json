@@ -1,0 +1,34 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024337Z",
+  "source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024337Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024337Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024337Z/game/th07.dat",
+      "archive_kind": "th07-pbg4",
+      "sha256": "8b9e3bcf7b93d6dd966272918d42b1e679a17bb90232c28d277f43fee049efd5",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 44920
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024337Z/game/th07.cfg",
+    "source": "generated-source-backed-default",
+    "size": 56,
+    "sha256": "abbe42c3a586fe8bcd733b6d10f9104ef73cea4782935a65d83b89a3f4d58b65",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 52,
+    "opts": 17475,
+    "safe_video_flags": true,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 52
+    }
+  },
+  "prepare_only": true
+}

@@ -1,0 +1,205 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z",
+  "source_result": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/game/th08.dat",
+      "archive_kind": "th08-pbgz",
+      "sha256": "9d56e04b9e83fc1a85ebbc83fc2e858b070ae629b19db22511576599917b545c",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 45848
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/game/th08.cfg",
+    "source": "generated-source-backed-default",
+    "size": 60,
+    "sha256": "f622d5eab63e9754a6034efe8b9e3799671fb024fdde911d77525ec68c12e74a",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 56,
+    "opts": 1,
+    "safe_video_flags": false,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 56
+    }
+  },
+  "prepare_only": false,
+  "wine_probe": {
+    "mode": "generic-new-game-key-probe",
+    "title": "th08",
+    "command": [
+      "wine",
+      "th08.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/game",
+    "display": ":210",
+    "wine_prefix": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/prefix",
+    "wineboot_log": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/wineboot.log",
+    "wine_log": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/wine.log",
+    "keys": [
+      "z",
+      "z",
+      "Down",
+      "Down",
+      "Down",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "control_error": null,
+    "screenshots": [
+      "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/probe-00-launch-window.png",
+      "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/probe-01-after-input.png",
+      "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/probe-02-final.png"
+    ],
+    "screenshot_summary": {
+      "count": 3,
+      "decoded_count": 3,
+      "all_decoded_black": false,
+      "captures": [
+        {
+          "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/probe-00-launch-window.png",
+          "sha256": "e9236c745a5a9449f874f8780e699c5d2ee63441370d3dbd64cdf0e71edfdb00",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 60,
+          "black_ratio": 0.9999237060546875,
+          "max_byte": 255,
+          "mean_byte": 0.0194549560546875
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/probe-01-after-input.png",
+          "sha256": "7639d0f305802e1bf159fde045c6102239be3eb31dad5915c50f6c674c8bd5cc",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 212608,
+          "black_ratio": 0.7296549479166667,
+          "max_byte": 255,
+          "mean_byte": 22.857771131727432
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/probe-02-final.png",
+          "sha256": "7639d0f305802e1bf159fde045c6102239be3eb31dad5915c50f6c674c8bd5cc",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 212608,
+          "black_ratio": 0.7296549479166667,
+          "max_byte": 255,
+          "mean_byte": 22.857771131727432
+        }
+      ]
+    },
+    "elapsed_seconds": 39.922080993652344,
+    "window_census": {
+      "display": ":210",
+      "windows": [
+        {
+          "window_id": "1293",
+          "name": ""
+        },
+        {
+          "window_id": "6291457",
+          "name": ""
+        },
+        {
+          "window_id": "4194344",
+          "name": ""
+        },
+        {
+          "window_id": "6291459",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "6291458",
+          "name": ""
+        },
+        {
+          "window_id": "6291460",
+          "name": ""
+        },
+        {
+          "window_id": "10485761",
+          "name": ""
+        },
+        {
+          "window_id": "6291461",
+          "name": ""
+        },
+        {
+          "window_id": "6291462",
+          "name": ""
+        },
+        {
+          "window_id": "6291463",
+          "name": ""
+        },
+        {
+          "window_id": "2097184",
+          "name": ""
+        },
+        {
+          "window_id": "2097194",
+          "name": ""
+        },
+        {
+          "window_id": "8388616",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "8388615",
+          "name": "東方永夜抄　～ Imperishable Night. ver 1.00d"
+        },
+        {
+          "window_id": "2097267",
+          "name": ""
+        }
+      ],
+      "window_names_path": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/window-names.txt"
+    },
+    "wine_summary": {
+      "path": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/wine.log",
+      "classification": "no-crash-signature",
+      "primary_signature": null,
+      "crash_lines": [],
+      "error_lines": []
+    },
+    "oracle": {
+      "classification": "game-window-live",
+      "interesting": false,
+      "window_names": [
+        "",
+        "",
+        "",
+        "Default IME",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Default IME",
+        "東方永夜抄　～ Imperishable Night. ver 1.00d",
+        ""
+      ],
+      "crash_titles": [],
+      "wine_log_classification": "no-crash-signature",
+      "wine_log_primary_signature": null,
+      "returncode": null,
+      "timed_out": true
+    }
+  }
+}

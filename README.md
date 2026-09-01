@@ -220,7 +220,9 @@ read-only and records archive
 hashes plus executable/data CRCs before any Wine validation. Retail validation
 scripts operate on isolated copies under
 `/home/yann/yann/touhou/formal/retail_extract` and
-`/home/yann/yann/touhou/formal/retail_validation`.
+the repository's ignored-by-default `retail_validation/` tree. Small
+`result.json` and `report.json` evidence files in that tree are committed;
+retail game files, Wine prefixes, screenshots, and mutated payloads are not.
 
 Current retained results are summarized in
 [`docs/formal-results.md`](docs/formal-results.md). The current formal-vs-fuzz

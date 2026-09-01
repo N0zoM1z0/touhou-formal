@@ -1,0 +1,26 @@
+{
+  "schema": "touhou-formal-retail-counterexample-v1",
+  "formal_result_id": "TH06-ECL-SUBTABLE-ARG0-256",
+  "lean_theorem": "TouhouFormal.TH06.rawOneSubArg0256_shared_counterexample",
+  "smt_query": "lake exe smt th06-sub-oob | z3 -in",
+  "case_name": "formal-stage5-arg0-256",
+  "mutant_name": "timeline-arg0-256",
+  "source_archive": "/home/yann/yann/touhou/formal/retail_extract/th06-20260831-unar/th06/紅魔郷ST.DAT",
+  "source_payload_sha256": "50b5c4777a56910148466c7e5ea1c8dadc126e706420604d52421a49bf861d1b",
+  "seed_name": "ecldata5.ecl",
+  "override_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/source-result/override",
+  "payload_sha256": "2ff0c53669575690e60298536be0f43d32affa7be1e6f9073f793c5488d02304",
+  "mutation_metadata": {
+    "family": "timeline-arg0",
+    "field_name": "arg0",
+    "value": 256,
+    "site_key": "timeline:0001",
+    "model_fault": "EclManager.CallEclSub subTable out-of-bounds read"
+  },
+  "sites": [
+    {
+      "site_kind": "timeline",
+      "instruction_index": 1
+    }
+  ]
+}

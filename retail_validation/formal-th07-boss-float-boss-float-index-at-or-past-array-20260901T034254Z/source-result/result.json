@@ -1,0 +1,119 @@
+{
+  "schema": "touhou-formal-retail-boss-float-read-candidate-v1",
+  "formal_result_id": "TH07-ECL-BOSS-FLOAT-BOSS-FLOAT-INDEX-AT-OR-PAST-ARRAY",
+  "lean_model": "TouhouFormal.ECL.rawBossFloatReadStep",
+  "symex_command": [
+    "scripts/symex_materialize_boss_float_read.py",
+    "th07",
+    "boss-float-index-at-or-past-array",
+    "8",
+    "0"
+  ],
+  "case_name": "formal-th07-boss-float-boss-float-index-at-or-past-array",
+  "mutant_name": "boss-float-boss-float-index-at-or-past-array-s01-i0001",
+  "source_game_dir": "/home/yann/yann/touhou/formal/retail_extract/th07-20260901-unar/[th07] 东方妖妖梦 (日文版)",
+  "source_archive": "/home/yann/yann/touhou/formal/retail_extract/th07-20260901-unar/[th07] 东方妖妖梦 (日文版)/th07.dat",
+  "source_archive_sha256": "5fe8d772191505bf208f966da8070ee0a9e0d0ee8567a8827ef3a362bcb0c287",
+  "source_payload_sha256": "c443e28b86cb20eeb7613d786c7ff667c2bd39726bf7ffbb38a3c0e354db1b40",
+  "source_plain_payload_sha256": "c443e28b86cb20eeb7613d786c7ff667c2bd39726bf7ffbb38a3c0e354db1b40",
+  "seed_name": "ecldata1.ecl",
+  "override_dir": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z/source-result/override",
+  "payload_sha256": "8b7cf0c60fb5bcd10022779402b2bb61ef7acf6e964e71547dfce092cf3cb005",
+  "symex": {
+    "activeMask": 8,
+    "fixture": {
+      "action": "fault:out-of-bounds-read",
+      "bossIndexKind": "-",
+      "bossIndexValue": "-",
+      "bossPresent": "-",
+      "decodedDifficultyMask": "8",
+      "decodedNextOffset": "24",
+      "decodedOpcode": "44",
+      "decodedOperandMask": "2",
+      "decodedTime": "0",
+      "faultDetail": "source boss-indexed float read reaches g_EnemyManager.bosses[index] for opcode 44",
+      "faultKind": "out-of-bounds-read",
+      "hex": "000000002c00180000080200000000800000008008000000",
+      "matchesPath": "true",
+      "outputFlagEnabled": "-",
+      "outputKind": "-",
+      "outputSelectorKnown": "-",
+      "result": "-",
+      "size": "24",
+      "value": "-",
+      "valueKind": "-"
+    },
+    "overrideMask": 0,
+    "path": "boss-float-index-at-or-past-array",
+    "status": "sat",
+    "title": "th07",
+    "witness": {
+      "activeMask": 8,
+      "bossIndexHost": -2147483648,
+      "bossIndexRaw": 8,
+      "bossPresent": false,
+      "bufferSize": 24,
+      "currentTime": 0,
+      "difficultyPass": true,
+      "instrTime": 0,
+      "instructionMask": 8,
+      "nextOffset": 24,
+      "opcode": 44,
+      "operandMask": 2,
+      "outputHostBefore": 2147483647,
+      "outputRaw": -2147483648,
+      "overrideMask": 0,
+      "requiredDifficultyMask": 8,
+      "valueHost": -2147483648,
+      "valueRaw": -2147483648
+    }
+  },
+  "mutation_metadata": {
+    "family": "boss-float-read-symbolic-step",
+    "boss_read_family": "boss-float",
+    "symex_path": "boss-float-index-at-or-past-array",
+    "active_mask": 8,
+    "override_mask": 0,
+    "site_selection": "reachable-timeline-spawn",
+    "fixture_hex": "000000002c00180000080200000000800000008008000000",
+    "fixture_size": 24,
+    "th08_crypt_key_index": null,
+    "timeline_spawn_source": {
+      "timeline_index": 1,
+      "instruction_index": 0,
+      "file_offset": 43404,
+      "time": 1,
+      "opcode": 0,
+      "size": 32,
+      "first_arg_sub_index": 1,
+      "difficulty_mask": null
+    },
+    "site_key": "sub:0001:instr:0001",
+    "old_instruction": {
+      "file_offset": 396,
+      "time": 0,
+      "opcode": 101,
+      "size": 24,
+      "difficulty_mask": 255,
+      "operand_mask": 0,
+      "hex": "000000006500180000ff0000000000000000000000000042"
+    },
+    "new_instruction": {
+      "file_offset": 396,
+      "hex": "000000002c00180000080200000000800000008008000000"
+    }
+  },
+  "sites": [
+    {
+      "site_kind": "raw-sub-instruction",
+      "sub_index": 1,
+      "instruction_index": 1,
+      "file_offset": 396
+    }
+  ],
+  "limitations": [
+    "This preserves the original ECL layout and patches one equal-sized raw instruction.",
+    "Default site selection uses source-backed timeline spawn opcodes, not dynamic trace coverage.",
+    "Retail execution is a black-box Wine probe for TH07/TH08, not yet the TH06 address-level oracle."
+  ]
+}
