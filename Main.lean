@@ -265,6 +265,29 @@ private def describeShootingOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeAnimationOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawAnimationOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "hostCall=" ++ reprStr effect.hostCall ++
+              " moveScripts=" ++ reprStr effect.movementScriptsWrite ++
+              " deathScripts=" ++ reprStr effect.deathScriptsWrite ++
+              " scriptTable=" ++ reprStr effect.primaryScriptTableWrite ++
+              " bankFlag=" ++ reprStr effect.alternateBankFlagWrite ++
+              " autoRotate=" ++ reprStr effect.autoRotateWrite ++
+              " pendingInterrupt=" ++
+                reprStr effect.primaryPendingInterruptWrite ++
+              " rotZ=" ++ reprStr effect.primaryRotationZWrite
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeBulletPatternOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBulletPatternOutcome) :
     String :=
@@ -515,6 +538,17 @@ def main : IO Unit := do
   IO.println s!"TH08 random interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th08RandomIntervalOutcome}"
   IO.println s!"TH06 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th06OffsetOutcome}"
   IO.println s!"TH08 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th08OffsetOutcome}"
+  IO.println ""
+  IO.println "Animation controls"
+  IO.println s!"TH06 animation opcode count: {TouhouFormal.Search.Animation.animationOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 animation opcode count: {TouhouFormal.Search.Animation.animationOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 animation opcode count: {TouhouFormal.Search.Animation.animationOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 set ANM: {describeAnimationOutcome TouhouFormal.Search.Animation.th06SetAnmOutcome}"
+  IO.println s!"TH06 pose ANM: {describeAnimationOutcome TouhouFormal.Search.Animation.th06PoseOutcome}"
+  IO.println s!"TH07 set ANM: {describeAnimationOutcome TouhouFormal.Search.Animation.th07SetAnmOutcome}"
+  IO.println s!"TH08 sequential alternate ANM: {describeAnimationOutcome TouhouFormal.Search.Animation.th08SequentialOutcome}"
+  IO.println s!"TH08 special alternate ANM: {describeAnimationOutcome TouhouFormal.Search.Animation.th08SpecialAlternateOutcome}"
+  IO.println s!"TH08 primary interrupt: {describeAnimationOutcome TouhouFormal.Search.Animation.th08InterruptOutcome}"
   IO.println ""
   IO.println "Bullet-pattern controls"
   IO.println s!"TH06 bullet-pattern opcode count: {TouhouFormal.Search.BulletPattern.bulletPatternOpcodeCount TouhouFormal.TH06.headerShape}"

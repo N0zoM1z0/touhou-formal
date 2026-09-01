@@ -76,6 +76,10 @@ def eclOpcodeDisableShooting : Int := 75
 def eclOpcodeEnableShooting : Int := 76
 def eclOpcodeSpawnPreviousPattern : Int := 77
 def eclOpcodeSetShootOffset : Int := 78
+def eclOpcodeSetAnm : Int := 95
+def eclOpcodeSetMoveAnm : Int := 96
+def eclOpcodeSetSubAnm : Int := 97
+def eclOpcodeSetDeathAnm : Int := 98
 def eclOpcodeSetHitboxSize : Int := 101
 def eclOpcodeSetGrazeSize : Int := 153
 def eclOpcodeSetContactHitbox : Int := 102
@@ -97,6 +101,11 @@ def eclOpcodeBindTimerCallbackToDeath : Int := 133
 def eclOpcodeSetPeriodicCallback : Int := 144
 def eclOpcodeSetLifeCallback : Int := 148
 def eclOpcodeRandomExitAngle : Int := 155
+def eclOpcodeSetVmAutoRotate : Int := 120
+def eclOpcodeSetPrimaryVmInterrupt : Int := 128
+def eclOpcodeSetVmInterrupt : Int := 129
+def eclOpcodeSetPrimaryVmRotZ : Int := 150
+def enemyAnmScriptBase : Int := 0x900
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
@@ -252,6 +261,30 @@ def eclEvidence : List TouhouFormal.SourceRef :=
         startLine := 1265
         endLine := 1329
         claim := "Bullet-pattern opcodes 64 through 72 skip dead enemies, derive aim mode from the opcode, resolve packed sprite/color plus count/float operands with their shifted mask bits, omit rank and clamps during spellcards, and let disableBullets suppress only the spawn call." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1197
+        endLine := 1216
+        claim := "ECL_SET_ANM resolves operand 0, adds ANM_SCRIPT_ENEMY_ARRAY, and runs the primary VM; ECL_SET_SUB_ANM diagnoses only high indexes and still accesses enemy->vms[index]." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1340
+        endLine := 1344
+        claim := "ECL_SET_DEATH_ANM copies three raw bytes from args[0].c into the death-animation fields." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1637
+        endLine := 1644
+        claim := "ECL_SET_MOVE_ANM copies five packed i16 movement-animation scripts and sets anmExFlags to 255." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1797
+        endLine := 1798
+        claim := "ECL_SET_VM_AUTO_ROTATE assigns raw args[0].b[0] into a one-bit primaryVmAutoRotate field." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1861
+        endLine := 1865
+        claim := "ECL_SET_PRIMARY_VM_INTERRUPT writes a resolved integer into primaryVm.pendingInterrupt; ECL_SET_VM_INTERRUPT indexes the secondary VM array without a bounds check." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1957
+        endLine := 1958
+        claim := "ECL_SET_PRIMARY_VM_ROT_Z resolves one float operand and writes primaryVm.rotation.z." },
       { path := "reference/th07/src/th07/EclManager.cpp"
         startLine := 1670
         endLine := 1672
@@ -673,6 +706,39 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          animationOps :=
+            [ { opcode := eclOpcodeSetAnm
+                kind := .setPrimaryScript
+                scriptSource := some (.intRValue 0)
+                scriptBase := enemyAnmScriptBase
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetMoveAnm
+                kind := .setMovementScripts
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI16, halfIndex := 0 },
+                    { operandIndex := 0, policy := .rawI16, halfIndex := 1 },
+                    { operandIndex := 1, policy := .rawI16, halfIndex := 0 },
+                    { operandIndex := 1, policy := .rawI16, halfIndex := 1 },
+                    { operandIndex := 2, policy := .rawI16, halfIndex := 0 } ] },
+              { opcode := eclOpcodeSetDeathAnm
+                kind := .setDeathScripts
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte, byteIndex := 0 },
+                    { operandIndex := 0, policy := .rawByte, byteIndex := 1 },
+                    { operandIndex := 0, policy := .rawByte, byteIndex := 2 } ] },
+              { opcode := eclOpcodeSetVmAutoRotate
+                kind := .setAutoRotate
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte } ] },
+              { opcode := eclOpcodeSetPrimaryVmInterrupt
+                kind := .setPrimaryInterrupt
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetPrimaryVmRotZ
+                kind := .setPrimaryRotationZ
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ] } ]
           bulletPatternFamilies :=
             [ { firstOpcode := eclOpcodeSpawnBulletPatternFirst
                 lastOpcode := eclOpcodeSpawnBulletPatternLast

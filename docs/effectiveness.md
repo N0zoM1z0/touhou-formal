@@ -8,7 +8,7 @@ Short answer: it is already better than fuzzing for the modeled VM-core
 dispatch skeleton, the first shared opcode-body slice, the integer resolver,
 the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
 the CALL/RET/conditional-CALL slices. It is not yet better than fuzzing for the
-full ECL/ANM VM, because most gameplay host effects, callbacks, and
+full ECL/ANM VM, because lasers, item/enemy lifecycle, full ANM execution, and
 multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
@@ -563,16 +563,17 @@ jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
 movement state writes, timed direction/position interpolation, orbit movement,
 enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior, zero
 divisors, shooting-control state writes, primary bullet-pattern descriptor
-construction/gates, callback configuration, interrupt entry, and signed idiv overflow. Most gameplay host effects
+construction/gates, animation-control state writes, callback configuration,
+interrupt entry, and signed idiv overflow. Most gameplay host effects
 and multi-instruction state composition remain outside the current model.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 94: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 42 |
-| TH07 | 159 `EclOpcode` symbols | 97: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 62 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 95: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 89 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 99: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 37 |
+| TH07 | 159 `EclOpcode` symbols | 103: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 56 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 105: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 79 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -592,7 +593,7 @@ Not covered:
   computation, float division/fmod edge cases, and other C/C++ arithmetic
   hazards;
 - BulletManager allocation/transform execution, lasers, enemy lifecycle, item,
-  ANM, sound, and callback side effects;
+  full ANM execution, sound, and callback trigger side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
@@ -626,6 +627,9 @@ complete for the implemented TH06 conditional-CALL abstraction;
 complete for the implemented primary bullet-pattern descriptor/gate
   abstraction, with source-side f32 arithmetic supplied by the explicit host
   boundary;
+complete for the implemented animation-control abstraction, including primary
+  ANM host calls, packed move/death fields, TH08 script tables, bank flag
+  writes, primary interrupts, and primary rotation-Z writes;
 complete for the implemented callback-configuration abstraction, including
   partial effects before indexed host-write faults;
 complete for the implemented explicit interrupt table/entry abstraction,

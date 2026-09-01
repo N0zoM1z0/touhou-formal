@@ -753,6 +753,105 @@ structure RawShootingOpShape where
   zeroOffsetZ : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawAnimationBank where
+  | primary
+  | alternate
+deriving Repr, DecidableEq
+
+def RawAnimationBank.name : RawAnimationBank -> String
+  | .primary => "primary"
+  | .alternate => "alternate"
+
+inductive RawAnimationBankPolicy where
+  | fixed (bank : RawAnimationBank)
+  | runtimeFlag
+deriving Repr, DecidableEq
+
+def RawAnimationBankPolicy.name : RawAnimationBankPolicy -> String
+  | .fixed bank => "fixed-" ++ bank.name
+  | .runtimeFlag => "runtime-flag"
+
+inductive RawAnimationScriptSource where
+  | intRValue (operandIndex : Nat)
+  | rawI32 (operandIndex : Nat)
+  | runtimeSpecial
+deriving Repr, DecidableEq
+
+def RawAnimationScriptSource.name : RawAnimationScriptSource -> String
+  | .intRValue operandIndex => "int-rvalue-" ++ toString operandIndex
+  | .rawI32 operandIndex => "raw-i32-" ++ toString operandIndex
+  | .runtimeSpecial => "runtime-special"
+
+inductive RawAnimationIntInputPolicy where
+  | intRValue
+  | rawI32
+  | rawByte
+  | rawU16ToI16
+  | rawI16
+deriving Repr, DecidableEq
+
+def RawAnimationIntInputPolicy.name : RawAnimationIntInputPolicy -> String
+  | .intRValue => "int-rvalue"
+  | .rawI32 => "raw-i32"
+  | .rawByte => "raw-byte"
+  | .rawU16ToI16 => "raw-u16-to-i16"
+  | .rawI16 => "raw-i16"
+
+structure RawAnimationIntInputShape where
+  operandIndex : Nat
+  policy : RawAnimationIntInputPolicy
+  byteIndex : Nat := 0
+  halfIndex : Nat := 0
+deriving Repr, DecidableEq
+
+inductive RawAnimationFloatInputPolicy where
+  | floatRValue
+  | rawBits
+deriving Repr, DecidableEq
+
+def RawAnimationFloatInputPolicy.name : RawAnimationFloatInputPolicy -> String
+  | .floatRValue => "float-rvalue"
+  | .rawBits => "raw-bits"
+
+structure RawAnimationFloatInputShape where
+  operandIndex : Nat
+  policy : RawAnimationFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawAnimationOpKind where
+  | setPrimaryScript
+  | setPrimaryScriptTableSequential
+  | setPrimaryScriptTableExplicit
+  | playPrimarySpecialScript
+  | setMovementScripts
+  | setDeathScripts
+  | setAutoRotate
+  | setPrimaryInterrupt
+  | setPrimaryRotationZ
+deriving Repr, DecidableEq
+
+def RawAnimationOpKind.name : RawAnimationOpKind -> String
+  | .setPrimaryScript => "set-primary-script"
+  | .setPrimaryScriptTableSequential => "set-primary-script-table-sequential"
+  | .setPrimaryScriptTableExplicit => "set-primary-script-table-explicit"
+  | .playPrimarySpecialScript => "play-primary-special-script"
+  | .setMovementScripts => "set-movement-scripts"
+  | .setDeathScripts => "set-death-scripts"
+  | .setAutoRotate => "set-auto-rotate"
+  | .setPrimaryInterrupt => "set-primary-interrupt"
+  | .setPrimaryRotationZ => "set-primary-rotation-z"
+
+structure RawAnimationOpShape where
+  opcode : Int
+  kind : RawAnimationOpKind
+  bankPolicy : RawAnimationBankPolicy := .fixed .primary
+  scriptSource : Option RawAnimationScriptSource := none
+  scriptBase : Int := 0
+  intInputs : List RawAnimationIntInputShape := []
+  floatInputs : List RawAnimationFloatInputShape := []
+  setAlternateBankFlag : Option Bool := none
+deriving Repr, DecidableEq
+
 inductive RawBulletPatternPackedTypePolicy where
   | rawI16
   | intRValue
@@ -1111,6 +1210,7 @@ structure RawInstrShape where
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
+  animationOps : List RawAnimationOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
   callbackConfigOps : List RawCallbackConfigOpShape := []
   interruptOps : List RawInterruptOpShape := []
@@ -1192,6 +1292,11 @@ def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawShootingOpShape :=
   rawShape.shootingOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findAnimationOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawAnimationOpShape :=
+  rawShape.animationOps.find? (fun op => op.opcode == opcode)
 
 private def findBulletPatternFamilyInList?
     (families : List RawBulletPatternFamilyShape)

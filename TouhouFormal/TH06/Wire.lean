@@ -71,6 +71,10 @@ def eclOpcodeDisableShooting : Int := 78
 def eclOpcodeEnableShooting : Int := 79
 def eclOpcodeSpawnPreviousPattern : Int := 80
 def eclOpcodeSetShootOffset : Int := 81
+def eclOpcodeAnmSetMain : Int := 97
+def eclOpcodeAnmSetPoses : Int := 98
+def eclOpcodeAnmSetSlot : Int := 99
+def eclOpcodeAnmSetDeath : Int := 100
 def eclOpcodeSetHitbox : Int := 103
 def eclOpcodeSetCollidable : Int := 104
 def eclOpcodeSetDamageable : Int := 105
@@ -85,8 +89,12 @@ def eclOpcodeSetLifeCallbackSub : Int := 114
 def eclOpcodeSetTimerCallbackThreshold : Int := 115
 def eclOpcodeSetTimerCallbackSub : Int := 116
 def eclOpcodeSetInteractable : Int := 117
+def eclOpcodeAnmFlagRotation : Int := 120
+def eclOpcodeAnmInterruptMain : Int := 128
+def eclOpcodeAnmInterruptSlot : Int := 129
 def eclOpcodeSetCallStackDisabled : Int := 130
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
+def enemyAnmScriptBase : Int := 0x100
 
 def isTimelineSpawnOpcode (opcode : Int) : Bool :=
   decide (0 <= opcode /\ opcode <= 7)
@@ -228,6 +236,26 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 357
       endLine := 410
       claim := "Bullet-pattern opcodes 67 through 75 share one descriptor body: the opcode delta selects aim mode, counts and floats always use GetVar/GetVarFloat, rank adjustment and minimum-speed clamps always run, angle1 is normalized, and shootingDisabled suppresses only the final spawn call." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 304
+      endLine := 317
+      claim := "ANMSETMAIN adds ANM_SCRIPT_ENEMY_START to one raw i32 script id and runs the primary VM; ANMSETSLOT diagnoses only high slot indexes and still accesses enemy->vms[vmIdx]." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 422
+      endLine := 426
+      claim := "ANMSETDEATH copies three raw byte fields into the enemy death-animation slots." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 660
+      endLine := 667
+      claim := "ANMSETPOSES copies five packed i16 pose scripts and then sets anmExFlags to 0xff." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 826
+      endLine := 828
+      claim := "ANMFLAGROTATION assigns one raw i32 operand into a one-bit rotateAnm field." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 896
+      endLine := 900
+      claim := "ANMINTERRUPTMAIN writes the raw i32 operand into primaryVm.pendingInterrupt; ANMINTERRUPTSLOT indexes the secondary VM array without a bounds check." },
     { path := "reference/th06/src/EclManager.cpp"
       startLine := 685
       endLine := 686
@@ -600,6 +628,35 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          animationOps :=
+            [ { opcode := eclOpcodeAnmSetMain
+                kind := .setPrimaryScript
+                scriptSource := some (.rawI32 0)
+                scriptBase := enemyAnmScriptBase
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeAnmSetPoses
+                kind := .setMovementScripts
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI16, halfIndex := 0 },
+                    { operandIndex := 0, policy := .rawI16, halfIndex := 1 },
+                    { operandIndex := 1, policy := .rawI16, halfIndex := 0 },
+                    { operandIndex := 1, policy := .rawI16, halfIndex := 1 },
+                    { operandIndex := 2, policy := .rawI16, halfIndex := 0 } ] },
+              { opcode := eclOpcodeAnmSetDeath
+                kind := .setDeathScripts
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte, byteIndex := 0 },
+                    { operandIndex := 0, policy := .rawByte, byteIndex := 1 },
+                    { operandIndex := 0, policy := .rawByte, byteIndex := 2 } ] },
+              { opcode := eclOpcodeAnmFlagRotation
+                kind := .setAutoRotate
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeAnmInterruptMain
+                kind := .setPrimaryInterrupt
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawI32 } ] } ]
           bulletPatternFamilies :=
             [ { firstOpcode := eclOpcodeSpawnBulletPatternFirst
                 lastOpcode := eclOpcodeSpawnBulletPatternLast

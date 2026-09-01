@@ -55,6 +55,15 @@ def eclOpcodeVectorAngle : Int := 34
 def eclOpcodeNormalizeAngle : Int := 37
 def eclOpcodeSubCall : Int := 52
 def eclOpcodeSubRet : Int := 53
+def eclOpcodeSetPrimaryAnm : Int := 54
+def eclOpcodeSetPrimaryAnmSequential : Int := 55
+def eclOpcodeSetPrimaryAnmExplicit : Int := 56
+def eclOpcodeSetExtraAnm : Int := 57
+def eclOpcodeSetAlternateAnm : Int := 58
+def eclOpcodeSetAlternateAnmSequential : Int := 59
+def eclOpcodeSetAlternateAnmExplicit : Int := 60
+def eclOpcodeSetAlternateExtraAnm : Int := 61
+def eclOpcodePlaySpecialAnm : Int := 62
 def eclOpcodeSetPosition : Int := 63
 def eclOpcodeMovePositionTimed : Int := 64
 def eclOpcodeSetPolarVelocity : Int := 65
@@ -90,10 +99,14 @@ def eclOpcodeSetLife : Int := 131
 def eclOpcodeSetBossTimer : Int := 132
 def eclOpcodeSetLifeCallback : Int := 133
 def eclOpcodeSetTimerCallback : Int := 134
+def eclOpcodeSetRotateAnmWithMovement : Int := 145
 def eclOpcodeRunInterrupt : Int := 125
 def eclOpcodeSetInterrupt : Int := 126
+def eclOpcodeSetPrimaryVmInterrupt : Int := 149
+def eclOpcodeSetSecondaryVmInterrupt : Int := 150
 def eclOpcodeSetCallStackDisabled : Int := 151
 def eclOpcodeBindTimerCallbackToDeath : Int := 153
+def eclOpcodeSetPrimaryVmRotZ : Int := 165
 def eclOpcodeRandomExitAngle : Int := 169
 def eclOpcodeMoveRandomBiasedTimed : Int := 178
 
@@ -254,6 +267,30 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 165
       endLine := 184
       claim := "High opcodes 96 through 104 skip dead enemies and copy the complete 0x2c-byte raw instruction into pendingShotInstruction while the defer flag is set; otherwise they share DispatchShotInstruction." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 428
+      endLine := 495
+      claim := "Low opcodes 54 through 62 choose primary or alternate ANM bank, write six-script primary tables, toggle the alternate-bank flag, or play the current special script." },
+    { path := "reference/th08/src/EclDependencies.cpp"
+      startLine := 449
+      endLine := 459
+      claim := "SetPrimaryAnmScripts casts all six script inputs to i16, stores the named enemy script table, and sets anmDirection to 0xff." },
+    { path := "reference/th08/src/EclDependencies.cpp"
+      startLine := 534
+      endLine := 565
+      claim := "SetExtraAnmScript diagnoses only indexes >= 2, repeatedly resolves index/script operands, and still accesses secondaryVms[index]." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 684
+      endLine := 687
+      claim := "High opcode 145 writes a raw byte into the one-bit rotateAnmWithMovement field." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 780
+      endLine := 787
+      claim := "High opcode 149 writes a resolved integer into primary vm.pendingInterrupt; opcode 150 writes a raw-u16 signed interrupt into secondaryVms[raw index] without bounds checking." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 864
+      endLine := 867
+      claim := "High opcode 165 resolves one float operand and writes primary vm.rotation.z." },
     { path := "reference/th08/src/EclDependencies.cpp"
       startLine := 687
       endLine := 780
@@ -706,6 +743,70 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue } ]
                 zeroOffsetZ := true } ]
+          animationOps :=
+            [ { opcode := eclOpcodeSetPrimaryAnm
+                kind := .setPrimaryScript
+                scriptSource := some (.intRValue 0)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ]
+                setAlternateBankFlag := some false },
+              { opcode := eclOpcodeSetPrimaryAnmSequential
+                kind := .setPrimaryScriptTableSequential
+                scriptSource := some (.intRValue 0)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ]
+                setAlternateBankFlag := some false },
+              { opcode := eclOpcodeSetPrimaryAnmExplicit
+                kind := .setPrimaryScriptTableExplicit
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue },
+                    { operandIndex := 1, policy := .intRValue },
+                    { operandIndex := 2, policy := .intRValue },
+                    { operandIndex := 3, policy := .intRValue },
+                    { operandIndex := 4, policy := .intRValue },
+                    { operandIndex := 5, policy := .intRValue } ]
+                setAlternateBankFlag := some false },
+              { opcode := eclOpcodeSetAlternateAnm
+                kind := .setPrimaryScript
+                bankPolicy := .fixed .alternate
+                scriptSource := some (.intRValue 0)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ]
+                setAlternateBankFlag := some true },
+              { opcode := eclOpcodeSetAlternateAnmSequential
+                kind := .setPrimaryScriptTableSequential
+                bankPolicy := .fixed .alternate
+                scriptSource := some (.intRValue 0)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ]
+                setAlternateBankFlag := some true },
+              { opcode := eclOpcodeSetAlternateAnmExplicit
+                kind := .setPrimaryScriptTableExplicit
+                bankPolicy := .fixed .alternate
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue },
+                    { operandIndex := 1, policy := .intRValue },
+                    { operandIndex := 2, policy := .intRValue },
+                    { operandIndex := 3, policy := .intRValue },
+                    { operandIndex := 4, policy := .intRValue },
+                    { operandIndex := 5, policy := .intRValue } ]
+                setAlternateBankFlag := some true },
+              { opcode := eclOpcodePlaySpecialAnm
+                kind := .playPrimarySpecialScript
+                bankPolicy := .runtimeFlag
+                scriptSource := some .runtimeSpecial },
+              { opcode := eclOpcodeSetRotateAnmWithMovement
+                kind := .setAutoRotate
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte } ] },
+              { opcode := eclOpcodeSetPrimaryVmInterrupt
+                kind := .setPrimaryInterrupt
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetPrimaryVmRotZ
+                kind := .setPrimaryRotationZ
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ] } ]
           bulletPatternFamilies :=
             [ { firstOpcode := eclOpcodeSpawnBulletPatternFirst
                 lastOpcode := eclOpcodeSpawnBulletPatternLast

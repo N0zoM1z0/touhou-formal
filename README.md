@@ -106,6 +106,12 @@ The executable model currently covers these source-backed boundaries:
   while profiles retain TH06's unconditional zero-interval timer reset,
   TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
   TH08's forced-zero offset Z.
+- Shared animation-control effects cover the first 21 ECL/ANM bridge opcodes:
+  TH06/TH07 primary enemy script selection, packed move/death animation fields,
+  raw bitfield auto-rotation, primary VM interrupts, TH07/TH08 primary
+  rotation-Z writes, and TH08's primary/alternate script-table bank policy.
+  The model records host ANM calls and table writes while deliberately leaving
+  secondary VM slot hazards for the dedicated unchecked-access family.
 - One consecutive-family profile now covers all 27 primary bullet-pattern
   opcodes (nine aim modes per title). The shared effect preserves packed-i16
   type/color reads, shifted resolver bits, i16 count writes, spellcard rank
@@ -220,7 +226,7 @@ output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate and timed movement effects, enemy-state
-effects, and shooting-control effects currently have Lean
+effects, shooting-control effects, and animation-control effects currently have Lean
 executable controls for profile coverage and shared-step execution, but no dedicated
 solver/materializer lane yet. Bullet-pattern, callback-configuration, and
 interrupt effects have the same Lean-only status for now. The boss integer-read

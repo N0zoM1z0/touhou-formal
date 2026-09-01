@@ -45,6 +45,13 @@ Add call/return stack behavior, jumps, arithmetic, divide/modulo checks,
 host-indexed operations, enemy child contexts, and ANM interactions. Each new
 host boundary should have an explicit assumption or a model.
 
+Current status: the shared ECL body now includes control flow, arithmetic,
+randoms, movement, bullets, enemy state, callbacks, interrupts, boss reads, and
+the first ECL-to-ANM bridge layer. ANM bridge coverage currently records
+primary VM host calls, packed move/death animation fields, TH08 primary script
+tables, bank flag writes, primary pending interrupts, and rotation-Z writes;
+unchecked secondary VM slot accesses are the next ANM-related fault surface.
+
 ## Phase 4: Search and Validation
 
 Generate solver queries from the Lean-side relation where practical. Keep
