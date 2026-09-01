@@ -336,7 +336,7 @@ SOURCE_COVERAGE = [
     {
         "area": "enemy hitbox and flag state writes",
         "status": "covered-by-model",
-        "reason": "shared enemy-state effects cover primary/secondary hitboxes, source-width flag truncation, TH08 replace/disable/enable masks, alignment-effect collision mirroring, and presentation-guarded death-mode writes",
+        "reason": "shared enemy-state effects cover primary/secondary hitboxes, source-width flag truncation, TH08 replace/disable/enable masks, alignment-effect collision mirroring, presentation-guarded death-mode writes, life/gauge updates, and exact timer-history resets",
     },
     {
         "area": "ANM entry header/nextOffset profile",
@@ -361,7 +361,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate enemy movement plus hitbox/flag/death-mode writes now have typed host-effect boundaries; bullet, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
+        "reason": "immediate enemy movement plus hitbox/flag/death-mode/life/timer writes now have typed host-effect boundaries; bullet, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",

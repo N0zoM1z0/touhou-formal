@@ -16,6 +16,7 @@ structure RawEnemyStateOperands where
   intHost : Int := 0
   alignmentEffectPresent : Bool := false
   presentationWritesAllowed : Bool := true
+  primaryBoss : Bool := false
 deriving Repr, DecidableEq
 
 inductive RawEnemyStateFloatResolution where
@@ -48,12 +49,23 @@ structure RawEnemyStateFieldWrite where
   value : Int
 deriving Repr, DecidableEq
 
+structure RawEnemyTimerWrite where
+  current : Int
+  subFrameBits : Int
+  previous : Int
+deriving Repr, DecidableEq
+
 structure RawEnemyStateEffect where
   primaryHitboxWrite : Option RawEnemyHitboxBits := none
   secondaryHitboxWrite : Option RawEnemyHitboxBits := none
   fieldWrites : List RawEnemyStateFieldWrite := []
   alignmentEffectCollisionWrite : Option Bool := none
   suppressedByPresentationPolicy : Bool := false
+  lifeWrite : Option Int := none
+  maxLifeWrite : Option Int := none
+  phaseStartingLifeWrite : Option Int := none
+  timerWrite : Option RawEnemyTimerWrite := none
+  clearBossGauge : Bool := false
 deriving Repr, DecidableEq
 
 structure RawEnemyStatePrepared where
@@ -245,6 +257,19 @@ private def enemyStateEffect
             some true
           else
             none }
+  | .setLife =>
+      { lifeWrite := some value
+        maxLifeWrite := some value
+        phaseStartingLifeWrite :=
+          if op.writePhaseStartingLife then some value else none
+        clearBossGauge :=
+          op.clearBossGaugeForPrimaryBoss && operands.primaryBoss }
+  | .setTimer =>
+      { timerWrite :=
+          some
+            { current := value
+              subFrameBits := 0
+              previous := -999 } }
 
 def rawEnemyStatePrepare
     (shape : HeaderShape)

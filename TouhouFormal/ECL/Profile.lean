@@ -396,6 +396,8 @@ inductive RawEnemyStateOpKind where
   | replaceFlagMask
   | disableFlagMask
   | enableFlagMask
+  | setLife
+  | setTimer
 deriving Repr, DecidableEq
 
 def RawEnemyStateOpKind.name : RawEnemyStateOpKind -> String
@@ -407,6 +409,8 @@ def RawEnemyStateOpKind.name : RawEnemyStateOpKind -> String
   | .replaceFlagMask => "replace-flag-mask"
   | .disableFlagMask => "disable-flag-mask"
   | .enableFlagMask => "enable-flag-mask"
+  | .setLife => "set-life"
+  | .setTimer => "set-timer"
 
 def RawEnemyStateOpKind.hitboxDimensions? : RawEnemyStateOpKind -> Option Nat
   | .setPrimaryHitbox dimensions | .setSecondaryHitbox dimensions =>
@@ -434,6 +438,8 @@ structure RawEnemyStateOpShape where
   intOperandIndex : Nat := 0
   intInputPolicy : Option RawEnemyStateIntInputPolicy := none
   presentationGuard : Bool := false
+  writePhaseStartingLife : Bool := false
+  clearBossGaugeForPrimaryBoss : Bool := false
 deriving Repr, DecidableEq
 
 structure IntSelectorRange where

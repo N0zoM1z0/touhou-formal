@@ -2,6 +2,8 @@ import TouhouFormal
 
 open TouhouFormal
 
+set_option maxRecDepth 2048
+
 private def describeFaultLookup : Except Fault (Option Nat) -> String
   | .ok (some offset) => "ok offset=" ++ toString offset
   | .ok none => "ok no-op"
@@ -168,7 +170,13 @@ private def describeEnemyStateOutcome
               " alignmentCollision=" ++
                 reprStr effect.alignmentEffectCollisionWrite ++
               " presentationSuppressed=" ++
-                toString effect.suppressedByPresentationPolicy
+                toString effect.suppressedByPresentationPolicy ++
+              " life=" ++ reprStr
+                (effect.lifeWrite,
+                  effect.maxLifeWrite,
+                  effect.phaseStartingLifeWrite) ++
+              " timer=" ++ reprStr effect.timerWrite ++
+              " clearBossGauge=" ++ toString effect.clearBossGauge
       "action=" ++ reprStr outcome.action ++
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
@@ -317,6 +325,10 @@ def main : IO Unit := do
   IO.println s!"TH08 replace flags: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08ReplaceFlagsOutcome}"
   IO.println s!"TH08 disable collision: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08DisableCollisionOutcome}"
   IO.println s!"TH08 suppressed death mode: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08SuppressedDeathModeOutcome}"
+  IO.println s!"TH06 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th06LifeOutcome}"
+  IO.println s!"TH07 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th07LifeOutcome}"
+  IO.println s!"TH08 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08LifeOutcome}"
+  IO.println s!"TH08 timer: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08TimerOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

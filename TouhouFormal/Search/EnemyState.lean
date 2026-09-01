@@ -142,16 +142,76 @@ def th08SuppressedDeathModeOutcome :
     th08SuppressedDeathModePrefix
     { intRaw := 7, presentationWritesAllowed := false }
 
+def th06LifePrefix : RawInstrPrefix :=
+  { fileOffset := 0
+    time := 0
+    opcode := TouhouFormal.TH06.eclOpcodeSetLife
+    nextOffset := 16
+    difficultyMask := some 1
+    operandMask := none }
+
+def th06LifeOutcome : Except TouhouFormal.Fault RawEnemyStateOutcome :=
+  rawEnemyStateStep
+    TouhouFormal.TH06.headerShape
+    0 1 0 8 64
+    th06LifePrefix
+    { intRaw := 10000, intHost := 900 }
+
+def th07LifePrefix : RawInstrPrefix :=
+  { fileOffset := 0
+    time := 0
+    opcode := TouhouFormal.TH07.eclOpcodeSetLife
+    nextOffset := 16
+    difficultyMask := some 1
+    operandMask := some 1 }
+
+def th07LifeOutcome : Except TouhouFormal.Fault RawEnemyStateOutcome :=
+  rawEnemyStateStep
+    TouhouFormal.TH07.headerShape
+    0 1 0 8 64
+    th07LifePrefix
+    { intRaw := 10000, intHost := 1200, primaryBoss := true }
+
+def th08LifePrefix : RawInstrPrefix :=
+  { fileOffset := 0
+    time := 0
+    opcode := TouhouFormal.TH08.eclOpcodeSetLife
+    nextOffset := 16
+    difficultyMask := some 1
+    operandMask := some 1 }
+
+def th08LifeOutcome : Except TouhouFormal.Fault RawEnemyStateOutcome :=
+  rawEnemyStateStep
+    TouhouFormal.TH08.headerShape
+    0 1 0 8 64
+    th08LifePrefix
+    { intRaw := 10000, intHost := 1500, primaryBoss := true }
+
+def th08TimerPrefix : RawInstrPrefix :=
+  { fileOffset := 0
+    time := 0
+    opcode := TouhouFormal.TH08.eclOpcodeSetBossTimer
+    nextOffset := 16
+    difficultyMask := some 1
+    operandMask := some 0 }
+
+def th08TimerOutcome : Except TouhouFormal.Fault RawEnemyStateOutcome :=
+  rawEnemyStateStep
+    TouhouFormal.TH08.headerShape
+    0 1 0 8 64
+    th08TimerPrefix
+    { intRaw := 60 }
+
 theorem th06_enemy_state_profile_count :
-    enemyStateOpcodeCount TouhouFormal.TH06.headerShape = 5 := by
+    enemyStateOpcodeCount TouhouFormal.TH06.headerShape = 7 := by
   rfl
 
 theorem th07_enemy_state_profile_count :
-    enemyStateOpcodeCount TouhouFormal.TH07.headerShape = 7 := by
+    enemyStateOpcodeCount TouhouFormal.TH07.headerShape = 9 := by
   rfl
 
 theorem th08_enemy_state_profile_count :
-    enemyStateOpcodeCount TouhouFormal.TH08.headerShape = 6 := by
+    enemyStateOpcodeCount TouhouFormal.TH08.headerShape = 8 := by
   rfl
 
 theorem th06_hitbox_uses_raw_float_bits :
@@ -199,6 +259,43 @@ theorem th08_death_mode_can_be_presentation_suppressed :
 theorem th08_suppressed_death_mode_has_no_field_write :
     (outcomeEffect? th08SuppressedDeathModeOutcome).map
       (fun effect => effect.fieldWrites) = some [] := by
+  rfl
+
+theorem th06_life_uses_raw_i32_not_getvar :
+    (outcomeEffect? th06LifeOutcome).bind (fun effect => effect.lifeWrite) =
+      some 10000 := by
+  rfl
+
+theorem th06_life_updates_max_life_too :
+    (outcomeEffect? th06LifeOutcome).bind (fun effect => effect.maxLifeWrite) =
+      some 10000 := by
+  rfl
+
+theorem th07_life_resolves_operand_and_clears_primary_boss_gauge :
+    (outcomeEffect? th07LifeOutcome).map
+      (fun effect =>
+        (effect.lifeWrite, effect.maxLifeWrite, effect.clearBossGauge)) =
+      some (some 1200, some 1200, true) := by
+  rfl
+
+theorem th07_life_does_not_write_phase_starting_life :
+    (outcomeEffect? th07LifeOutcome).bind
+      (fun effect => effect.phaseStartingLifeWrite) = none := by
+  rfl
+
+theorem th08_life_writes_phase_starting_life :
+    (outcomeEffect? th08LifeOutcome).map
+      (fun effect =>
+        (effect.lifeWrite,
+          effect.maxLifeWrite,
+          effect.phaseStartingLifeWrite,
+          effect.clearBossGauge)) =
+      some (some 1500, some 1500, some 1500, true) := by
+  rfl
+
+theorem th08_timer_assignment_resets_timer_history :
+    (outcomeEffect? th08TimerOutcome).bind (fun effect => effect.timerWrite) =
+      some { current := 60, subFrameBits := 0, previous := -999 } := by
   rfl
 
 end TouhouFormal.Search.EnemyState

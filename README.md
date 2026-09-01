@@ -76,11 +76,11 @@ The executable model currently covers these source-backed boundaries:
   player-relative motion, and movement bounds. Shared effects retain title
   differences such as TH06's raw player-angle offset/bounds, TH07's derived
   axis angle, and TH08's forced-zero Z plus timer-reset behavior.
-- Shared enemy-state effects cover 18 hitbox, collision/damage flag, and
-  death-mode opcodes. The model retains TH06/TH07 bitfield truncation, TH08's
-  inverted replace-mask rules, alignment-effect collision mirroring, and the
-  high-opcode presentation-write guard instead of flattening them into one
-  cleaned-up flag API.
+- Shared enemy-state effects cover 24 hitbox, collision/damage flag,
+  death-mode, life, and boss-timer opcodes. The model retains TH06/TH07
+  bitfield truncation, TH08's inverted replace-mask rules, alignment-effect
+  collision mirroring, the high-opcode presentation-write guard, title-specific
+  life operand resolution/gauge effects, and exact timer-history reset writes.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector

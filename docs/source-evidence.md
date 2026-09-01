@@ -408,10 +408,23 @@ The model records this as a shared `RawBossFloatReadShape` with the same
   effect when one exists.
 - `reference/th08/src/EclRunHigh.inl:477-481` gates high opcode 129's raw-byte
   death-mode write on the target's presentation-write condition.
+- `reference/th06/src/EclManager.cpp:707-709` writes one raw i32 operand to
+  both `life` and `maxLife`; `:785-787` passes a raw i32 to
+  `bossTimer.SetCurrent`.
+- `reference/th07/src/th07/EclManager.cpp:1693-1704` resolves life through
+  `GET_INT_VALUE`, writes `life` and `maxLife`, and clears boss-health slots
+  for the primary boss. `:1719-1721` resolves and assigns the enemy timer.
+- `reference/th08/src/EclRunHigh.inl:520-531` resolves life into
+  `phaseStartingLife`, `life`, and `maxLife`, with the primary-boss gauge side
+  effect. `:549` resolves and assigns `bossTimer`.
+- `reference/th06/src/ZunTimer.hpp:62-67` and the corresponding TH07/TH08 timer
+  assignment operators set `current`, reset `subFrame` to zero, and set
+  `previous = -999`.
 
-The shared model therefore emits typed field writes rather than pretending
-that the three games expose one uniform boolean flag setter. One-bit and
-three-bit target fields explicitly truncate their source values.
+The shared model therefore emits typed state writes rather than pretending
+that the three games expose one uniform cleaned-up enemy API. One-bit and
+three-bit target fields explicitly truncate their source values; life and
+timer effects retain title-specific operand resolution and secondary writes.
 
 ## Retail Calibration
 
