@@ -49,8 +49,9 @@ Current status: the shared ECL body now includes control flow, arithmetic,
 randoms, movement, bullets, enemy state, callbacks, interrupts, boss reads, and
 the first ECL-to-ANM bridge layer. ANM bridge coverage currently records
 primary VM host calls, packed move/death animation fields, TH08 primary script
-tables, bank flag writes, primary pending interrupts, and rotation-Z writes;
-unchecked secondary VM slot accesses are the next ANM-related fault surface.
+tables, bank flag writes, primary/secondary pending interrupts, secondary slot
+host calls/clears, high-index diagnostics, negative/high slot faults, and
+rotation-Z writes.
 
 ## Phase 4: Search and Validation
 

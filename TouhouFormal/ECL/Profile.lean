@@ -818,8 +818,34 @@ structure RawAnimationFloatInputShape where
   policy : RawAnimationFloatInputPolicy
 deriving Repr, DecidableEq
 
+inductive RawAnimationSecondaryScriptMode where
+  | alwaysRun
+  | runWhenNonnegativeElseClear
+deriving Repr, DecidableEq
+
+def RawAnimationSecondaryScriptMode.name :
+    RawAnimationSecondaryScriptMode -> String
+  | .alwaysRun => "always-run"
+  | .runWhenNonnegativeElseClear => "run-when-nonnegative-else-clear"
+
+structure RawAnimationSecondaryAccessShape where
+  slotCount : Nat
+  diagnoseHighOnly : Bool := true
+  slotInput : RawAnimationIntInputShape
+  scriptInput : RawAnimationIntInputShape :=
+    { operandIndex := 1, policy := .rawI32 }
+  scriptMode : RawAnimationSecondaryScriptMode := .alwaysRun
+  interruptInput : RawAnimationIntInputShape :=
+    { operandIndex := 1, policy := .rawI32 }
+  repeatedSlotReadForAccess : Bool := false
+  repeatedScriptReadForHostCall : Bool := false
+  scriptBase : Int := 0
+  clearScriptIndexValue : Int := -1
+deriving Repr, DecidableEq
+
 inductive RawAnimationOpKind where
   | setPrimaryScript
+  | setSecondaryScript
   | setPrimaryScriptTableSequential
   | setPrimaryScriptTableExplicit
   | playPrimarySpecialScript
@@ -827,11 +853,13 @@ inductive RawAnimationOpKind where
   | setDeathScripts
   | setAutoRotate
   | setPrimaryInterrupt
+  | setSecondaryInterrupt
   | setPrimaryRotationZ
 deriving Repr, DecidableEq
 
 def RawAnimationOpKind.name : RawAnimationOpKind -> String
   | .setPrimaryScript => "set-primary-script"
+  | .setSecondaryScript => "set-secondary-script"
   | .setPrimaryScriptTableSequential => "set-primary-script-table-sequential"
   | .setPrimaryScriptTableExplicit => "set-primary-script-table-explicit"
   | .playPrimarySpecialScript => "play-primary-special-script"
@@ -839,6 +867,7 @@ def RawAnimationOpKind.name : RawAnimationOpKind -> String
   | .setDeathScripts => "set-death-scripts"
   | .setAutoRotate => "set-auto-rotate"
   | .setPrimaryInterrupt => "set-primary-interrupt"
+  | .setSecondaryInterrupt => "set-secondary-interrupt"
   | .setPrimaryRotationZ => "set-primary-rotation-z"
 
 structure RawAnimationOpShape where
@@ -849,6 +878,7 @@ structure RawAnimationOpShape where
   scriptBase : Int := 0
   intInputs : List RawAnimationIntInputShape := []
   floatInputs : List RawAnimationFloatInputShape := []
+  secondaryAccess : Option RawAnimationSecondaryAccessShape := none
   setAlternateBankFlag : Option Bool := none
 deriving Repr, DecidableEq
 

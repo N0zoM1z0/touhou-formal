@@ -571,9 +571,9 @@ Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 99: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 37 |
-| TH07 | 159 `EclOpcode` symbols | 103: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 56 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 105: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 79 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 101: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 35 |
+| TH07 | 159 `EclOpcode` symbols | 105: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 54 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 108: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, animation-control, bullet-pattern, callback configuration, and interrupts | 76 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -629,7 +629,9 @@ complete for the implemented primary bullet-pattern descriptor/gate
   boundary;
 complete for the implemented animation-control abstraction, including primary
   ANM host calls, packed move/death fields, TH08 script tables, bank flag
-  writes, primary interrupts, and primary rotation-Z writes;
+  writes, primary/secondary interrupts, secondary slot host calls/clears,
+  high-index diagnostics, negative/high slot faults, and primary rotation-Z
+  writes;
 complete for the implemented callback-configuration abstraction, including
   partial effects before indexed host-write faults;
 complete for the implemented explicit interrupt table/entry abstraction,

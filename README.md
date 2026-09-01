@@ -106,12 +106,13 @@ The executable model currently covers these source-backed boundaries:
   while profiles retain TH06's unconditional zero-interval timer reset,
   TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
   TH08's forced-zero offset Z.
-- Shared animation-control effects cover the first 21 ECL/ANM bridge opcodes:
+- Shared animation-control effects cover the first 28 ECL/ANM bridge opcodes:
   TH06/TH07 primary enemy script selection, packed move/death animation fields,
   raw bitfield auto-rotation, primary VM interrupts, TH07/TH08 primary
-  rotation-Z writes, and TH08's primary/alternate script-table bank policy.
-  The model records host ANM calls and table writes while deliberately leaving
-  secondary VM slot hazards for the dedicated unchecked-access family.
+  rotation-Z writes, TH08's primary/alternate script-table bank policy, and
+  unchecked secondary VM slot accesses. The model records host ANM calls, table
+  writes, slot clears, secondary interrupts, high-index diagnostics, and
+  negative/high slot faults without executing the ANM VM itself.
 - One consecutive-family profile now covers all 27 primary bullet-pattern
   opcodes (nine aim modes per title). The shared effect preserves packed-i16
   type/color reads, shifted resolver bits, i16 count writes, spellcard rank

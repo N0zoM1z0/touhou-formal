@@ -92,6 +92,21 @@ structure RawAnimationPrimaryScriptTable where
   anmDirection : Int
 deriving Repr, DecidableEq
 
+structure RawAnimationSecondarySlotDiagnostic where
+  slot : Int
+  bound : Nat
+deriving Repr, DecidableEq
+
+structure RawAnimationSecondaryScriptClear where
+  slot : Int
+  scriptIndex : Int
+deriving Repr, DecidableEq
+
+structure RawAnimationSecondaryInterruptWrite where
+  slot : Int
+  interruptId : Int
+deriving Repr, DecidableEq
+
 structure RawAnimationEffect where
   hostCall : Option RawAnimationHostCall := none
   movementScriptsWrite : Option RawAnimationMovementScripts := none
@@ -100,6 +115,10 @@ structure RawAnimationEffect where
   alternateBankFlagWrite : Option Bool := none
   autoRotateWrite : Option Int := none
   primaryPendingInterruptWrite : Option Int := none
+  secondarySlotDiagnostic : Option RawAnimationSecondarySlotDiagnostic := none
+  secondaryScriptClear : Option RawAnimationSecondaryScriptClear := none
+  secondaryPendingInterruptWrite :
+    Option RawAnimationSecondaryInterruptWrite := none
   primaryRotationZWrite : Option Int := none
 deriving Repr, DecidableEq
 
@@ -117,12 +136,14 @@ structure RawAnimationPrepared where
   bank : RawAnimationBank
   scriptResolution : Option RawAnimationScriptResolution
   effect : RawAnimationEffect
+  hostFault : Option Fault := none
 deriving Repr, DecidableEq
 
 inductive RawAnimationAction where
   | yielded
   | skipped
   | advanced
+  | hostFault
   | vmError
 deriving Repr, DecidableEq
 
@@ -131,6 +152,7 @@ structure RawAnimationOutcome where
   targetCursor : Option Int := none
   cursorClass : Option TouhouFormal.CursorClass := none
   effect : Option RawAnimationEffect := none
+  fault : Option Fault := none
   prepared : Option RawAnimationPrepared := none
 deriving Repr, DecidableEq
 
@@ -155,6 +177,7 @@ private def rawAnimationCursorOutcome
     (rawPrefix : RawInstrPrefix)
     (bufferSize : Nat)
     (effect : Option RawAnimationEffect := none)
+    (fault : Option Fault := none)
     (prepared : Option RawAnimationPrepared := none) : RawAnimationOutcome :=
   { action := action
     targetCursor := some rawPrefix.nextCursor
@@ -162,7 +185,59 @@ private def rawAnimationCursorOutcome
       (TouhouFormal.classifyCursorTransfer
         rawPrefix.fileOffset rawPrefix.nextCursor bufferSize)
     effect := effect
+    fault := fault
     prepared := prepared }
+
+private def missingAnimationOperandFault
+    (shape : HeaderShape)
+    (op : RawAnimationOpShape)
+    (occurrence : Nat)
+    (operandIndex : Nat) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.animation"
+    detail :=
+      "animation opcode " ++ op.kind.name ++
+        " did not receive source occurrence " ++ toString occurrence ++
+        " for operand slot " ++ toString operandIndex
+    index := some op.opcode }
+
+private def missingSecondaryAccessFault
+    (shape : HeaderShape)
+    (op : RawAnimationOpShape) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.animation.secondaryVm"
+    detail :=
+      "animation opcode " ++ op.kind.name ++
+        " requires a secondary VM access profile"
+    index := some op.opcode }
+
+private def secondarySlotWriteFault
+    (shape : HeaderShape)
+    (_op : RawAnimationOpShape)
+    (access : RawAnimationSecondaryAccessShape)
+    (slot : Int) : Fault :=
+  { kind := .outOfBoundsWrite
+    title := shape.title
+    component := "EclRun.animation.secondaryVm"
+    detail :=
+      "source indexes a secondary ANM VM slot without a full bounds check"
+    index := some slot
+    bound := some access.slotCount }
+
+private def secondarySlotInBounds
+    (access : RawAnimationSecondaryAccessShape)
+    (slot : Int) : Bool :=
+  decide (0 <= slot ∧ slot < Int.ofNat access.slotCount)
+
+private def secondarySlotDiagnostic?
+    (access : RawAnimationSecondaryAccessShape)
+    (slot : Int) : Option RawAnimationSecondarySlotDiagnostic :=
+  if access.diagnoseHighOnly && decide (Int.ofNat access.slotCount <= slot) then
+    some { slot := slot, bound := access.slotCount }
+  else
+    none
 
 def rawAnimationU8FromWord (rawValue : Int) (byteIndex : Nat) : Int :=
   (TouhouFormal.toWord32Bits rawValue / (2 ^ (8 * byteIndex))) % 256
@@ -207,6 +282,23 @@ private def resolveAnimationIntInput
           (.rawI16
             (rawAnimationI16FromWord input.rawValue inputShape.halfIndex))
   .ok { shape := inputShape, resolution := resolution }
+
+private def resolveAnimationIntOccurrence
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (op : RawAnimationOpShape)
+    (operands : RawAnimationOperands)
+    (occurrence : Nat)
+    (inputShape : RawAnimationIntInputShape) :
+    Except Fault RawAnimationResolvedIntInput := do
+  let input <-
+    match operands.intInputs[occurrence]? with
+    | none =>
+        .error
+          (missingAnimationOperandFault
+            shape op occurrence inputShape.operandIndex)
+    | some input => .ok input
+  resolveAnimationIntInput shape rawPrefix inputShape input
 
 private def resolveAnimationFloatInput
     (shape : HeaderShape)
@@ -416,6 +508,198 @@ private def primaryRotationFromInputs
           ("primary-rotation opcode resolved " ++
             toString floatResolutions.length ++ " inputs, expected 1"))
 
+private def secondaryFaultPrepared
+    (op : RawAnimationOpShape)
+    (intResolutions : List RawAnimationResolvedIntInput)
+    (bank : RawAnimationBank)
+    (scriptResolution : Option RawAnimationScriptResolution)
+    (effect : RawAnimationEffect)
+    (fault : Fault) : RawAnimationPrepared :=
+  { op := op
+    intResolutions := intResolutions
+    floatResolutions := []
+    bank := bank
+    scriptResolution := scriptResolution
+    effect := effect
+    hostFault := some fault }
+
+private def prepareSecondaryScriptDirect
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (op : RawAnimationOpShape)
+    (access : RawAnimationSecondaryAccessShape)
+    (operands : RawAnimationOperands)
+    (bank : RawAnimationBank) : Except Fault RawAnimationPrepared := do
+  let slotRead <-
+    resolveAnimationIntOccurrence
+      shape rawPrefix op operands 0 access.slotInput
+  let scriptRead <-
+    resolveAnimationIntOccurrence
+      shape rawPrefix op operands 1 access.scriptInput
+  let slot := slotRead.resolution.value
+  let scriptResolution : RawAnimationScriptResolution :=
+    { source := .rawI32 access.scriptInput.operandIndex
+      value := scriptRead.resolution.value
+      base := access.scriptBase
+      scriptId := scriptRead.resolution.value + access.scriptBase }
+  let diagnostic := secondarySlotDiagnostic? access slot
+  let baseEffect : RawAnimationEffect :=
+    { alternateBankFlagWrite := op.setAlternateBankFlag
+      secondarySlotDiagnostic := diagnostic }
+  let reads := [slotRead, scriptRead]
+  if !secondarySlotInBounds access slot then
+    let fault := secondarySlotWriteFault shape op access slot
+    .ok
+      (secondaryFaultPrepared
+        op reads bank (some scriptResolution) baseEffect fault)
+  else
+    .ok
+      { op := op
+        intResolutions := reads
+        floatResolutions := []
+        bank := bank
+        scriptResolution := some scriptResolution
+        effect :=
+          { baseEffect with
+            hostCall :=
+              some
+                { bank := bank
+                  target := .secondary slot
+                  scriptId := scriptResolution.scriptId } } }
+
+private def prepareSecondaryScriptBranched
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (op : RawAnimationOpShape)
+    (access : RawAnimationSecondaryAccessShape)
+    (operands : RawAnimationOperands)
+    (bank : RawAnimationBank) : Except Fault RawAnimationPrepared := do
+  let slotCheckRead <-
+    resolveAnimationIntOccurrence
+      shape rawPrefix op operands 0 access.slotInput
+  let branchScriptRead <-
+    resolveAnimationIntOccurrence
+      shape rawPrefix op operands 1 access.scriptInput
+  let branchScript := branchScriptRead.resolution.value
+  let slotCheck := slotCheckRead.resolution.value
+  let diagnostic := secondarySlotDiagnostic? access slotCheck
+  if decide (0 <= branchScript) then
+    let slotAccessRead <-
+      resolveAnimationIntOccurrence
+        shape rawPrefix op operands 2 access.slotInput
+    let scriptRunRead <-
+      resolveAnimationIntOccurrence
+        shape rawPrefix op operands 3 access.scriptInput
+    let slot := slotAccessRead.resolution.value
+    let scriptResolution : RawAnimationScriptResolution :=
+      { source := .intRValue access.scriptInput.operandIndex
+        value := scriptRunRead.resolution.value
+        base := access.scriptBase
+        scriptId := scriptRunRead.resolution.value + access.scriptBase }
+    let baseEffect : RawAnimationEffect :=
+      { alternateBankFlagWrite := op.setAlternateBankFlag
+        secondarySlotDiagnostic := diagnostic }
+    let reads :=
+      [slotCheckRead, branchScriptRead, slotAccessRead, scriptRunRead]
+    if !secondarySlotInBounds access slot then
+      let fault := secondarySlotWriteFault shape op access slot
+      .ok
+        (secondaryFaultPrepared
+          op reads bank (some scriptResolution) baseEffect fault)
+    else
+      .ok
+        { op := op
+          intResolutions := reads
+          floatResolutions := []
+          bank := bank
+          scriptResolution := some scriptResolution
+          effect :=
+            { baseEffect with
+              hostCall :=
+                some
+                  { bank := bank
+                    target := .secondary slot
+                    scriptId := scriptResolution.scriptId } } }
+  else
+    let slotAccessRead <-
+      resolveAnimationIntOccurrence
+        shape rawPrefix op operands 2 access.slotInput
+    let slot := slotAccessRead.resolution.value
+    let baseEffect : RawAnimationEffect :=
+      { alternateBankFlagWrite := op.setAlternateBankFlag
+        secondarySlotDiagnostic := diagnostic }
+    let reads := [slotCheckRead, branchScriptRead, slotAccessRead]
+    if !secondarySlotInBounds access slot then
+      let fault := secondarySlotWriteFault shape op access slot
+      .ok (secondaryFaultPrepared op reads bank none baseEffect fault)
+    else
+      .ok
+        { op := op
+          intResolutions := reads
+          floatResolutions := []
+          bank := bank
+          scriptResolution := none
+          effect :=
+            { baseEffect with
+              secondaryScriptClear :=
+                some
+                  { slot := slot
+                    scriptIndex := access.clearScriptIndexValue } } }
+
+private def prepareSecondaryScript
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (op : RawAnimationOpShape)
+    (operands : RawAnimationOperands) : Except Fault RawAnimationPrepared := do
+  let access <-
+    match op.secondaryAccess with
+    | none => .error (missingSecondaryAccessFault shape op)
+    | some access => .ok access
+  let bank := resolveAnimationBank op.bankPolicy operands
+  match access.scriptMode with
+  | .alwaysRun =>
+      prepareSecondaryScriptDirect shape rawPrefix op access operands bank
+  | .runWhenNonnegativeElseClear =>
+      prepareSecondaryScriptBranched shape rawPrefix op access operands bank
+
+private def prepareSecondaryInterrupt
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (op : RawAnimationOpShape)
+    (operands : RawAnimationOperands) : Except Fault RawAnimationPrepared := do
+  let access <-
+    match op.secondaryAccess with
+    | none => .error (missingSecondaryAccessFault shape op)
+    | some access => .ok access
+  let slotRead <-
+    resolveAnimationIntOccurrence
+      shape rawPrefix op operands 0 access.slotInput
+  let interruptRead <-
+    resolveAnimationIntOccurrence
+      shape rawPrefix op operands 1 access.interruptInput
+  let slot := slotRead.resolution.value
+  let interruptId := interruptRead.resolution.value
+  let bank := resolveAnimationBank op.bankPolicy operands
+  let diagnostic := secondarySlotDiagnostic? access slot
+  let baseEffect : RawAnimationEffect :=
+    { alternateBankFlagWrite := op.setAlternateBankFlag
+      secondarySlotDiagnostic := diagnostic }
+  let reads := [slotRead, interruptRead]
+  if !secondarySlotInBounds access slot then
+    let fault := secondarySlotWriteFault shape op access slot
+    .ok (secondaryFaultPrepared op reads bank none baseEffect fault)
+  else
+    .ok
+      { op := op
+        intResolutions := reads
+        floatResolutions := []
+        bank := bank
+        scriptResolution := none
+        effect :=
+          { baseEffect with
+            secondaryPendingInterruptWrite :=
+              some { slot := slot, interruptId := interruptId } } }
+
 private def animationEffect
     (shape : HeaderShape)
     (op : RawAnimationOpShape)
@@ -441,6 +725,10 @@ private def animationEffect
                   { bank := bank
                     target := .primary
                     scriptId := script.scriptId } }
+  | .setSecondaryScript =>
+      .error
+        (malformedAnimationShapeFault
+          shape op "secondary script opcodes use ordered source reads")
   | .setPrimaryScriptTableSequential =>
       let table <- sequentialPrimaryScriptTable shape op scriptResolution
       .ok { baseEffect with primaryScriptTableWrite := some table }
@@ -473,6 +761,10 @@ private def animationEffect
   | .setPrimaryInterrupt =>
       let value <- primaryInterruptFromInputs shape op intResolutions
       .ok { baseEffect with primaryPendingInterruptWrite := some value }
+  | .setSecondaryInterrupt =>
+      .error
+        (malformedAnimationShapeFault
+          shape op "secondary interrupt opcodes use ordered source reads")
   | .setPrimaryRotationZ =>
       let value <- primaryRotationFromInputs shape op floatResolutions
       .ok { baseEffect with primaryRotationZWrite := some value }
@@ -483,40 +775,46 @@ def rawAnimationPrepare
     (op : RawAnimationOpShape)
     (operands : RawAnimationOperands) :
     Except Fault RawAnimationPrepared := do
-  if operands.intInputs.length != op.intInputs.length then
-    .error
-      (malformedAnimationShapeFault
-        shape op
-        ("step supplied " ++ toString operands.intInputs.length ++
-          " integer inputs, expected " ++ toString op.intInputs.length))
-  else if operands.floatInputs.length != op.floatInputs.length then
-    .error
-      (malformedAnimationShapeFault
-        shape op
-        ("step supplied " ++ toString operands.floatInputs.length ++
-          " float inputs, expected " ++ toString op.floatInputs.length))
-  else
-    let intResolutions <-
-      (List.zip op.intInputs operands.intInputs).mapM
-        (fun (inputShape, input) =>
-          resolveAnimationIntInput shape rawPrefix inputShape input)
-    let floatResolutions <-
-      (List.zip op.floatInputs operands.floatInputs).mapM
-        (fun (inputShape, input) =>
-          resolveAnimationFloatInput shape rawPrefix inputShape input)
-    let bank := resolveAnimationBank op.bankPolicy operands
-    let scriptResolution <-
-      resolveAnimationScript shape op intResolutions operands
-    let effect <-
-      animationEffect shape op bank scriptResolution intResolutions
-        floatResolutions
-    .ok
-      { op := op
-        intResolutions := intResolutions
-        floatResolutions := floatResolutions
-        bank := bank
-        scriptResolution := scriptResolution
-        effect := effect }
+  match op.kind with
+  | .setSecondaryScript =>
+      prepareSecondaryScript shape rawPrefix op operands
+  | .setSecondaryInterrupt =>
+      prepareSecondaryInterrupt shape rawPrefix op operands
+  | _ =>
+      if operands.intInputs.length != op.intInputs.length then
+        .error
+          (malformedAnimationShapeFault
+            shape op
+            ("step supplied " ++ toString operands.intInputs.length ++
+              " integer inputs, expected " ++ toString op.intInputs.length))
+      else if operands.floatInputs.length != op.floatInputs.length then
+        .error
+          (malformedAnimationShapeFault
+            shape op
+            ("step supplied " ++ toString operands.floatInputs.length ++
+              " float inputs, expected " ++ toString op.floatInputs.length))
+      else
+        let intResolutions <-
+          (List.zip op.intInputs operands.intInputs).mapM
+            (fun (inputShape, input) =>
+              resolveAnimationIntInput shape rawPrefix inputShape input)
+        let floatResolutions <-
+          (List.zip op.floatInputs operands.floatInputs).mapM
+            (fun (inputShape, input) =>
+              resolveAnimationFloatInput shape rawPrefix inputShape input)
+        let bank := resolveAnimationBank op.bankPolicy operands
+        let scriptResolution <-
+          resolveAnimationScript shape op intResolutions operands
+        let effect <-
+          animationEffect shape op bank scriptResolution intResolutions
+            floatResolutions
+        .ok
+          { op := op
+            intResolutions := intResolutions
+            floatResolutions := floatResolutions
+            bank := bank
+            scriptResolution := scriptResolution
+            effect := effect }
 
 def rawAnimationStep
     (shape : HeaderShape)
@@ -543,12 +841,17 @@ def rawAnimationStep
               .ok (rawAnimationCursorOutcome .advanced rawPrefix bufferSize)
           | some op => do
               let prepared <- rawAnimationPrepare shape rawPrefix op operands
+              let action :=
+                match prepared.hostFault with
+                | none => .advanced
+                | some _ => .hostFault
               .ok
                 (rawAnimationCursorOutcome
-                  .advanced
+                  action
                   rawPrefix
                   bufferSize
                   (some prepared.effect)
+                  prepared.hostFault
                   (some prepared))
 
 end TouhouFormal.ECL

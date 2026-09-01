@@ -95,6 +95,7 @@ def eclOpcodeAnmInterruptSlot : Int := 129
 def eclOpcodeSetCallStackDisabled : Int := 130
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
 def enemyAnmScriptBase : Int := 0x100
+def secondaryAnmVmCount : Nat := 8
 
 def isTimelineSpawnOpcode (opcode : Int) : Bool :=
   decide (0 <= opcode /\ opcode <= 7)
@@ -635,6 +636,14 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 scriptBase := enemyAnmScriptBase
                 intInputs :=
                   [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeAnmSetSlot
+                kind := .setSecondaryScript
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      slotInput := { operandIndex := 0, policy := .rawI32 }
+                      scriptInput := { operandIndex := 1, policy := .rawI32 }
+                      scriptBase := enemyAnmScriptBase } },
               { opcode := eclOpcodeAnmSetPoses
                 kind := .setMovementScripts
                 intInputs :=
@@ -656,7 +665,16 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
               { opcode := eclOpcodeAnmInterruptMain
                 kind := .setPrimaryInterrupt
                 intInputs :=
-                  [ { operandIndex := 0, policy := .rawI32 } ] } ]
+                  [ { operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeAnmInterruptSlot
+                kind := .setSecondaryInterrupt
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      diagnoseHighOnly := false
+                      slotInput := { operandIndex := 0, policy := .rawI32 }
+                      interruptInput :=
+                        { operandIndex := 1, policy := .rawI32 } } } ]
           bulletPatternFamilies :=
             [ { firstOpcode := eclOpcodeSpawnBulletPatternFirst
                 lastOpcode := eclOpcodeSpawnBulletPatternLast

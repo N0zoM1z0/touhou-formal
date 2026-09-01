@@ -109,6 +109,7 @@ def eclOpcodeBindTimerCallbackToDeath : Int := 153
 def eclOpcodeSetPrimaryVmRotZ : Int := 165
 def eclOpcodeRandomExitAngle : Int := 169
 def eclOpcodeMoveRandomBiasedTimed : Int := 178
+def secondaryAnmVmCount : Nat := 2
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th08/src/EclManager.hpp"
@@ -766,6 +767,18 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 4, policy := .intRValue },
                     { operandIndex := 5, policy := .intRValue } ]
                 setAlternateBankFlag := some false },
+              { opcode := eclOpcodeSetExtraAnm
+                kind := .setSecondaryScript
+                bankPolicy := .runtimeFlag
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      slotInput := { operandIndex := 0, policy := .intRValue }
+                      scriptInput := { operandIndex := 1, policy := .intRValue }
+                      scriptMode := .runWhenNonnegativeElseClear
+                      repeatedSlotReadForAccess := true
+                      repeatedScriptReadForHostCall := true }
+                setAlternateBankFlag := some false },
               { opcode := eclOpcodeSetAlternateAnm
                 kind := .setPrimaryScript
                 bankPolicy := .fixed .alternate
@@ -791,6 +804,18 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 4, policy := .intRValue },
                     { operandIndex := 5, policy := .intRValue } ]
                 setAlternateBankFlag := some true },
+              { opcode := eclOpcodeSetAlternateExtraAnm
+                kind := .setSecondaryScript
+                bankPolicy := .fixed .alternate
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      slotInput := { operandIndex := 0, policy := .intRValue }
+                      scriptInput := { operandIndex := 1, policy := .intRValue }
+                      scriptMode := .runWhenNonnegativeElseClear
+                      repeatedSlotReadForAccess := true
+                      repeatedScriptReadForHostCall := true }
+                setAlternateBankFlag := some true },
               { opcode := eclOpcodePlaySpecialAnm
                 kind := .playPrimarySpecialScript
                 bankPolicy := .runtimeFlag
@@ -803,6 +828,15 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 kind := .setPrimaryInterrupt
                 intInputs :=
                   [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetSecondaryVmInterrupt
+                kind := .setSecondaryInterrupt
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      diagnoseHighOnly := false
+                      slotInput := { operandIndex := 0, policy := .rawI32 }
+                      interruptInput :=
+                        { operandIndex := 1, policy := .rawU16ToI16 } } },
               { opcode := eclOpcodeSetPrimaryVmRotZ
                 kind := .setPrimaryRotationZ
                 floatInputs :=

@@ -106,6 +106,7 @@ def eclOpcodeSetPrimaryVmInterrupt : Int := 128
 def eclOpcodeSetVmInterrupt : Int := 129
 def eclOpcodeSetPrimaryVmRotZ : Int := 150
 def enemyAnmScriptBase : Int := 0x900
+def secondaryAnmVmCount : Nat := 2
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
@@ -713,6 +714,18 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 scriptBase := enemyAnmScriptBase
                 intInputs :=
                   [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetSubAnm
+                kind := .setSecondaryScript
+                bankPolicy := .fixed .primary
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      slotInput := { operandIndex := 0, policy := .intRValue }
+                      scriptInput := { operandIndex := 1, policy := .intRValue }
+                      scriptMode := .runWhenNonnegativeElseClear
+                      repeatedSlotReadForAccess := true
+                      repeatedScriptReadForHostCall := true
+                      scriptBase := enemyAnmScriptBase } },
               { opcode := eclOpcodeSetMoveAnm
                 kind := .setMovementScripts
                 intInputs :=
@@ -735,6 +748,15 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 kind := .setPrimaryInterrupt
                 intInputs :=
                   [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetVmInterrupt
+                kind := .setSecondaryInterrupt
+                secondaryAccess :=
+                  some
+                    { slotCount := secondaryAnmVmCount
+                      diagnoseHighOnly := false
+                      slotInput := { operandIndex := 0, policy := .rawI32 }
+                      interruptInput :=
+                        { operandIndex := 1, policy := .rawI16 } } },
               { opcode := eclOpcodeSetPrimaryVmRotZ
                 kind := .setPrimaryRotationZ
                 floatInputs :=
