@@ -9,11 +9,11 @@ dispatch skeleton, the first shared opcode-body slice, the integer resolver,
 the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
 the CALL/RET/conditional-CALL slices. It also now source-models several
 gameplay-effect opcode families in Lean, including bullet-control host effects,
-laser-spawn descriptors, laser slot controls, animation controls, and primary
-bullet patterns, but those families are not yet dedicated SMT/materializer
-lanes. It is not yet better than fuzzing for the full ECL/ANM VM, because full
-BulletManager and laser runtime behavior, item/enemy lifecycle, full ANM
-execution, and multi-context scheduling are not modeled yet.
+time/wait controls, laser-spawn descriptors, laser slot controls, animation
+controls, and primary bullet patterns, but those families are not yet dedicated
+SMT/materializer lanes. It is not yet better than fuzzing for the full ECL/ANM
+VM, because full BulletManager and laser runtime behavior, item/enemy
+lifecycle, full ANM execution, and multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -566,21 +566,21 @@ dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
 movement state writes, timed direction/position interpolation, orbit movement,
-enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior, zero
-divisors, shooting-control state writes, bullet-control host effects, laser
-spawn descriptor construction, primary bullet-pattern descriptor
-construction/gates, laser slot controls, animation-control state writes,
-callback configuration, interrupt entry, and signed idiv overflow. Most
-gameplay host effects and multi-instruction state composition remain outside
-the current model.
+enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior,
+zero divisors, shooting-control state writes, time/wait controls,
+bullet-control host effects, laser spawn descriptor construction, primary
+bullet-pattern descriptor construction/gates, laser slot controls,
+animation-control state writes, callback configuration, interrupt entry, and
+signed idiv overflow. Most gameplay host effects and multi-instruction state
+composition remain outside the current model.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 113: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 23 |
-| TH07 | 159 `EclOpcode` symbols | 123: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 36 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 124: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 60 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 115: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 21 |
+| TH07 | 159 `EclOpcode` symbols | 126: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 33 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 127: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, time/wait controls, bullet-control, laser-spawn descriptors, laser slot controls, animation-control, bullet-pattern, callback configuration, and interrupts | 57 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -635,6 +635,9 @@ complete for the implemented TH06 conditional-CALL abstraction;
 complete for the implemented primary bullet-pattern descriptor/gate
   abstraction, with source-side f32 arithmetic supplied by the explicit host
   boundary;
+complete for the implemented time-control abstraction, including no-op body
+  advance, resolved context-time additions, stage waits, and TH07/TH08
+  pre-body wait gates with net frame stalls;
 complete for the implemented bullet-control host-effect abstraction, including
   source-ordered sound reads and signed-i16 rank-count truncation;
 complete for the implemented laser-spawn descriptor abstraction, including

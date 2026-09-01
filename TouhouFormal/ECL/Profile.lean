@@ -1460,6 +1460,51 @@ structure RawCallRetShape where
   childContextSlotCount : Nat := 0
 deriving Repr, DecidableEq
 
+inductive RawTimeControlIntInputPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawTimeControlIntInputPolicy.name :
+    RawTimeControlIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+structure RawTimeControlIntInputShape where
+  operandIndex : Nat
+  policy : RawTimeControlIntInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawTimeControlTarget where
+  | contextTime
+  | contextWaitTimer
+  | contextSecondaryTime
+  | stageScriptWaitTime
+deriving Repr, DecidableEq
+
+def RawTimeControlTarget.name : RawTimeControlTarget -> String
+  | .contextTime => "context-time"
+  | .contextWaitTimer => "context-wait-timer"
+  | .contextSecondaryTime => "context-secondary-time"
+  | .stageScriptWaitTime => "stage-script-wait-time"
+
+inductive RawTimeControlOpKind where
+  | noOp
+  | addToTime
+  | setTimer (target : RawTimeControlTarget)
+deriving Repr, DecidableEq
+
+def RawTimeControlOpKind.name : RawTimeControlOpKind -> String
+  | .noOp => "no-op"
+  | .addToTime => "add-to-time"
+  | .setTimer target => "set-" ++ target.name
+
+structure RawTimeControlOpShape where
+  opcode : Int
+  kind : RawTimeControlOpKind
+  intInput : Option RawTimeControlIntInputShape := none
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -1497,6 +1542,7 @@ structure RawInstrShape where
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
+  timeControlOps : List RawTimeControlOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
   laserSpawnOps : List RawLaserSpawnOpShape := []
   laserOps : List RawLaserOpShape := []
@@ -1582,6 +1628,11 @@ def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawShootingOpShape :=
   rawShape.shootingOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findTimeControlOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawTimeControlOpShape :=
+  rawShape.timeControlOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findBulletControlOp?
     (rawShape : RawInstrShape)

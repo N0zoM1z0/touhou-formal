@@ -22,6 +22,7 @@ import TouhouFormal.ECL.RandomTimedMovement
 import TouhouFormal.ECL.OrbitMovement
 import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.Shooting
+import TouhouFormal.ECL.TimeControl
 import TouhouFormal.ECL.BulletControl
 import TouhouFormal.ECL.LaserSpawn
 import TouhouFormal.ECL.Laser

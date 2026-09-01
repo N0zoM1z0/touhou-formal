@@ -9,6 +9,8 @@ def rawHeaderFixedPrefixBytes : Nat := 0x48
 def expectedEclVersion : Nat := 0x800
 def timelineOffsetCount : Nat := 16
 def timelineInstrFixedSize : Nat := 0x24
+def eclOpcodeSetSecondaryTime : Int := 2
+def eclOpcodeNoOp : Int := 3
 def eclOpcodeJump : Int := 4
 def eclOpcodeDecJump : Int := 5
 def eclOpcodeJumpIfEq : Int := 40
@@ -110,6 +112,7 @@ def eclOpcodeSetBossTimer : Int := 132
 def eclOpcodeSetLifeCallback : Int := 133
 def eclOpcodeSetTimerCallback : Int := 134
 def eclOpcodeSetRotateAnmWithMovement : Int := 145
+def eclOpcodeAddTime : Int := 146
 def eclOpcodeRunInterrupt : Int := 125
 def eclOpcodeSetInterrupt : Int := 126
 def eclOpcodeSetPrimaryVmInterrupt : Int := 149
@@ -840,6 +843,17 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue } ]
                 zeroOffsetZ := true } ]
+          timeControlOps :=
+            [ { opcode := eclOpcodeSetSecondaryTime
+                kind := .setTimer .contextSecondaryTime
+                intInput :=
+                  some { operandIndex := 0, policy := .intRValue } },
+              { opcode := eclOpcodeNoOp
+                kind := .noOp },
+              { opcode := eclOpcodeAddTime
+                kind := .addToTime
+                intInput :=
+                  some { operandIndex := 0, policy := .intRValue } } ]
           bulletControlOps :=
             [ { opcode := eclOpcodeClearBulletsForTransition
                 kind := .clear .clearForTransition },

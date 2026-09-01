@@ -494,6 +494,37 @@ timer effects retain title-specific operand resolution and secondary writes.
 The model shares that interpolation and the u32 RNG range operation but keeps
 the timer guard and gate meaning in title profiles.
 
+## Time Control Evidence
+
+- `reference/th06/src/EclManager.hpp:349-352` declares opcode 0 as `NOP`, while
+  `reference/th06/src/EclManager.cpp:126-128` begins the switch body at
+  `UNIMP`; the no-op path therefore reaches the ordinary post-switch advance.
+- `reference/th06/src/EclManager.cpp:842-845` implements `TIMESET` by adding
+  the value returned by `EnemyEclInstr::GetVar` to
+  `currentContext.time`; `reference/th06/src/EclManager.cpp:1039-1040` then
+  records the current instruction and ticks the context timer in the common
+  frame tail.
+- `reference/th07/src/th07/EclManager.cpp:927-931` gates dispatch when
+  `waitTimer > 0` by decrementing both `waitTimer` and context time before
+  leaving the body. `reference/th07/src/th07/EclManager.cpp:2242-2243` performs
+  the common tail increment, making the script-time effect a net stall.
+- `reference/th07/src/th07/EclManager.cpp:943-944` resolves operand 0 into
+  `waitTimer`; `reference/th07/src/th07/EclManager.cpp:1814-1822` resolves the
+  same operand shape for `ADD_TIME` and `SET_SCRIPT_WAIT_TIME`.
+- `reference/th08/src/EclRun.cpp:58-62` has the same gate shape for
+  `secondaryTime`; it decrements secondary time and context time, breaks out of
+  the dispatch loop, and reaches the common
+  `reference/th08/src/EclRun.cpp:185-186` tail increment.
+- `reference/th08/src/EclRunLow.inl:226-231` sets `secondaryTime` for opcode 2
+  and keeps opcode 3 as an ordinary advance entry.
+  `reference/th08/src/EclRunHigh.inl:706-708` resolves operand 0 and adds it
+  into the active ECL context time for opcode 146.
+
+The shared model records opcode-body writes separately from the frame-tail
+increment. That keeps later multi-context scheduler work honest: a wait gate is
+not an opcode dispatch, but it is still a source-backed VM transition that can
+block body execution while preserving net script time.
+
 ## Bullet Control Evidence
 
 - `reference/th06/src/EclManager.cpp:891-915` clears all bullets into points,

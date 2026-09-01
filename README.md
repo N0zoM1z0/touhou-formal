@@ -106,6 +106,12 @@ The executable model currently covers these source-backed boundaries:
   while profiles retain TH06's unconditional zero-interval timer reset,
   TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
   TH08's forced-zero offset Z.
+- Shared time-control effects cover VM-local no-op advance, context-time
+  addition, context wait timers, TH08 secondary-time waits, and global
+  stage-script waits. The wait gate is modeled separately from opcode bodies:
+  TH07 and TH08 decrement the timer and pre-tail context time, then the normal
+  frame tail restores script time, giving a net stall without fusing scheduler
+  and opcode semantics.
 - Shared bullet-control effects cover 11 cross-title opcodes: TH06's point
   conversion, TH07 item/no-item/radius removal, TH08 transition clearing,
   sound flag toggles and overrides, and bullet-rank influence writes. The model
@@ -243,11 +249,12 @@ output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate and timed movement effects, enemy-state
-effects, shooting-control effects, bullet-control effects, laser slot controls,
-laser-spawn descriptor effects, animation-control effects, bullet-pattern
-effects, callback-configuration effects, and interrupt effects currently have
-Lean executable controls for profile coverage and shared-step execution, but no dedicated
-solver/materializer lane yet. The boss integer-read
+effects, shooting-control effects, time-control effects, bullet-control
+effects, laser slot controls, laser-spawn descriptor effects,
+animation-control effects, bullet-pattern effects, callback-configuration
+effects, and interrupt effects currently have Lean executable controls for
+profile coverage and shared-step execution, but no dedicated solver/materializer
+lane yet. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses

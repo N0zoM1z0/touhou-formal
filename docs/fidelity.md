@@ -80,6 +80,16 @@ polar helper. Every timer assignment records `current`, zero subframe bits, and
 the source sentinel `previous = -999`. Binary32 trig/subtraction products remain explicit results, but
 mirror-X is modeled exactly by toggling the delta's sign bit.
 
+Time-control opcodes are modeled at the boundary where the source mutates
+timer state. TH06 `TIMESET`, TH07 `ADD_TIME`, and TH08 opcode 146 add a
+resolved integer into the active context time; TH07 `SET_WAIT_TIMER`, TH07
+`SET_SCRIPT_WAIT_TIME`, and TH08 opcode 2 assign resolved timer values to their
+source targets. The ordinary frame-tail `time++` is not folded into these body
+effects. Instead, TH07 `waitTimer` and TH08 `secondaryTime` gates are modeled
+as separate pre-body transitions: if the timer is positive, the source
+decrements the timer and context time, skips opcode dispatch, and then the
+common tail increment restores net script time for that frame.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

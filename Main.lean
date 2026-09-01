@@ -265,6 +265,29 @@ private def describeShootingOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeTimeControlOutcome
+    (result :
+      Except TouhouFormal.Fault TouhouFormal.ECL.RawTimeControlOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "writes=" ++ reprStr effect.writes ++
+              " ordinaryAdvanceOnly=" ++ toString effect.ordinaryAdvanceOnly
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
+private def describeTimeControlGateOutcome
+    (outcome : TouhouFormal.ECL.RawTimeControlGateOutcome) : String :=
+  "action=" ++ reprStr outcome.action ++
+    " bodyMayRun=" ++ toString outcome.bodyMayRun ++
+    " effect=" ++ reprStr outcome.effect
+
 private def describeBulletControlOutcome
     (result :
       Except TouhouFormal.Fault TouhouFormal.ECL.RawBulletControlOutcome) :
@@ -605,6 +628,19 @@ def main : IO Unit := do
   IO.println s!"TH08 random interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th08RandomIntervalOutcome}"
   IO.println s!"TH06 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th06OffsetOutcome}"
   IO.println s!"TH08 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th08OffsetOutcome}"
+  IO.println ""
+  IO.println "Time controls"
+  IO.println s!"TH06 time-control opcode count: {TouhouFormal.Search.TimeControl.timeControlOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 time-control opcode count: {TouhouFormal.Search.TimeControl.timeControlOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 time-control opcode count: {TouhouFormal.Search.TimeControl.timeControlOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 TIMESET: {describeTimeControlOutcome TouhouFormal.Search.TimeControl.th06TimeSetOutcome}"
+  IO.println s!"TH07 SET_WAIT_TIMER: {describeTimeControlOutcome TouhouFormal.Search.TimeControl.th07SetWaitOutcome}"
+  IO.println s!"TH07 ADD_TIME: {describeTimeControlOutcome TouhouFormal.Search.TimeControl.th07AddTimeOutcome}"
+  IO.println s!"TH07 SET_SCRIPT_WAIT_TIME: {describeTimeControlOutcome TouhouFormal.Search.TimeControl.th07SetScriptWaitRawOutcome}"
+  IO.println s!"TH08 secondary time: {describeTimeControlOutcome TouhouFormal.Search.TimeControl.th08SetSecondaryTimeOutcome}"
+  IO.println s!"TH08 ADD_TIME: {describeTimeControlOutcome TouhouFormal.Search.TimeControl.th08AddTimeOutcome}"
+  IO.println s!"TH07 wait gate: {describeTimeControlGateOutcome TouhouFormal.Search.TimeControl.th07WaitGateOutcome}"
+  IO.println s!"TH08 secondary gate: {describeTimeControlGateOutcome TouhouFormal.Search.TimeControl.th08SecondaryGateOutcome}"
   IO.println ""
   IO.println "Bullet controls"
   IO.println s!"TH06 bullet-control opcode count: {TouhouFormal.Search.BulletControl.bulletControlOpcodeCount TouhouFormal.TH06.headerShape}"

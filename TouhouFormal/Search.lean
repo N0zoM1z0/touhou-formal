@@ -12,6 +12,7 @@ import TouhouFormal.Search.TimedMovement
 import TouhouFormal.Search.OrbitMovement
 import TouhouFormal.Search.EnemyState
 import TouhouFormal.Search.Shooting
+import TouhouFormal.Search.TimeControl
 import TouhouFormal.Search.BulletControl
 import TouhouFormal.Search.LaserSpawn
 import TouhouFormal.Search.Laser

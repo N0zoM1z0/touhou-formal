@@ -8,6 +8,7 @@ def title : String := "TH06"
 def rawHeaderSize : Nat := 0x10
 def timelinePointerCount : Nat := 3
 def timelineInstrFixedSize : Nat := 0x1c
+def eclOpcodeNoOp : Int := 0
 def eclOpcodeJump : Int := 2
 def eclOpcodeJumpDec : Int := 3
 def eclOpcodeSetInt : Int := 4
@@ -100,6 +101,7 @@ def eclOpcodeSetTimerCallbackThreshold : Int := 115
 def eclOpcodeSetTimerCallbackSub : Int := 116
 def eclOpcodeSetInteractable : Int := 117
 def eclOpcodeAnmFlagRotation : Int := 120
+def eclOpcodeTimeSet : Int := 123
 def eclOpcodeAnmInterruptMain : Int := 128
 def eclOpcodeAnmInterruptSlot : Int := 129
 def eclOpcodeSetCallStackDisabled : Int := 130
@@ -720,6 +722,13 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          timeControlOps :=
+            [ { opcode := eclOpcodeNoOp
+                kind := .noOp },
+              { opcode := eclOpcodeTimeSet
+                kind := .addToTime
+                intInput :=
+                  some { operandIndex := 0, policy := .intRValue } } ]
           bulletControlOps :=
             [ { opcode := eclOpcodeBulletCancel
                 kind := .clear .turnAllIntoPoints },

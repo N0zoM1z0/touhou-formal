@@ -48,6 +48,7 @@ def eclOpcodeAtan2 : Int := 26
 def eclOpcodeNormalizeAngle : Int := 40
 def eclOpcodeGetBossInt : Int := 43
 def eclOpcodeGetBossFloat : Int := 44
+def eclOpcodeSetWaitTimer : Int := 45
 def eclOpcodeSubCall : Int := 41
 def eclOpcodeSubRet : Int := 42
 def eclOpcodeSetPosition : Int := 46
@@ -112,6 +113,8 @@ def eclOpcodeSetPeriodicCallback : Int := 144
 def eclOpcodeSetLifeCallback : Int := 148
 def eclOpcodeRandomExitAngle : Int := 155
 def eclOpcodeSetVmAutoRotate : Int := 120
+def eclOpcodeAddTime : Int := 123
+def eclOpcodeSetScriptWaitTime : Int := 125
 def eclOpcodeSetPrimaryVmInterrupt : Int := 128
 def eclOpcodeSetVmInterrupt : Int := 129
 def eclOpcodeSetBulletRankParams : Int := 131
@@ -808,6 +811,19 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          timeControlOps :=
+            [ { opcode := eclOpcodeSetWaitTimer
+                kind := .setTimer .contextWaitTimer
+                intInput :=
+                  some { operandIndex := 0, policy := .intRValue } },
+              { opcode := eclOpcodeAddTime
+                kind := .addToTime
+                intInput :=
+                  some { operandIndex := 0, policy := .intRValue } },
+              { opcode := eclOpcodeSetScriptWaitTime
+                kind := .setTimer .stageScriptWaitTime
+                intInput :=
+                  some { operandIndex := 0, policy := .intRValue } } ]
           bulletControlOps :=
             [ { opcode := eclOpcodeRemoveAllBulletsSpawnItems
                 kind := .clear (.removeAll true) },
