@@ -289,6 +289,11 @@ SOURCE_COVERAGE = [
         "reason": "shared profiles model float ADD/SUB/MUL/DIV/MOD plus title-specific SIN/COS/ATAN2 or VectorAngle and angle normalization operand layouts; host float result bits remain explicit inputs",
     },
     {
+        "area": "special numeric operations and interpolation slots",
+        "status": "covered-by-model",
+        "reason": "shared semantics cover nine self-position/LERP/vector/distance opcodes plus TH07/TH08 8-slot interpolation installation, repeated resolver reads, IEEE slot-key equality, no-slot suppression, and unchecked callback-table indices",
+    },
+    {
         "area": "random scalar generation",
         "status": "covered-by-model",
         "reason": "shared profiles model TH06 range generators, TH07 range/add/sign generators, and TH08 sign generators with explicit RNG words and the TH06 SetVar re-resolution quirk",

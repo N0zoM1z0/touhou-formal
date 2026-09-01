@@ -99,6 +99,31 @@ private def describeFloatFunctionOutcome
         " resultBits=" ++ resultBits ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeNumericSpecialOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawNumericSpecialOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      "action=" ++ reprStr outcome.action ++
+        " effect=" ++ reprStr outcome.effect ++
+        " cursor=" ++ toString outcome.targetCursor
+
+private def describeInterpolationOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawInterpolationOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let faultSummary :=
+        match outcome.fault with
+        | none => "none"
+        | some fault => fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " effect=" ++ reprStr outcome.effect ++
+        " fault=" ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeRandomOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawRandomOutcome) :
     String :=
@@ -756,6 +781,19 @@ def main : IO Unit := do
   IO.println s!"TH06 atan2: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th06Atan2Outcome}"
   IO.println s!"TH07 sin: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th07SinOutcome}"
   IO.println s!"TH08 vector angle: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th08VectorAngleOutcome}"
+  IO.println ""
+  IO.println "Special numeric and interpolation controls"
+  IO.println s!"TH06 special numeric opcode count: {TouhouFormal.Search.NumericSpecial.numericSpecialOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 special numeric opcode count: {TouhouFormal.Search.NumericSpecial.numericSpecialOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 special numeric opcode count: {TouhouFormal.Search.NumericSpecial.numericSpecialOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 self-Y transfer: {describeNumericSpecialOutcome TouhouFormal.Search.NumericSpecial.th06SelfYOutcome}"
+  IO.println s!"TH07 LERP: {describeNumericSpecialOutcome TouhouFormal.Search.NumericSpecial.th07LerpOutcome}"
+  IO.println s!"TH08 vector decomposition: {describeNumericSpecialOutcome TouhouFormal.Search.NumericSpecial.th08VectorOutcome}"
+  IO.println s!"TH07 interpolation opcode count: {TouhouFormal.Search.Interpolation.interpolationOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 interpolation opcode count: {TouhouFormal.Search.Interpolation.interpolationOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH07 callback index fault: {describeInterpolationOutcome TouhouFormal.Search.Interpolation.th07CallbackIndex8Outcome}"
+  IO.println s!"TH08 no interpolation slot: {describeInterpolationOutcome TouhouFormal.Search.Interpolation.th08NoAvailableSlotOutcome}"
+  IO.println s!"TH08 signed-zero slot match: {describeInterpolationOutcome TouhouFormal.Search.Interpolation.th08SignedZeroMatchOutcome}"
   IO.println ""
   IO.println "Random opcode controls"
   IO.println s!"TH06 random opcode count: {TouhouFormal.Search.Random.randomOpcodeCount TouhouFormal.TH06.headerShape}"

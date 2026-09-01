@@ -66,6 +66,11 @@ The executable model currently covers these source-backed boundaries:
   `VectorAngle`, TH07/TH08 `sinf`/`cosf`, and angle normalization. The profile
   preserves TH06's unusual `GetVar`-pointer read followed by `SetVar`, while
   transcendental result bits remain an explicit host/SMT float-theory boundary.
+- Shared special-numeric semantics covers nine self-position, LERP,
+  polar-to-Cartesian, and distance opcodes, preserving repeated resolver reads
+  and two-output write order. A separate shared 8-slot interpolation model
+  covers TH07/TH08 installation, including IEEE signed-zero/NaN matching,
+  no-free-slot suppression, and unchecked 8-entry callback-table indexing.
 - Shared random-value semantics cover integer range/modulo, range-plus-addend,
   repeated-bound float ranges, and parity-selected sign opcodes. Integer results use explicit 32-bit word
   arithmetic; float RNG results stay at the host/SMT boundary. TH06 preserves

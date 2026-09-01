@@ -11,7 +11,8 @@ the CALL/RET/conditional-CALL slices. It also now source-models several
 gameplay-effect opcode families in Lean, including bullet-control host effects,
 time/wait controls, enemy lifecycle spawn/remove requests, item/drop requests,
 boss/spellcard lifecycle controls, laser-spawn descriptors, laser slot controls,
-effect/sound/particle host effects, animation controls, and primary bullet
+special numeric/interpolation controls, effect/sound/particle host effects,
+animation controls, and primary bullet
 patterns, but those families are not yet
 dedicated SMT/materializer lanes. It is not yet better than fuzzing for the full
 ECL/ANM VM, because full BulletManager/EnemyManager/ItemManager runtime
@@ -569,7 +570,8 @@ ADD/SUB/MUL/DIV/MOD single-step behavior, float ADD/SUB/MUL/DIV/MOD
 dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate and random-direction
-movement state writes, timed direction/position interpolation, orbit movement,
+movement state writes, special numeric operations, 8-slot interpolation
+installation, timed direction/position interpolation, orbit movement,
 enemy hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove
 requests, item/drop requests and state writes, boss/spellcard lifecycle
 controls, effect/sound/particle requests, plain CALL/RET stack behavior, zero divisors, shooting-control state
@@ -583,9 +585,9 @@ Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 128: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 8 |
-| TH07 | 159 `EclOpcode` symbols | 145: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic and branches, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 14 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 149: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic and branches, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 35 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 131: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic and special numeric operations, float functions, compare-register producers, CALL/RET, conditional CALL, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 5 |
+| TH07 | 159 `EclOpcode` symbols | 148: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic/branches/special numeric operations, interpolation slots, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 11 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 154: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic/branches/special numeric operations, interpolation slots, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 30 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -657,6 +659,9 @@ complete for the implemented item/drop host-effect abstraction, including
 complete for the implemented effect/sound/particle host boundary, including
   source operand resolution, tracked-array/color-table bounds, TH07's
   `specialEffect` null branch, and TH08 alignment-effect policy;
+complete for the implemented special-numeric/interpolation abstraction,
+  including repeated resolver occurrences, two-output write order, IEEE
+  slot-key equality, no-slot suppression, and callback-table faults;
 complete for the implemented laser-spawn descriptor abstraction, including
   source-ordered descriptor construction and unchecked selected-slot writes
   after spawn requests;
@@ -738,6 +743,9 @@ Concrete advantages already demonstrated:
 - shared Lean controls now cover 15 effect/sound/particle opcodes and expose
   unchecked 12/24-slot tracked-effect writes, 28-entry color reads, and TH07's
   conditional null `specialEffect` write;
+- shared Lean controls now cover nine special numeric opcodes plus the TH07/08
+  interpolation installers, including repeated reads, signed-zero equality,
+  no-free-slot suppression, and callback index 8 faults;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a

@@ -589,6 +589,26 @@ unchecked boss/gauge slot accesses become formal faults, source-visible
 truncation and branch gates are explicit, and deep GUI/Spellcard/Catk scoring
 state remains an opaque host subsystem for later modeling.
 
+## Special Numeric and Interpolation Evidence
+
+- `reference/th06/src/EclManager.cpp:174-182` copies enemy X/Y/Z float bits
+  through the original `SetVar` destination resolver.
+- `reference/th07/src/th07/EclManager.cpp:1064-1089` implements immediate LERP
+  with a repeated operand-2 read and installs into the first free or
+  same-affected-variable slot among `interps[8]`; the callback index is used
+  unchecked against `g_EclInterpFuncs[8]`. `:1959-1964` writes sine/Y before
+  cosine/X and repeats the angle/magnitude reads.
+- `reference/th08/src/EclRunLow.inl:360-391` dispatches immediate LERP,
+  8-slot interpolation installation, two-output polar decomposition, and 2D
+  distance. `reference/th08/src/EclDependencies.cpp:353-375` shows the same
+  first-free-or-equal selection and unchecked 8-entry callback lookup, while
+  `reference/th08/src/EclRunHigh.inl:868-887` repeats polar decomposition.
+
+The model evaluates slot-key equality with IEEE binary32 ordered equality, so
+`+0` and `-0` match while NaNs do not. Transcendental, square-root, and fused
+arithmetic result bits remain explicit host values, but input resolution and
+source write order are executable Lean semantics.
+
 ## Effect, Particle, and Sound Host-Boundary Evidence
 
 - `reference/th06/src/EclManager.cpp:412-421` resolves four integer and four

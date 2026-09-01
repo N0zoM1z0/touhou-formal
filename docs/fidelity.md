@@ -123,6 +123,13 @@ source-visible request ordering. Unchecked color-table reads, tracked-pointer
 writes, and TH07's conditional null dereference are structured faults; the
 effect pool, audio mixer, ANM execution, and rendering lifetime remain opaque.
 
+Immediate LERP/vector/distance operations retain each source resolver
+occurrence and output-write order, but accept host-computed binary32 result bits
+where Lean does not yet emulate x87/SSE arithmetic. Interpolation-slot matching
+is evaluated from binary32 bits, including signed-zero equality and unordered
+NaNs. An out-of-range callback index preserves the field writes that precede
+the table lookup and suppresses the later parameter reads.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

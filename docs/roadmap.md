@@ -46,7 +46,8 @@ host-indexed operations, enemy child contexts, and ANM interactions. Each new
 host boundary should have an explicit assumption or a model.
 
 Current status: the shared ECL body now includes control flow, arithmetic,
-randoms, movement, time/wait controls, primary bullet patterns, bullet-control
+randoms, special numeric operations, 8-slot interpolation installation,
+movement, time/wait controls, primary bullet patterns, bullet-control
 host effects, laser spawn descriptors, laser slot controls, enemy state, enemy
 lifecycle spawn/remove requests, item/drop requests, boss/spellcard lifecycle
 controls, effect/sound/particle host requests, callbacks, interrupts, boss

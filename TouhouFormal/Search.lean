@@ -5,6 +5,8 @@ import TouhouFormal.Search.Cursor
 import TouhouFormal.Search.Difficulty
 import TouhouFormal.Search.FloatArithmetic
 import TouhouFormal.Search.FloatFunction
+import TouhouFormal.Search.NumericSpecial
+import TouhouFormal.Search.Interpolation
 import TouhouFormal.Search.IntUnaryUpdate
 import TouhouFormal.Search.Movement
 import TouhouFormal.Search.RandomDirection

@@ -206,6 +206,49 @@ structure RawFloatFunctionShape where
   inputOperandIndices : List Nat
 deriving Repr, DecidableEq
 
+inductive RawNumericSpecialSource where
+  | enemyPositionX
+  | enemyPositionY
+  | enemyPositionZ
+deriving Repr, DecidableEq
+
+def RawNumericSpecialSource.name : RawNumericSpecialSource -> String
+  | .enemyPositionX => "enemy-position-x"
+  | .enemyPositionY => "enemy-position-y"
+  | .enemyPositionZ => "enemy-position-z"
+
+inductive RawNumericSpecialOpKind where
+  | copyHostFloat (source : RawNumericSpecialSource)
+  | lerp
+  | polarToCartesian
+  | distance2d
+deriving Repr, DecidableEq
+
+def RawNumericSpecialOpKind.name : RawNumericSpecialOpKind -> String
+  | .copyHostFloat source => "copy-" ++ source.name
+  | .lerp => "lerp"
+  | .polarToCartesian => "polar-to-cartesian"
+  | .distance2d => "distance-2d"
+
+structure RawNumericSpecialOpShape where
+  opcode : Int
+  kind : RawNumericSpecialOpKind
+  outputPolicy : RawScalarAssignOutputPolicy
+  outputOperandIndices : List Nat
+  inputOperandIndices : List Nat := []
+deriving Repr, DecidableEq
+
+structure RawInterpolationOpShape where
+  opcode : Int
+  affectedVariableOperandIndex : Nat := 0
+  durationOperandIndex : Nat := 1
+  callbackIndexOperandIndex : Nat := 2
+  easingOperandIndex : Nat := 3
+  parameterOperandIndices : List Nat := [4, 5, 6, 7]
+  slotCount : Nat := 8
+  callbackTableCount : Nat := 8
+deriving Repr, DecidableEq
+
 inductive RawRandomOpKind where
   | intRange
   | intRangeAdd
@@ -2170,6 +2213,8 @@ structure RawInstrShape where
   intBinaryOps : List RawIntBinaryOpShape := []
   floatBinaryOps : List RawFloatBinaryOpShape := []
   floatFunctions : List RawFloatFunctionShape := []
+  numericSpecialOps : List RawNumericSpecialOpShape := []
+  interpolationOps : List RawInterpolationOpShape := []
   randomOps : List RawRandomOpShape := []
   movementOps : List RawMovementOpShape := []
   randomDirectionOps : List RawRandomDirectionOpShape := []
@@ -2218,6 +2263,16 @@ def RawInstrShape.findFloatFunction?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawFloatFunctionShape :=
   rawShape.floatFunctions.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findNumericSpecialOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawNumericSpecialOpShape :=
+  rawShape.numericSpecialOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findInterpolationOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawInterpolationOpShape :=
+  rawShape.interpolationOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findRandomOp?
     (rawShape : RawInstrShape)
