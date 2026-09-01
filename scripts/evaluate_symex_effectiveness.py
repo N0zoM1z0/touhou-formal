@@ -339,6 +339,11 @@ SOURCE_COVERAGE = [
         "reason": "shared enemy-state effects cover primary/secondary hitboxes, source-width flag truncation, TH08 replace/disable/enable masks, alignment-effect collision mirroring, presentation-guarded death-mode writes, life/gauge updates, and exact timer-history resets",
     },
     {
+        "area": "shooting control state writes",
+        "status": "covered-by-model",
+        "reason": "shared shooting effects cover ranked immediate/random intervals, timer initialization, suppress/defer gates, previous-pattern spawn requests, and resolved offsets with title-specific zero guards and Z writes",
+    },
+    {
         "area": "ANM entry header/nextOffset profile",
         "status": "partially-covered",
         "reason": "entry table shape and nextOffset chain headers are modeled, but ANM opcode execution and resource side effects are not",
@@ -361,7 +366,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate enemy movement plus hitbox/flag/death-mode/life/timer writes now have typed host-effect boundaries; bullet, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
+        "reason": "immediate enemy movement, hitbox/flag/death-mode/life/timer writes, and shooting controls now have typed host-effect boundaries; bullet-pattern construction, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",

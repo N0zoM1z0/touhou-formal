@@ -561,16 +561,16 @@ dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate movement state writes,
 enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior, zero
-divisors, and signed idiv overflow. Most gameplay host effects and
+divisors, shooting-control state writes, and signed idiv overflow. Most gameplay host effects and
 multi-instruction state composition remain outside the current model.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 55: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate movement, and enemy-state families | 81 |
-| TH07 | 159 `EclOpcode` symbols | 60: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, and enemy-state families | 99 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 64: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, and enemy-state families | 120 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 61: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate movement, enemy-state, and shooting-control families | 75 |
+| TH07 | 159 `EclOpcode` symbols | 66: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, enemy-state, and shooting-control families | 93 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 70: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, enemy-state, and shooting-control families | 114 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants referenced by each Lean `Wire.lean` profile, maps those numeric values

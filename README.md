@@ -81,6 +81,11 @@ The executable model currently covers these source-backed boundaries:
   bitfield truncation, TH08's inverted replace-mask rules, alignment-effect
   collision mirroring, the high-opcode presentation-write guard, title-specific
   life operand resolution/gauge effects, and exact timer-history reset writes.
+- Shared shooting-control effects cover 18 interval, gate, previous-pattern,
+  and offset opcodes. One rank-scaling function is reused across all titles,
+  while profiles retain TH06's unconditional zero-interval timer reset,
+  TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
+  TH08's forced-zero offset Z.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -179,8 +184,9 @@ integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
-float conditional jumps, immediate movement effects, and enemy-state effects
-currently have Lean executable controls for profile coverage and shared-step execution, but no dedicated
+float conditional jumps, immediate movement effects, enemy-state effects, and
+shooting-control effects currently have Lean executable controls for profile
+coverage and shared-step execution, but no dedicated
 solver/materializer lane yet. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds

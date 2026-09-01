@@ -181,6 +181,25 @@ private def describeEnemyStateOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeShootingOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawShootingOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "interval=" ++ reprStr effect.shootIntervalWrite ++
+              " timer=" ++ reprStr effect.shootIntervalTimerWrite ++
+              " gate=" ++ reprStr effect.shootingGateWrite ++
+              " spawn=" ++ toString effect.spawnPreviousPattern ++
+              " offset=" ++ reprStr effect.shootOffsetWrite
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -329,6 +348,16 @@ def main : IO Unit := do
   IO.println s!"TH07 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th07LifeOutcome}"
   IO.println s!"TH08 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08LifeOutcome}"
   IO.println s!"TH08 timer: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08TimerOutcome}"
+  IO.println ""
+  IO.println "Shooting controls"
+  IO.println s!"TH06 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 zero interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th06ZeroIntervalOutcome}"
+  IO.println s!"TH07 zero interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th07ZeroIntervalOutcome}"
+  IO.println s!"TH08 random interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th08RandomIntervalOutcome}"
+  IO.println s!"TH06 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th06OffsetOutcome}"
+  IO.println s!"TH08 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th08OffsetOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

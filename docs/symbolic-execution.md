@@ -44,6 +44,13 @@ life/max-life/phase-start writes, conditional boss-gauge clearing, and exact
 timer-history resets explicit. These effects also have Lean controls but are
 not yet in the solver lane.
 
+Shooting-control effects cover 18 more handlers: immediate and randomized
+intervals, disable/enable gates, previous-pattern spawning, and shoot offsets.
+The shared layer computes the source rank interpolation and RNG range, while
+profiles retain the zero-interval timer guard, suppress-versus-defer gate
+meaning, operand resolution, and offset-Z differences. This layer likewise has
+Lean controls but no dedicated solver/materializer lane yet.
+
 The integer rvalue resolver is modeled as its own shared layer: TH06 always
 calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
 or selector resolution. Known selector ranges, source-backed exclusions, and

@@ -442,6 +442,76 @@ structure RawEnemyStateOpShape where
   clearBossGaugeForPrimaryBoss : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawShootingOpKind where
+  | setInterval
+  | setRandomizedInterval
+  | disableShooting
+  | enableShooting
+  | spawnPreviousPattern
+  | setShootOffset
+deriving Repr, DecidableEq
+
+def RawShootingOpKind.name : RawShootingOpKind -> String
+  | .setInterval => "set-interval"
+  | .setRandomizedInterval => "set-randomized-interval"
+  | .disableShooting => "disable-shooting"
+  | .enableShooting => "enable-shooting"
+  | .spawnPreviousPattern => "spawn-previous-pattern"
+  | .setShootOffset => "set-shoot-offset"
+
+inductive RawShootingIntInputPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawShootingIntInputPolicy.name : RawShootingIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+inductive RawShootingFloatInputPolicy where
+  | floatRValue
+  | rawBits
+deriving Repr, DecidableEq
+
+def RawShootingFloatInputPolicy.name : RawShootingFloatInputPolicy -> String
+  | .floatRValue => "float-rvalue"
+  | .rawBits => "raw-bits"
+
+structure RawShootingFloatInputShape where
+  operandIndex : Nat
+  policy : RawShootingFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawShootingIntervalGuardPolicy where
+  | alwaysApplyRank
+  | onlyWhenBaseNonzero
+deriving Repr, DecidableEq
+
+def RawShootingIntervalGuardPolicy.name :
+    RawShootingIntervalGuardPolicy -> String
+  | .alwaysApplyRank => "always-apply-rank"
+  | .onlyWhenBaseNonzero => "only-when-base-nonzero"
+
+inductive RawShootingGatePolicy where
+  | suppressSpawn
+  | deferPattern
+deriving Repr, DecidableEq
+
+def RawShootingGatePolicy.name : RawShootingGatePolicy -> String
+  | .suppressSpawn => "suppress-spawn"
+  | .deferPattern => "defer-pattern"
+
+structure RawShootingOpShape where
+  opcode : Int
+  kind : RawShootingOpKind
+  intOperandIndex : Nat := 0
+  intInputPolicy : Option RawShootingIntInputPolicy := none
+  floatInputs : List RawShootingFloatInputShape := []
+  intervalGuardPolicy : RawShootingIntervalGuardPolicy := .onlyWhenBaseNonzero
+  gatePolicy : RawShootingGatePolicy := .suppressSpawn
+  zeroOffsetZ : Bool := false
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -661,6 +731,7 @@ structure RawInstrShape where
   randomOps : List RawRandomOpShape := []
   movementOps : List RawMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
+  shootingOps : List RawShootingOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -705,6 +776,11 @@ def RawInstrShape.findEnemyStateOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawEnemyStateOpShape :=
   rawShape.enemyStateOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findShootingOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawShootingOpShape :=
+  rawShape.shootingOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

@@ -426,6 +426,31 @@ that the three games expose one uniform cleaned-up enemy API. One-bit and
 three-bit target fields explicitly truncate their source values; life and
 timer effects retain title-specific operand resolution and secondary writes.
 
+## Shooting Control Evidence
+
+- `reference/th06/src/EclManager.cpp:428-454` uses raw interval operands,
+  always applies `ShootInterval(rank)`, unconditionally resets the immediate
+  timer, randomizes the delayed timer only when the adjusted interval is
+  nonzero, toggles `shootingDisabled`, spawns the previous pattern, and resolves
+  all three offset components through `GetVarFloat`.
+- `reference/th07/src/th07/EclManager.cpp:1345-1376` resolves interval operand
+  0 and only rank-adjusts or writes the timer when the base is nonzero. Its
+  disable flag suppresses pattern spawning, and its offset has three resolved
+  components.
+- `reference/th08/src/EclRunHigh.inl:210-258` has the same nonzero interval
+  guard but computes the shared rank endpoints through
+  `ScaleIntBasedOnRank`. Opcodes 107/108 toggle the defer-pattern flag rather
+  than TH06/TH07's suppress-spawn flag, and opcode 110 resolves XY while
+  forcing offset Z to zero.
+- `reference/th06/src/Enemy.hpp:183-191`,
+  `reference/th07/src/th07/EnemyManager.hpp:120-128`, and
+  `reference/th08/src/GameManager.cpp:188-191` implement the same integer rank
+  interpolation: `rank * (lower - upper) / 32 + upper`, with endpoints derived
+  from `interval / 5` and `-interval / 5`.
+
+The model shares that interpolation and the u32 RNG range operation but keeps
+the timer guard and gate meaning in title profiles.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in
