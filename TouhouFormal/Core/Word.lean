@@ -16,4 +16,10 @@ def word32Add (lhs rhs : Int) : Int :=
 def word32Neg (value : Int) : Int :=
   toWord32Bits (-word32BitsToInt value)
 
+def word32BitSet (value : Int) (bit : Nat) : Bool :=
+  (toWord32Bits value / (2 ^ bit)) % 2 == 1
+
+def truncateUnsignedBits (value : Int) (width : Nat) : Int :=
+  toWord32Bits value % (2 ^ width)
+
 end TouhouFormal

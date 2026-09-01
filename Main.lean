@@ -152,6 +152,27 @@ private def describeMovementOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeEnemyStateOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawEnemyStateOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "primaryHitbox=" ++ reprStr effect.primaryHitboxWrite ++
+              " secondaryHitbox=" ++ reprStr effect.secondaryHitboxWrite ++
+              " fields=" ++ reprStr effect.fieldWrites ++
+              " alignmentCollision=" ++
+                reprStr effect.alignmentEffectCollisionWrite ++
+              " presentationSuppressed=" ++
+                toString effect.suppressedByPresentationPolicy
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -286,6 +307,16 @@ def main : IO Unit := do
   IO.println s!"TH07 axis velocity: {describeMovementOutcome TouhouFormal.Search.Movement.th07AxisVelocityOutcome}"
   IO.println s!"TH08 polar velocity: {describeMovementOutcome TouhouFormal.Search.Movement.th08PolarVelocityOutcome}"
   IO.println s!"TH08 position: {describeMovementOutcome TouhouFormal.Search.Movement.th08PositionOutcome}"
+  IO.println ""
+  IO.println "Enemy state controls"
+  IO.println s!"TH06 enemy-state opcode count: {TouhouFormal.Search.EnemyState.enemyStateOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 enemy-state opcode count: {TouhouFormal.Search.EnemyState.enemyStateOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 enemy-state opcode count: {TouhouFormal.Search.EnemyState.enemyStateOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 hitbox: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th06HitboxOutcome}"
+  IO.println s!"TH07 hitbox: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th07HitboxOutcome}"
+  IO.println s!"TH08 replace flags: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08ReplaceFlagsOutcome}"
+  IO.println s!"TH08 disable collision: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08DisableCollisionOutcome}"
+  IO.println s!"TH08 suppressed death mode: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08SuppressedDeathModeOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

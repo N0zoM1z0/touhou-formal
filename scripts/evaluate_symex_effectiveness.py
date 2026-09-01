@@ -334,6 +334,11 @@ SOURCE_COVERAGE = [
         "reason": "shared movement effects cover position, axis/polar velocity, angular velocity, speed, acceleration, player-relative angle, and movement bounds while preserving title-specific resolution, normalization, clamp, mode, and timer updates",
     },
     {
+        "area": "enemy hitbox and flag state writes",
+        "status": "covered-by-model",
+        "reason": "shared enemy-state effects cover primary/secondary hitboxes, source-width flag truncation, TH08 replace/disable/enable masks, alignment-effect collision mirroring, and presentation-guarded death-mode writes",
+    },
+    {
         "area": "ANM entry header/nextOffset profile",
         "status": "partially-covered",
         "reason": "entry table shape and nextOffset chain headers are modeled, but ANM opcode execution and resource side effects are not",
@@ -356,7 +361,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate enemy movement writes now have a typed host-effect boundary; bullet, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
+        "reason": "immediate enemy movement plus hitbox/flag/death-mode writes now have typed host-effect boundaries; bullet, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",
@@ -1373,6 +1378,7 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
     th06 = reference_root / "th06" / "src" / "EclManager.hpp"
     th07 = reference_root / "th07" / "src" / "th07" / "EclManager.hpp"
     th08_low = reference_root / "th08" / "src" / "EclRunLow.inl"
+    th08_high = reference_root / "th08" / "src" / "EclRunHigh.inl"
     th08_run = reference_root / "th08" / "src" / "EclRun.cpp"
 
     if th06.exists():
@@ -1403,12 +1409,25 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
 
     if th08_low.exists():
         low_text = th08_low.read_text(errors="ignore")
-        case_labels = [
+        low_case_labels = [
             int(value)
             for value in unique_preserving(
                 re.findall(r"\bcase\s+([0-9]+)\s*:", low_text)
             )
         ]
+        high_case_labels: list[int] = []
+        if th08_high.exists():
+            high_text = th08_high.read_text(errors="ignore")
+            high_case_labels = [
+                int(value)
+                for value in unique_preserving(
+                    re.findall(r"\bcase\s+([0-9]+)\s*:", high_text)
+                )
+            ]
+        case_labels = unique_preserving(
+            [str(value) for value in low_case_labels + high_case_labels]
+        )
+        case_labels = [int(value) for value in case_labels]
         profile = modeled_profile_opcodes("th08")
         modeled_values = set(profile["values"])
         source_values = set(case_labels)
@@ -1416,8 +1435,11 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
         missing_cases = [value for value in case_labels if value not in modeled_values]
         report["titles"]["th08"] = {
             "source": str(th08_low),
+            "highSource": str(th08_high) if th08_high.exists() else None,
             "runSource": str(th08_run) if th08_run.exists() else None,
-            "lowOpcodeCaseLabelCount": len(case_labels),
+            "lowOpcodeCaseLabelCount": len(low_case_labels),
+            "highOpcodeCaseLabelCount": len(high_case_labels),
+            "rawOpcodeCaseLabelCount": len(case_labels),
             "profileSource": profile["source"],
             "profileOpcodeValues": profile["values"],
             "profileOpcodeConstantsByValue": profile["constantsByValue"],

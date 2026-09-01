@@ -389,6 +389,30 @@ The model records this as a shared `RawBossFloatReadShape` with the same
 `bossSlotCount = 8` index boundary as boss-int, plus a title-specific
 `RawBossReadNullPolicy`: TH07 is `unguarded-deref`, TH08 is `guarded-skip`.
 
+## Enemy State Effect Evidence
+
+- `reference/th06/src/EclManager.cpp:668-683` copies three raw float hitbox
+  words and assigns raw i32 values into one-bit collision/damage and three-bit
+  death-mode fields. `:801-803` does the same for the one-bit interactable
+  field.
+- `reference/th07/src/th07/EclManager.cpp:1645-1668` resolves the three float
+  components of both primary and graze hitboxes, but reads the low raw byte for
+  contact, damage, hittable, and death-type bitfields. `:1747-1749` writes the
+  raw low byte into `canDie`.
+- `reference/th08/src/EclRunLow.inl:633-648` resolves two float operands for
+  each XY hitbox and leaves Z untouched.
+- `reference/th08/src/EclRunLow.inl:650-688` gives opcodes 79, 80, and 81 three
+  distinct mask meanings. Opcode 79 replaces all six flags and inverts the
+  first three bits; 80 conditionally disables them; 81 conditionally enables
+  them. Collision changes in 80/81 are mirrored into an attached alignment
+  effect when one exists.
+- `reference/th08/src/EclRunHigh.inl:477-481` gates high opcode 129's raw-byte
+  death-mode write on the target's presentation-write condition.
+
+The shared model therefore emits typed field writes rather than pretending
+that the three games expose one uniform boolean flag setter. One-bit and
+three-bit target fields explicitly truncate their source values.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

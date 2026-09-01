@@ -62,8 +62,14 @@ def eclOpcodeSetAngularVelocity : Int := 70
 def eclOpcodeSetAcceleration : Int := 71
 def eclOpcodeSetMovementBounds : Int := 75
 def eclOpcodeDisableMovementBounds : Int := 76
+def eclOpcodeSetPrimaryHitbox : Int := 77
+def eclOpcodeSetSecondaryHitbox : Int := 78
+def eclOpcodeReplaceEnemyFlags : Int := 79
+def eclOpcodeDisableEnemyFlags : Int := 80
+def eclOpcodeEnableEnemyFlags : Int := 81
 def eclOpcodeGetBossInt : Int := 86
 def eclOpcodeGetBossFloat : Int := 87
+def eclOpcodeSetDeathMode : Int := 129
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th08/src/EclManager.hpp"
@@ -182,6 +188,18 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 617
       endLine := 631
       claim := "Low opcodes 75 and 76 resolve four float movement bounds and toggle the movement-bounds flag." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 633
+      endLine := 648
+      claim := "Low opcodes 77 and 78 resolve two float operands into primary and secondary XY hitbox dimensions without writing Z." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 650
+      endLine := 688
+      claim := "Low opcodes 79 through 81 resolve one integer mask and replace, disable, or enable six enemy flags; collision toggles in 80/81 also mirror into an attached alignment-effect VM." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 477
+      endLine := 481
+      claim := "High opcode 129 writes the raw low byte into the three-bit deathMode field only when presentation writes are allowed." },
     { path := "reference/th08/src/EclDependencies.cpp"
       startLine := 466
       endLine := 493
@@ -460,6 +478,30 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .floatRValue } ] },
               { opcode := eclOpcodeDisableMovementBounds
                 kind := .disableBounds } ]
+          enemyStateOps :=
+            [ { opcode := eclOpcodeSetPrimaryHitbox
+                kind := .setPrimaryHitbox 2
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ] },
+              { opcode := eclOpcodeSetSecondaryHitbox
+                kind := .setSecondaryHitbox 2
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ] },
+              { opcode := eclOpcodeReplaceEnemyFlags
+                kind := .replaceFlagMask
+                intInputPolicy := some .intRValue },
+              { opcode := eclOpcodeDisableEnemyFlags
+                kind := .disableFlagMask
+                intInputPolicy := some .intRValue },
+              { opcode := eclOpcodeEnableEnemyFlags
+                kind := .enableFlagMask
+                intInputPolicy := some .intRValue },
+              { opcode := eclOpcodeSetDeathMode
+                kind := .setField .deathMode
+                intInputPolicy := some .rawByte
+                presentationGuard := true } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeInc
                 kind := .inc

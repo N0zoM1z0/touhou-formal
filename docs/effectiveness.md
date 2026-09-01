@@ -560,21 +560,21 @@ ADD/SUB/MUL/DIV/MOD single-step behavior, float ADD/SUB/MUL/DIV/MOD
 dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate movement state writes,
-plain CALL/RET stack behavior, zero divisors, and signed idiv overflow. Most
-gameplay host effects and multi-instruction state composition remain outside
-the current model.
+enemy hitbox/flag/death-mode writes, plain CALL/RET stack behavior, zero
+divisors, and signed idiv overflow. Most gameplay host effects and
+multi-instruction state composition remain outside the current model.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 48: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, and immediate movement families | 88 |
-| TH07 | 159 `EclOpcode` symbols | 51: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, and immediate movement families | 108 |
-| TH08 | 91 numeric low-run `case` labels | 56: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, and immediate movement families | 35 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 53: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate movement, and enemy-state families | 83 |
+| TH07 | 159 `EclOpcode` symbols | 58: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, and enemy-state families | 101 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 62: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, and enemy-state families | 122 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants referenced by each Lean `Wire.lean` profile, maps those numeric values
-back to the local source enum or TH08 low-run `case` labels, and computes the
+back to the local source enum or TH08's integrated low/high `case` labels, and computes the
 remaining lower bound from the set difference. This makes new profile entries
 count automatically and flags unresolved or source-absent profile values.
 "Ordinary advance" for the remaining opcodes still does not prove their

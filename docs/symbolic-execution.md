@@ -36,6 +36,13 @@ covers 24 position/velocity/scalar/bounds handlers across the three titles and
 records derived-angle/clamp host boundaries. These effects have Lean profile
 and step controls but are not yet included in the solver lane.
 
+Enemy hitbox and flag writes use a second shared effect layer covering 18
+handlers. It keeps raw versus resolved float inputs, one-bit/three-bit C
+bitfield truncation, TH08's replace/disable/enable mask polarity, optional
+alignment-effect collision mirroring, and the high-opcode presentation guard
+explicit. These effects also have Lean controls but are not yet in the solver
+lane.
+
 The integer rvalue resolver is modeled as its own shared layer: TH06 always
 calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
 or selector resolution. Known selector ranges, source-backed exclusions, and

@@ -340,6 +340,102 @@ structure RawMovementOpShape where
   resetMovementTimers : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawEnemyStateFloatInputPolicy where
+  | floatRValue
+  | rawBits
+deriving Repr, DecidableEq
+
+def RawEnemyStateFloatInputPolicy.name : RawEnemyStateFloatInputPolicy -> String
+  | .floatRValue => "float-rvalue"
+  | .rawBits => "raw-bits"
+
+structure RawEnemyStateFloatInputShape where
+  operandIndex : Nat
+  policy : RawEnemyStateFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawEnemyStateField where
+  | interactable
+  | collidable
+  | damageable
+  | contactHitbox
+  | canBeDamaged
+  | hittable
+  | canDie
+  | deathMode
+  | acceptsDamage
+  | collision
+  | noSprite
+  | allowOffscreen
+  | noDeath
+deriving Repr, DecidableEq
+
+def RawEnemyStateField.name : RawEnemyStateField -> String
+  | .interactable => "interactable"
+  | .collidable => "collidable"
+  | .damageable => "damageable"
+  | .contactHitbox => "contact-hitbox"
+  | .canBeDamaged => "can-be-damaged"
+  | .hittable => "hittable"
+  | .canDie => "can-die"
+  | .deathMode => "death-mode"
+  | .acceptsDamage => "accepts-damage"
+  | .collision => "collision"
+  | .noSprite => "no-sprite"
+  | .allowOffscreen => "allow-offscreen"
+  | .noDeath => "no-death"
+
+def RawEnemyStateField.bitWidth : RawEnemyStateField -> Nat
+  | .deathMode => 3
+  | _ => 1
+
+inductive RawEnemyStateOpKind where
+  | setPrimaryHitbox (dimensions : Nat)
+  | setSecondaryHitbox (dimensions : Nat)
+  | setField (field : RawEnemyStateField)
+  | replaceFlagMask
+  | disableFlagMask
+  | enableFlagMask
+deriving Repr, DecidableEq
+
+def RawEnemyStateOpKind.name : RawEnemyStateOpKind -> String
+  | .setPrimaryHitbox dimensions =>
+      "set-primary-hitbox-" ++ toString dimensions ++ "d"
+  | .setSecondaryHitbox dimensions =>
+      "set-secondary-hitbox-" ++ toString dimensions ++ "d"
+  | .setField field => "set-" ++ field.name
+  | .replaceFlagMask => "replace-flag-mask"
+  | .disableFlagMask => "disable-flag-mask"
+  | .enableFlagMask => "enable-flag-mask"
+
+def RawEnemyStateOpKind.hitboxDimensions? : RawEnemyStateOpKind -> Option Nat
+  | .setPrimaryHitbox dimensions | .setSecondaryHitbox dimensions =>
+      some dimensions
+  | _ => none
+
+def RawEnemyStateOpKind.requiresIntInput (kind : RawEnemyStateOpKind) : Bool :=
+  kind.hitboxDimensions?.isNone
+
+inductive RawEnemyStateIntInputPolicy where
+  | rawI32
+  | rawByte
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawEnemyStateIntInputPolicy.name : RawEnemyStateIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .rawByte => "raw-byte"
+  | .intRValue => "int-rvalue"
+
+structure RawEnemyStateOpShape where
+  opcode : Int
+  kind : RawEnemyStateOpKind
+  floatInputs : List RawEnemyStateFloatInputShape := []
+  intOperandIndex : Nat := 0
+  intInputPolicy : Option RawEnemyStateIntInputPolicy := none
+  presentationGuard : Bool := false
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -558,6 +654,7 @@ structure RawInstrShape where
   floatFunctions : List RawFloatFunctionShape := []
   randomOps : List RawRandomOpShape := []
   movementOps : List RawMovementOpShape := []
+  enemyStateOps : List RawEnemyStateOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -597,6 +694,11 @@ def RawInstrShape.findMovementOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawMovementOpShape :=
   rawShape.movementOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findEnemyStateOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawEnemyStateOpShape :=
+  rawShape.enemyStateOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

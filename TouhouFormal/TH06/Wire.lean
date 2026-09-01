@@ -55,6 +55,11 @@ def eclOpcodeMoveAcceleration : Int := 48
 def eclOpcodeMoveAtPlayer : Int := 51
 def eclOpcodeMoveBoundsSet : Int := 65
 def eclOpcodeMoveBoundsDisable : Int := 66
+def eclOpcodeSetHitbox : Int := 103
+def eclOpcodeSetCollidable : Int := 104
+def eclOpcodeSetDamageable : Int := 105
+def eclOpcodeSetDeathMode : Int := 107
+def eclOpcodeSetInteractable : Int := 117
 
 def isTimelineSpawnOpcode (opcode : Int) : Bool :=
   decide (0 <= opcode /\ opcode <= 7)
@@ -164,6 +169,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 612
       endLine := 620
       claim := "Movement-bound opcodes copy four raw float fields and toggle the shouldClampPos flag without resolving those bounds through GetVarFloat." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 668
+      endLine := 683
+      claim := "Enemy hitbox opcode 103 copies three raw float fields, while opcodes 104, 105, and 107 assign raw i32 values into one-bit collision/damage and three-bit death-mode fields." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 801
+      endLine := 803
+      claim := "Enemy opcode 117 assigns its raw i32 operand into the one-bit isInteractable field." },
     { path := "reference/th06/src/Enemy.hpp"
       startLine := 195
       endLine := 197
@@ -430,6 +443,25 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .rawBits } ] },
               { opcode := eclOpcodeMoveBoundsDisable
                 kind := .disableBounds } ]
+          enemyStateOps :=
+            [ { opcode := eclOpcodeSetHitbox
+                kind := .setPrimaryHitbox 3
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .rawBits },
+                    { operandIndex := 1, policy := .rawBits },
+                    { operandIndex := 2, policy := .rawBits } ] },
+              { opcode := eclOpcodeSetCollidable
+                kind := .setField .collidable
+                intInputPolicy := some .rawI32 },
+              { opcode := eclOpcodeSetDamageable
+                kind := .setField .damageable
+                intInputPolicy := some .rawI32 },
+              { opcode := eclOpcodeSetDeathMode
+                kind := .setField .deathMode
+                intInputPolicy := some .rawI32 },
+              { opcode := eclOpcodeSetInteractable
+                kind := .setField .interactable
+                intInputPolicy := some .rawI32 } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeMathInc
                 kind := .inc

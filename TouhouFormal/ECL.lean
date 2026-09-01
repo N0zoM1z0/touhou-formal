@@ -16,4 +16,5 @@ import TouhouFormal.ECL.Unary
 import TouhouFormal.ECL.FloatFunction
 import TouhouFormal.ECL.Random
 import TouhouFormal.ECL.Movement
+import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.Boss
