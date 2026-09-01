@@ -14,6 +14,7 @@ import TouhouFormal.Search.EnemyState
 import TouhouFormal.Search.EnemyLifecycle
 import TouhouFormal.Search.Item
 import TouhouFormal.Search.BossLifecycle
+import TouhouFormal.Search.HostEffect
 import TouhouFormal.Search.Shooting
 import TouhouFormal.Search.TimeControl
 import TouhouFormal.Search.BulletControl

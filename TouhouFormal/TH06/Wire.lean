@@ -72,6 +72,7 @@ def eclOpcodeDisableShooting : Int := 78
 def eclOpcodeEnableShooting : Int := 79
 def eclOpcodeSpawnPreviousPattern : Int := 80
 def eclOpcodeSetShootOffset : Int := 81
+def eclOpcodeBulletEffects : Int := 82
 def eclOpcodeBulletCancel : Int := 83
 def eclOpcodeBulletSound : Int := 84
 def eclOpcodeLaserCreate : Int := 85
@@ -91,9 +92,11 @@ def eclOpcodeAnmSetPoses : Int := 98
 def eclOpcodeAnmSetSlot : Int := 99
 def eclOpcodeAnmSetDeath : Int := 100
 def eclOpcodeBossSet : Int := 101
+def eclOpcodeSpellcardEffect : Int := 102
 def eclOpcodeSetHitbox : Int := 103
 def eclOpcodeSetCollidable : Int := 104
 def eclOpcodeSetDamageable : Int := 105
+def eclOpcodeEffectSound : Int := 106
 def eclOpcodeSetDeathMode : Int := 107
 def eclOpcodeSetDeathCallbackSub : Int := 108
 def eclOpcodeSetInterrupt : Int := 109
@@ -839,6 +842,42 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { role := .flagValue
                       operandIndex := 0
                       policy := .rawI32 } ] } ]
+          hostEffectOps :=
+            [ { opcode := eclOpcodeBulletEffects
+                kind := .setBulletExtras
+                intInputs :=
+                  [ { role := .extra 0, operandIndex := 0, policy := .intRValue },
+                    { role := .extra 1, operandIndex := 1, policy := .intRValue },
+                    { role := .extra 2, operandIndex := 2, policy := .intRValue },
+                    { role := .extra 3, operandIndex := 3, policy := .intRValue } ]
+                floatInputs :=
+                  [ { role := .extra 0, operandIndex := 4, policy := .floatRValue },
+                    { role := .extra 1, operandIndex := 5, policy := .floatRValue },
+                    { role := .extra 2, operandIndex := 6, policy := .floatRValue },
+                    { role := .extra 3, operandIndex := 7, policy := .floatRValue } ] },
+              { opcode := eclOpcodeSpellcardEffect
+                kind := .spawnTrackedEffect
+                intInputs :=
+                  [ { role := .color, operandIndex := 0, policy := .rawI32 } ]
+                floatInputs :=
+                  [ { role := .vectorX, operandIndex := 1, policy := .rawBits },
+                    { role := .vectorY, operandIndex := 2, policy := .rawBits },
+                    { role := .vectorZ, operandIndex := 3, policy := .rawBits },
+                    { role := .distance, operandIndex := 4, policy := .rawBits } ]
+                trackedSlotCount := 12
+                colorTableCount := some 28
+                fixedEffectId := some 13
+                fixedCount := some 1 },
+              { opcode := eclOpcodeEffectSound
+                kind := .playSound
+                intInputs :=
+                  [ { role := .soundId, operandIndex := 0, policy := .rawI32 } ] },
+              { opcode := eclOpcodeEffectParticle
+                kind := .spawnParticles false
+                intInputs :=
+                  [ { role := .effectId, operandIndex := 0, policy := .rawI32 },
+                    { role := .count, operandIndex := 1, policy := .rawI32 },
+                    { role := .color, operandIndex := 2, policy := .rawI32 } ] } ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

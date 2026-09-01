@@ -2014,6 +2014,132 @@ structure RawBossLifecycleOpShape where
   effectTrackingStoresVectorWhenZero : Bool := false
 deriving Repr, DecidableEq
 
+/-!
+Shared profile for the ECL boundary where VM operands become sound, particle,
+and effect-manager requests.  The profile deliberately keeps host array and
+pointer hazards visible instead of replacing the original behavior with safe
+containers.
+-/
+
+inductive RawHostEffectIntInputPolicy where
+  | rawI32
+  | intRValue
+  | intPointerValue
+deriving Repr, DecidableEq
+
+def RawHostEffectIntInputPolicy.name :
+    RawHostEffectIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+  | .intPointerValue => "int-pointer-value"
+
+inductive RawHostEffectFloatInputPolicy where
+  | rawBits
+  | floatRValue
+deriving Repr, DecidableEq
+
+def RawHostEffectFloatInputPolicy.name :
+    RawHostEffectFloatInputPolicy -> String
+  | .rawBits => "raw-bits"
+  | .floatRValue => "float-rvalue"
+
+inductive RawHostEffectIntRole where
+  | effectId
+  | count
+  | color
+  | soundId
+  | customPositionFlag
+  | extra (index : Nat)
+deriving Repr, DecidableEq
+
+def RawHostEffectIntRole.name : RawHostEffectIntRole -> String
+  | .effectId => "effect-id"
+  | .count => "count"
+  | .color => "color"
+  | .soundId => "sound-id"
+  | .customPositionFlag => "custom-position-flag"
+  | .extra index => "extra-int-" ++ toString index
+
+inductive RawHostEffectFloatRole where
+  | vectorX
+  | vectorY
+  | vectorZ
+  | distance
+  | colorR
+  | colorG
+  | colorB
+  | colorA
+  | extra (index : Nat)
+deriving Repr, DecidableEq
+
+def RawHostEffectFloatRole.name : RawHostEffectFloatRole -> String
+  | .vectorX => "vector-x"
+  | .vectorY => "vector-y"
+  | .vectorZ => "vector-z"
+  | .distance => "distance"
+  | .colorR => "color-r"
+  | .colorG => "color-g"
+  | .colorB => "color-b"
+  | .colorA => "color-a"
+  | .extra index => "extra-float-" ++ toString index
+
+structure RawHostEffectIntInputShape where
+  role : RawHostEffectIntRole
+  operandIndex : Nat
+  policy : RawHostEffectIntInputPolicy
+deriving Repr, DecidableEq
+
+structure RawHostEffectFloatInputShape where
+  role : RawHostEffectFloatRole
+  operandIndex : Nat
+  policy : RawHostEffectFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawHostEffectPositionSource where
+  | enemyPosition
+  | enemyWorldPosition
+deriving Repr, DecidableEq
+
+def RawHostEffectPositionSource.name :
+    RawHostEffectPositionSource -> String
+  | .enemyPosition => "enemy-position"
+  | .enemyWorldPosition => "enemy-world-position"
+
+inductive RawHostEffectOpKind where
+  | setBulletExtras
+  | spawnTrackedEffect
+  | playSound
+  | spawnParticles (moving : Bool)
+  | setGlobalColorMultiplier
+  | setSpecialEffectPosition
+  | spawnAlignmentEffect
+deriving Repr, DecidableEq
+
+def RawHostEffectOpKind.name : RawHostEffectOpKind -> String
+  | .setBulletExtras => "set-bullet-extras"
+  | .spawnTrackedEffect => "spawn-tracked-effect"
+  | .playSound => "play-sound"
+  | .spawnParticles false => "spawn-particles"
+  | .spawnParticles true => "spawn-moving-particles"
+  | .setGlobalColorMultiplier => "set-global-color-multiplier"
+  | .setSpecialEffectPosition => "set-special-effect-position"
+  | .spawnAlignmentEffect => "spawn-alignment-effect"
+
+structure RawHostEffectOpShape where
+  opcode : Int
+  kind : RawHostEffectOpKind
+  intInputs : List RawHostEffectIntInputShape := []
+  floatInputs : List RawHostEffectFloatInputShape := []
+  positionSource : RawHostEffectPositionSource := .enemyPosition
+  trackedSlotCount : Nat := 0
+  colorTableCount : Option Nat := none
+  fixedEffectId : Option Int := none
+  fixedCount : Option Int := none
+  fixedColor : Option Int := none
+  effectIdBase : Int := 0
+  positionedSound : Bool := false
+deriving Repr, DecidableEq
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -2053,6 +2179,7 @@ structure RawInstrShape where
   enemyLifecycleOps : List RawEnemyLifecycleOpShape := []
   itemOps : List RawItemOpShape := []
   bossLifecycleOps : List RawBossLifecycleOpShape := []
+  hostEffectOps : List RawHostEffectOpShape := []
   shootingOps : List RawShootingOpShape := []
   timeControlOps : List RawTimeControlOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
@@ -2150,6 +2277,11 @@ def RawInstrShape.findBossLifecycleOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawBossLifecycleOpShape :=
   rawShape.bossLifecycleOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findHostEffectOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawHostEffectOpShape :=
+  rawShape.hostEffectOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)

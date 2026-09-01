@@ -589,6 +589,28 @@ unchecked boss/gauge slot accesses become formal faults, source-visible
 truncation and branch gates are explicit, and deep GUI/Spellcard/Catk scoring
 state remains an opaque host subsystem for later modeling.
 
+## Effect, Particle, and Sound Host-Boundary Evidence
+
+- `reference/th06/src/EclManager.cpp:412-421` resolves four integer and four
+  float extended-bullet values. `:552-558` indexes both `g_EffectsColor[28]`
+  and `enemy->effectArray[12]` without an opcode-level bound check, while
+  `:679` and `:804-807` issue raw sound and particle requests.
+- `reference/th07/src/th07/EclManager.cpp:1530-1536` performs the analogous
+  unchecked `g_BulletColor[28]` and `enemy->effects[24]` accesses. `:1664` and
+  `:1750-1763` resolve sound/particle operands, `:1921-1929` writes the global
+  effect color multiplier, and `:1947-1954` writes through `specialEffect`
+  without a null guard when custom positioning is disabled.
+- `reference/th08/src/EclRunHigh.inl:458-476` tracks an effect through the
+  unchecked `attachedEffects[24]` index and plays positioned sound. `:614-634`
+  resolves ordinary and moving effect requests, while `:936-951` replaces the
+  alignment effect, selects interrupt 1/2 from player alignment, and negates
+  angular velocity for odd enemy indices.
+
+The shared model records these as typed host requests and stops on the first
+modeled unchecked array/table/null boundary. It does not fabricate effect-pool,
+audio-device, or renderer behavior after the original C++ operation leaves the
+VM boundary.
+
 ## Shooting Control Evidence
 
 - `reference/th06/src/EclManager.cpp:428-454` uses raw interval operands,

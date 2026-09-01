@@ -24,6 +24,7 @@ import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.EnemyLifecycle
 import TouhouFormal.ECL.Item
 import TouhouFormal.ECL.BossLifecycle
+import TouhouFormal.ECL.HostEffect
 import TouhouFormal.ECL.Shooting
 import TouhouFormal.ECL.TimeControl
 import TouhouFormal.ECL.BulletControl

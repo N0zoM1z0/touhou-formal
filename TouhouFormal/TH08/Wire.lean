@@ -110,13 +110,17 @@ def eclOpcodeTestLaserInUse : Int := 120
 def eclOpcodeStopLaser : Int := 121
 def eclOpcodeBeginSpellcard : Int := 122
 def eclOpcodeEndSpellcard : Int := 123
+def eclOpcodePlayPositionedSound : Int := 124
 def eclOpcodeSetBoss : Int := 127
+def eclOpcodeSpawnTrackedEffect : Int := 128
 def eclOpcodeSetDeathMode : Int := 129
 def eclOpcodeSetDeathCallbackSub : Int := 130
 def eclOpcodeSetLife : Int := 131
 def eclOpcodeSetBossTimer : Int := 132
 def eclOpcodeSetLifeCallback : Int := 133
 def eclOpcodeSetTimerCallback : Int := 134
+def eclOpcodeSpawnEffect : Int := 139
+def eclOpcodeSpawnMovingEffect : Int := 140
 def eclOpcodeSpawnItem : Int := 141
 def eclOpcodeSpawnItems : Int := 142
 def eclOpcodeSetItemDropType : Int := 143
@@ -142,6 +146,7 @@ def eclOpcodeRandomExitAngle : Int := 169
 def eclOpcodeSetLaserHideCapDuringStartup : Int := 170
 def eclOpcodeSetLaserStartLength : Int := 171
 def eclOpcodeSetLaserOffsets : Int := 172
+def eclOpcodeSpawnAlignmentEffect : Int := 174
 def eclOpcodeSetPhaseStartingLife : Int := 177
 def eclOpcodeMoveRandomBiasedTimed : Int := 178
 def eclOpcodeSetSpellcardBonusUpdatesDisabled : Int := 184
@@ -1052,6 +1057,45 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { role := .flagValue
                       operandIndex := 0
                       policy := .intRValue } ] } ]
+          hostEffectOps :=
+            [ { opcode := eclOpcodeSpawnTrackedEffect
+                kind := .spawnTrackedEffect
+                floatInputs :=
+                  [ { role := .vectorX, operandIndex := 1, policy := .rawBits },
+                    { role := .vectorY, operandIndex := 2, policy := .rawBits },
+                    { role := .vectorZ, operandIndex := 3, policy := .rawBits },
+                    { role := .distance, operandIndex := 4, policy := .rawBits } ]
+                trackedSlotCount := 24
+                fixedEffectId := some 13
+                fixedCount := some 1
+                fixedColor := some 0xFF6060D0 },
+              { opcode := eclOpcodePlayPositionedSound
+                kind := .playSound
+                intInputs :=
+                  [ { role := .soundId, operandIndex := 0, policy := .intRValue } ]
+                positionedSound := true },
+              { opcode := eclOpcodeSpawnEffect
+                kind := .spawnParticles false
+                intInputs :=
+                  [ { role := .effectId, operandIndex := 0, policy := .intRValue },
+                    { role := .count, operandIndex := 1, policy := .intRValue },
+                    { role := .color, operandIndex := 2, policy := .intPointerValue } ] },
+              { opcode := eclOpcodeSpawnMovingEffect
+                kind := .spawnParticles true
+                intInputs :=
+                  [ { role := .effectId, operandIndex := 0, policy := .intRValue },
+                    { role := .count, operandIndex := 1, policy := .intRValue },
+                    { role := .color, operandIndex := 2, policy := .intPointerValue } ]
+                floatInputs :=
+                  [ { role := .vectorX, operandIndex := 3, policy := .floatRValue },
+                    { role := .vectorY, operandIndex := 4, policy := .floatRValue },
+                    { role := .vectorZ, operandIndex := 5, policy := .floatRValue } ] },
+              { opcode := eclOpcodeSpawnAlignmentEffect
+                kind := .spawnAlignmentEffect
+                intInputs :=
+                  [ { role := .effectId, operandIndex := 0, policy := .intRValue } ]
+                positionSource := .enemyWorldPosition
+                effectIdBase := 0x20 } ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

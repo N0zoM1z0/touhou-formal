@@ -420,6 +420,28 @@ private def describeBossLifecycleOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeHostEffectOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawHostEffectOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "spawn=" ++ reprStr effect.spawnRequest ++
+              " sound=" ++ reprStr effect.soundRequest ++
+              " specialPos=" ++ reprStr effect.specialPosition ++
+              " alignment=" ++ reprStr effect.alignment
+      let faultSummary :=
+        match outcome.fault with
+        | none => "fault=none"
+        | some fault => "fault=" ++ fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++ " " ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeShootingOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawShootingOutcome) :
     String :=
@@ -830,6 +852,15 @@ def main : IO Unit := do
   IO.println s!"TH08 effect tracking nonzero: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08EffectTrackingNonzeroOutcome}"
   IO.println s!"TH08 effect tracking zero: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08EffectTrackingZeroOutcome}"
   IO.println s!"TH08 life marker: {describeBossLifecycleOutcome TouhouFormal.Search.BossLifecycle.th08LifeMarkerOutcome}"
+  IO.println ""
+  IO.println "Host effect and sound controls"
+  IO.println s!"TH06 host-effect opcode count: {TouhouFormal.Search.HostEffect.hostEffectOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 host-effect opcode count: {TouhouFormal.Search.HostEffect.hostEffectOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 host-effect opcode count: {TouhouFormal.Search.HostEffect.hostEffectOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 tracked effect slot fault: {describeHostEffectOutcome TouhouFormal.Search.HostEffect.th06TrackedEffectSlot12}"
+  IO.println s!"TH07 special-effect null fault: {describeHostEffectOutcome TouhouFormal.Search.HostEffect.th07SpecialPositionNull}"
+  IO.println s!"TH08 tracked effect slot fault: {describeHostEffectOutcome TouhouFormal.Search.HostEffect.th08TrackedEffectSlot24}"
+  IO.println s!"TH08 alignment effect: {describeHostEffectOutcome TouhouFormal.Search.HostEffect.th08AlignmentOutcome}"
   IO.println ""
   IO.println "Shooting controls"
   IO.println s!"TH06 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH06.headerShape}"

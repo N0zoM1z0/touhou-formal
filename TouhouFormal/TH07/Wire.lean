@@ -46,6 +46,10 @@ def eclOpcodeSin : Int := 24
 def eclOpcodeCos : Int := 25
 def eclOpcodeAtan2 : Int := 26
 def eclOpcodeNormalizeAngle : Int := 40
+def eclOpcodeSpawnEffect : Int := 100
+def eclOpcodePlaySound : Int := 105
+def eclOpcodeSpawnParticles : Int := 117
+def eclOpcodeSpawnMovingParticles : Int := 118
 def eclOpcodeGetBossInt : Int := 43
 def eclOpcodeGetBossFloat : Int := 44
 def eclOpcodeSetWaitTimer : Int := 45
@@ -121,8 +125,10 @@ def eclOpcodeSetCallStackDisabled : Int := 130
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
 def eclOpcodeSetIsSurvivalSpellcard : Int := 135
 def eclOpcodeSetBossHealth : Int := 139
+def eclOpcodeSetGlobalEffectColorMultiplier : Int := 140
 def eclOpcodeSetPeriodicCallback : Int := 144
 def eclOpcodeSetBossRunInterrupt : Int := 145
+def eclOpcodeSetSpecialEffectPosition : Int := 149
 def eclOpcodeSetLifeCallback : Int := 148
 def eclOpcodeRandomExitAngle : Int := 155
 def eclOpcodeSetVmAutoRotate : Int := 120
@@ -984,6 +990,55 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                       operandIndex := 1
                       policy := .intRValue } ]
                 bossSlotCount := 8 } ]
+          hostEffectOps :=
+            [ { opcode := eclOpcodeSpawnEffect
+                kind := .spawnTrackedEffect
+                intInputs :=
+                  [ { role := .color, operandIndex := 0, policy := .rawI32 } ]
+                floatInputs :=
+                  [ { role := .vectorX, operandIndex := 1, policy := .rawBits },
+                    { role := .vectorY, operandIndex := 2, policy := .rawBits },
+                    { role := .vectorZ, operandIndex := 3, policy := .rawBits },
+                    { role := .distance, operandIndex := 4, policy := .rawBits } ]
+                trackedSlotCount := 24
+                colorTableCount := some 28
+                fixedEffectId := some 13
+                fixedCount := some 1 },
+              { opcode := eclOpcodePlaySound
+                kind := .playSound
+                intInputs :=
+                  [ { role := .soundId, operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSpawnParticles
+                kind := .spawnParticles false
+                intInputs :=
+                  [ { role := .effectId, operandIndex := 0, policy := .intRValue },
+                    { role := .count, operandIndex := 1, policy := .intRValue },
+                    { role := .color, operandIndex := 2, policy := .intPointerValue } ] },
+              { opcode := eclOpcodeSpawnMovingParticles
+                kind := .spawnParticles true
+                intInputs :=
+                  [ { role := .effectId, operandIndex := 0, policy := .intRValue },
+                    { role := .count, operandIndex := 1, policy := .intRValue },
+                    { role := .color, operandIndex := 2, policy := .intPointerValue } ]
+                floatInputs :=
+                  [ { role := .vectorX, operandIndex := 3, policy := .floatRValue },
+                    { role := .vectorY, operandIndex := 4, policy := .floatRValue },
+                    { role := .vectorZ, operandIndex := 5, policy := .floatRValue } ] },
+              { opcode := eclOpcodeSetGlobalEffectColorMultiplier
+                kind := .setGlobalColorMultiplier
+                floatInputs :=
+                  [ { role := .colorR, operandIndex := 0, policy := .floatRValue },
+                    { role := .colorG, operandIndex := 1, policy := .floatRValue },
+                    { role := .colorB, operandIndex := 2, policy := .floatRValue },
+                    { role := .colorA, operandIndex := 3, policy := .floatRValue } ] },
+              { opcode := eclOpcodeSetSpecialEffectPosition
+                kind := .setSpecialEffectPosition
+                intInputs :=
+                  [ { role := .customPositionFlag, operandIndex := 0, policy := .intRValue } ]
+                floatInputs :=
+                  [ { role := .vectorX, operandIndex := 1, policy := .floatRValue },
+                    { role := .vectorY, operandIndex := 2, policy := .floatRValue },
+                    { role := .vectorZ, operandIndex := 3, policy := .floatRValue } ] } ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

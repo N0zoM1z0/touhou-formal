@@ -117,6 +117,12 @@ as a structured fault before trying to simulate whatever C++ memory corruption
 would follow. The full GUI, `Spellcard`, `Catk`, score-drain, and presentation
 runtime remain host-side state to model later.
 
+Effect, particle, and sound opcodes use the same boundary discipline. Lean
+retains operandFlags resolution, fixed colors/ids, tracked array counts, and
+source-visible request ordering. Unchecked color-table reads, tracked-pointer
+writes, and TH07's conditional null dereference are structured faults; the
+effect pool, audio mixer, ANM execution, and rendering lifetime remain opaque.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

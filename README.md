@@ -119,6 +119,11 @@ The executable model currently covers these source-backed boundaries:
   host calls, boss gauge ratios, life-marker side effects, timeout/survival
   flags, boss run-interrupt writes, and TH08 spellcard effect/bonus control
   flags without expanding the full GUI/Spellcard/Catk runtimes.
+- Shared host-effect semantics cover 15 sound, particle, tracked-effect, color,
+  and alignment opcodes. Profiles preserve raw versus resolved operands while
+  the executable boundary exposes TH06's 12-slot and TH07/TH08's 24-slot
+  effect-pointer arrays, the two 28-entry color tables, TH07's unchecked
+  `specialEffect` dereference, and TH08's alignment-effect interrupt policy.
 - Shared shooting-control effects cover 18 interval, gate, previous-pattern,
   and offset opcodes. One rank-scaling function is reused across all titles,
   while profiles retain TH06's unconditional zero-interval timer reset,
