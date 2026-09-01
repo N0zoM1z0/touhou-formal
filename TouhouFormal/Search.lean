@@ -29,6 +29,7 @@ import TouhouFormal.Search.Callback
 import TouhouFormal.Search.Interrupt
 import TouhouFormal.Search.Extension
 import TouhouFormal.Search.ChildContext
+import TouhouFormal.Search.Misc
 import TouhouFormal.Search.Random
 import TouhouFormal.Search.ScalarAssignment
 import TouhouFormal.Search.SMT

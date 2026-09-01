@@ -124,15 +124,22 @@ def eclOpcodeSetTimerCallbackSub : Int := 115
 def eclOpcodeSetCanDie : Int := 116
 def eclOpcodeSetNumBossLifeMarkers : Int := 126
 def eclOpcodeSetCallStackDisabled : Int := 130
+def eclOpcodeSetHasNoCollision : Int := 132
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
 def eclOpcodeSetIsSurvivalSpellcard : Int := 135
+def eclOpcodeSetIsProjectile : Int := 136
+def eclOpcodeSetDespawnOnOob : Int := 137
+def eclOpcodeSetTrail : Int := 138
 def eclOpcodeSetBossHealth : Int := 139
 def eclOpcodeSetGlobalEffectColorMultiplier : Int := 140
+def eclOpcodeSetInvincibilityTimer : Int := 142
 def eclOpcodeSetPeriodicCallback : Int := 144
 def eclOpcodeSetBossRunInterrupt : Int := 145
 def eclOpcodeSetSpecialEffectPosition : Int := 149
 def eclOpcodeVectorFromAngleMagnitude : Int := 151
 def eclOpcodeLerp : Int := 159
+def eclOpcodeAddCherryPlus : Int := 160
+def eclOpcodeFreezeEclDuringBomb : Int := 161
 def eclOpcodeSetLifeCallback : Int := 148
 def eclOpcodeRandomExitAngle : Int := 155
 def eclOpcodeSetVmAutoRotate : Int := 120
@@ -146,6 +153,7 @@ def eclOpcodeSetBulletRankParams : Int := 131
 def eclOpcodeClearLasers : Int := 134
 def eclOpcodeRemoveBulletsRadius : Int := 143
 def eclOpcodeRemoveAllBulletsNoItems : Int := 146
+def eclOpcodeIdfk : Int := 147
 def eclOpcodeSetLaserAngle : Int := 152
 def eclOpcodeSetLaserHideWarning : Int := 156
 def eclOpcodeSetLaserStartLen : Int := 157
@@ -518,7 +526,19 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       { path := "reference/th07/src/th07/EclManager.cpp"
         startLine := 1938
         endLine := 1941
-        claim := "SET_BOSS_RUN_INTERRUPT resolves boss slot/sub id, reads bosses[slot] with no upper-bound check, and writes runInterrupt only when that boss pointer is non-null." } ]
+        claim := "SET_BOSS_RUN_INTERRUPT resolves boss slot/sub id, reads bosses[slot] with no upper-bound check, and writes runInterrupt only when that boss pointer is non-null." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1505
+        endLine := 1506
+        claim := "IDFK resolves operand zero and writes the otherwise-unused EnemyManager integer." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1892
+        endLine := 1932
+        claim := "Collision, projectile, OOB, trail, and invincibility handlers preserve raw-byte versus resolved operands, signed-i16 trail stores, the strip division, and ZunTimer assignment." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1980
+        endLine := 1984
+        claim := "The final two handlers forward a resolved cherry delta and assign the resolved bomb-freeze flag." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -1284,6 +1304,42 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 intPolicy := .intRValue
                 tableEntryCount := 24
                 repeatIndexReadOnInstall := true } ]
+          miscOps :=
+            [ { opcode := eclOpcodeIdfk
+                kind := .writeInt .enemyManagerUnused .identityI32
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetHasNoCollision
+                kind := .writeInt .enemyHasNoCollision (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte } ] },
+              { opcode := eclOpcodeSetIsProjectile
+                kind := .setProjectile
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte } ] },
+              { opcode := eclOpcodeSetDespawnOnOob
+                kind := .writeInt .enemyDisableOobDespawn (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte } ] },
+              { opcode := eclOpcodeSetTrail
+                kind := .configureTrail
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte },
+                    { operandIndex := 1, policy := .intRValue },
+                    { operandIndex := 2, policy := .intRValue },
+                    { operandIndex := 3, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetInvincibilityTimer
+                kind := .writeTimer .invincibility
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeAddCherryPlus
+                kind := .addCherry
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeFreezeEclDuringBomb
+                kind := .writeInt .enemyFreezeDuringBomb (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeInc
                 kind := .inc

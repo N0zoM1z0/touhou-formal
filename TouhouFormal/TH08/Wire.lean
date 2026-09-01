@@ -89,6 +89,10 @@ def eclOpcodeSetSecondaryHitbox : Int := 78
 def eclOpcodeReplaceEnemyFlags : Int := 79
 def eclOpcodeDisableEnemyFlags : Int := 80
 def eclOpcodeEnableEnemyFlags : Int := 81
+def eclOpcodeSetMinimumPlayerDistance : Int := 82
+def eclOpcodeSetFormEffect : Int := 83
+def eclOpcodeOrdinaryAdvance84 : Int := 84
+def eclOpcodeOrdinaryAdvance85 : Int := 85
 def eclOpcodeGetBossInt : Int := 86
 def eclOpcodeGetBossFloat : Int := 87
 def eclOpcodeSpawnEnemyAbs : Int := 93
@@ -136,6 +140,7 @@ def eclOpcodeSetItemDropType : Int := 143
 def eclOpcodeSetItemDropCounts : Int := 144
 def eclOpcodeSetRotateAnmWithMovement : Int := 145
 def eclOpcodeAddTime : Int := 146
+def eclOpcodeSetBackgroundLabel : Int := 147
 def eclOpcodeRunInterrupt : Int := 125
 def eclOpcodeSetInterrupt : Int := 126
 def eclOpcodeSetBossLifeMarkerCount : Int := 148
@@ -146,9 +151,14 @@ def eclOpcodeSetBulletRankInfluence : Int := 152
 def eclOpcodeBindTimerCallbackToDeath : Int := 153
 def eclOpcodeClearLasers : Int := 154
 def eclOpcodeSetTimeoutSpell : Int := 155
+def eclOpcodeSetSpecialInteraction : Int := 156
+def eclOpcodeSetTrail : Int := 157
 def eclOpcodeSetBossGauge : Int := 158
+def eclOpcodeSetDrawGroup : Int := 159
+def eclOpcodeSetDamageReductionTimer : Int := 160
 def eclOpcodeRemoveBulletsRadius : Int := 161
 def eclOpcodeRemoveAllBulletsMode4 : Int := 162
+def eclOpcodeSetEnemyManagerValue : Int := 163
 def eclOpcodeSetSpellcardEffectTracking : Int := 164
 def eclOpcodeSetPrimaryVmRotZ : Int := 165
 def eclOpcodeVectorFromAngleMagnitude : Int := 166
@@ -158,9 +168,17 @@ def eclOpcodeRandomExitAngle : Int := 169
 def eclOpcodeSetLaserHideCapDuringStartup : Int := 170
 def eclOpcodeSetLaserStartLength : Int := 171
 def eclOpcodeSetLaserOffsets : Int := 172
+def eclOpcodeSetPauseTimer : Int := 173
 def eclOpcodeSpawnAlignmentEffect : Int := 174
+def eclOpcodeSuppressTimelineSpawns : Int := 175
+def eclOpcodeConfigurePause : Int := 176
 def eclOpcodeSetPhaseStartingLife : Int := 177
 def eclOpcodeMoveRandomBiasedTimed : Int := 178
+def eclOpcodeStartStageBackground : Int := 179
+def eclOpcodeHideClock : Int := 180
+def eclOpcodeAdvanceClock : Int := 181
+def eclOpcodeSetExtraVmFixedOffset : Int := 182
+def eclOpcodeSetNoDamageDuringStop : Int := 183
 def eclOpcodeSetSpellcardBonusUpdatesDisabled : Int := 184
 def enemyPoolSlots : Nat := 480
 def secondaryAnmVmCount : Nat := 2
@@ -576,7 +594,27 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th08/src/EclRunHigh.inl"
       startLine := 972
       endLine := 972
-      claim := "High opcode 184 resolves one integer and forwards it to g_Spellcard.SetBonusUpdatesDisabled." } ]
+      claim := "High opcode 184 resolves one integer and forwards it to g_Spellcard.SetBonusUpdatesDisabled." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 690
+      endLine := 692
+      claim := "Low opcodes 84 and 85 are explicit ordinary-advance handlers." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 425
+      endLine := 475
+      claim := "High opcodes 163 and 159 resolve one integer into EnemyManager state and the enemy u8 draw group." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 711
+      endLine := 711
+      claim := "High opcode 147 resolves the pending background stage-script label." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 832
+      endLine := 934
+      claim := "The late enemy-state cluster includes raw-byte special interaction, signed-i16 trail setup and division, damage/pause timers, pause-mode flags, squared minimum distance, and the form-effect bit." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 953
+      endLine := 970
+      claim := "The final host-state cluster controls timeline suppression, GUI background/clock calls, signed-i8 clock advancement with u8 wrap, and the extra-VM offset flag." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -1408,6 +1446,70 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 truncateCallSubToI16 := true
                 blockByteCount := 0x24b0
                 copiedVariableBytes := 0x78 } ]
+          miscOps :=
+            [ { opcode := eclOpcodeOrdinaryAdvance84
+                kind := .noOp },
+              { opcode := eclOpcodeOrdinaryAdvance85
+                kind := .noOp },
+              { opcode := eclOpcodeSetMinimumPlayerDistance
+                kind := .setMinimumPlayerDistance
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ] },
+              { opcode := eclOpcodeSetFormEffect
+                kind := .writeInt .enemyFormEffect (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetBackgroundLabel
+                kind := .writeInt .backgroundPendingLabel .identityI32
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetSpecialInteraction
+                kind := .setSpecialInteraction
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte } ] },
+              { opcode := eclOpcodeSetTrail
+                kind := .configureTrail
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte },
+                    { operandIndex := 1, policy := .intRValue },
+                    { operandIndex := 2, policy := .intRValue },
+                    { operandIndex := 3, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetDrawGroup
+                kind := .writeInt .enemyDrawGroup (.unsignedBits 8)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetDamageReductionTimer
+                kind := .writeTimer .damageReduction
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetEnemyManagerValue
+                kind := .writeInt .enemyManagerOpcode163 .identityI32
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetPauseTimer
+                kind := .writeInt .enemyPauseTimer (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSuppressTimelineSpawns
+                kind := .writeInt .suppressTimelineSpawns .identityI32
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeConfigurePause
+                kind := .configurePause },
+              { opcode := eclOpcodeStartStageBackground
+                kind := .gui .startStageBackgroundSequence },
+              { opcode := eclOpcodeHideClock
+                kind := .gui .hideClockTime },
+              { opcode := eclOpcodeAdvanceClock
+                kind := .advanceClock },
+              { opcode := eclOpcodeSetExtraVmFixedOffset
+                kind := .writeInt .enemyExtraVmFixedOffset (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] },
+              { opcode := eclOpcodeSetNoDamageDuringStop
+                kind := .writeInt .enemyNoDamageDuringStop (.unsignedBits 1)
+                intInputs :=
+                  [ { operandIndex := 0, policy := .intRValue } ] } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeInc
                 kind := .inc

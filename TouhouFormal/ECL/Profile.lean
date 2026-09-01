@@ -1428,6 +1428,148 @@ structure RawChildContextOpShape where
   copiedVariableBytes : Nat
 deriving Repr, DecidableEq
 
+/-!
+Shared profile for small but semantically important ECL handlers that mutate
+enemy, manager, stage, or GUI state.  These handlers live at very different
+opcode numbers in the three games, but their operand resolution, C-width
+stores, timer assignment, and host-call boundaries are common enough to keep
+in one semantic family.
+-/
+
+inductive RawMiscIntInputPolicy where
+  | rawI32
+  | rawByte
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawMiscIntInputPolicy.name : RawMiscIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .rawByte => "raw-byte"
+  | .intRValue => "int-rvalue"
+
+inductive RawMiscFloatInputPolicy where
+  | rawBits
+  | floatRValue
+deriving Repr, DecidableEq
+
+def RawMiscFloatInputPolicy.name : RawMiscFloatInputPolicy -> String
+  | .rawBits => "raw-bits"
+  | .floatRValue => "float-rvalue"
+
+structure RawMiscIntInputShape where
+  operandIndex : Nat
+  policy : RawMiscIntInputPolicy
+deriving Repr, DecidableEq
+
+structure RawMiscFloatInputShape where
+  operandIndex : Nat
+  policy : RawMiscFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawMiscStorePolicy where
+  | identityI32
+  | unsignedBits (width : Nat)
+  | signedI16
+deriving Repr, DecidableEq
+
+def RawMiscStorePolicy.name : RawMiscStorePolicy -> String
+  | .identityI32 => "identity-i32"
+  | .unsignedBits width => "u" ++ toString width
+  | .signedI16 => "signed-i16"
+
+inductive RawMiscIntTarget where
+  | enemyInvisible
+  | enemyHasNoCollision
+  | enemyIsProjectile
+  | enemyDisableOobDespawn
+  | enemyFreezeDuringBomb
+  | enemyDrawGroup
+  | enemyZLayer
+  | enemySpecialInteraction
+  | enemyPauseTimer
+  | enemyNoDamageDuringStop
+  | enemyFormEffect
+  | enemyExtraVmFixedOffset
+  | enemyManagerUnused
+  | enemyManagerOpcode163
+  | backgroundPendingLabel
+  | suppressTimelineSpawns
+deriving Repr, DecidableEq
+
+def RawMiscIntTarget.name : RawMiscIntTarget -> String
+  | .enemyInvisible => "enemy-invisible"
+  | .enemyHasNoCollision => "enemy-has-no-collision"
+  | .enemyIsProjectile => "enemy-is-projectile"
+  | .enemyDisableOobDespawn => "enemy-disable-oob-despawn"
+  | .enemyFreezeDuringBomb => "enemy-freeze-during-bomb"
+  | .enemyDrawGroup => "enemy-draw-group"
+  | .enemyZLayer => "enemy-z-layer"
+  | .enemySpecialInteraction => "enemy-special-interaction"
+  | .enemyPauseTimer => "enemy-pause-timer"
+  | .enemyNoDamageDuringStop => "enemy-no-damage-during-stop"
+  | .enemyFormEffect => "enemy-form-effect"
+  | .enemyExtraVmFixedOffset => "enemy-extra-vm-fixed-offset"
+  | .enemyManagerUnused => "enemy-manager-unused"
+  | .enemyManagerOpcode163 => "enemy-manager-opcode-163"
+  | .backgroundPendingLabel => "background-pending-label"
+  | .suppressTimelineSpawns => "suppress-timeline-spawns"
+
+inductive RawMiscTimerTarget where
+  | invincibility
+  | damageReduction
+deriving Repr, DecidableEq
+
+def RawMiscTimerTarget.name : RawMiscTimerTarget -> String
+  | .invincibility => "invincibility"
+  | .damageReduction => "damage-reduction"
+
+inductive RawMiscGuiAction where
+  | startStageBackgroundSequence
+  | hideClockTime
+deriving Repr, DecidableEq
+
+def RawMiscGuiAction.name : RawMiscGuiAction -> String
+  | .startStageBackgroundSequence => "start-stage-background-sequence"
+  | .hideClockTime => "hide-clock-time"
+
+inductive RawMiscOpKind where
+  | noOp
+  | writeInt (target : RawMiscIntTarget) (store : RawMiscStorePolicy)
+  | writeTimer (target : RawMiscTimerTarget)
+  | setProjectile
+  | setSpecialInteraction
+  | configureTrail
+  | addCherry
+  | stageUnpause
+  | configurePause
+  | setMinimumPlayerDistance
+  | gui (action : RawMiscGuiAction)
+  | advanceClock
+deriving Repr, DecidableEq
+
+def RawMiscOpKind.name : RawMiscOpKind -> String
+  | .noOp => "no-op"
+  | .writeInt target store =>
+      "write-" ++ target.name ++ "-" ++ store.name
+  | .writeTimer target => "write-" ++ target.name ++ "-timer"
+  | .setProjectile => "set-projectile"
+  | .setSpecialInteraction => "set-special-interaction"
+  | .configureTrail => "configure-trail"
+  | .addCherry => "add-cherry"
+  | .stageUnpause => "stage-unpause"
+  | .configurePause => "configure-pause"
+  | .setMinimumPlayerDistance => "set-minimum-player-distance"
+  | .gui action => "gui-" ++ action.name
+  | .advanceClock => "advance-clock"
+
+structure RawMiscOpShape where
+  opcode : Int
+  kind : RawMiscOpKind
+  intInputs : List RawMiscIntInputShape := []
+  floatInputs : List RawMiscFloatInputShape := []
+  trailRenderMask : Nat := 8
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -2348,6 +2490,7 @@ structure RawInstrShape where
   interruptOps : List RawInterruptOpShape := []
   extensionOps : List RawExtensionOpShape := []
   childContextOps : List RawChildContextOpShape := []
+  miscOps : List RawMiscOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -2521,6 +2664,11 @@ def RawInstrShape.findChildContextOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawChildContextOpShape :=
   rawShape.childContextOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findMiscOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawMiscOpShape :=
+  rawShape.miscOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)
