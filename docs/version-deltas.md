@@ -50,3 +50,16 @@ range per title rather than nine independently maintained opcode records.
 TH07/TH08 indexed life configuration re-evaluates the index expression for
 each array write. The shared model therefore records resolver occurrences
 instead of assuming one cached index.
+
+## Interrupt Entry
+
+| Title | Table | Operand policy | Stored sub/index width | Save-disable flag | Negative selected sub |
+| --- | ---: | --- | --- | --- | --- |
+| TH06 | 8 entries | raw i32 | i32 | `disableCallStack` bit | unchecked subTable read |
+| TH07 | 32 entries | mask-resolved i32 | i32 | `noStackRet` bit | unchecked subTable read |
+| TH08 | 32 entries | flag-resolved i32 | signed i16 | `disableEclCallStack` bit | `CallEclSub` no-op |
+
+Every handler advances the current instruction first. When saving is enabled,
+that advanced context is written before the unchecked interrupt-table read.
+All three increment depth after a successful/no-op `CallEclSub` even when the
+save-disable flag prevented the corresponding stack write.

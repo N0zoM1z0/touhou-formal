@@ -247,6 +247,33 @@ private def describeCallbackConfigOutcome
         " " ++ effectSummary ++ faultSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeInterruptOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawInterruptOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "tableWrite=" ++ reprStr effect.tableWrite ++
+              " stackDisabled=" ++ reprStr effect.stackDisabledWrite ++
+              " run=" ++ reprStr effect.runIndexWrite ++
+              " save=" ++ reprStr effect.stackContextWriteIndex ++
+              " called=" ++ reprStr effect.calledSubId ++
+              " target=" ++ reprStr effect.targetSubOffset ++
+              " depth=" ++ reprStr effect.stackDepthWrite ++
+              " advancedWithoutSave=" ++
+                toString effect.stackAdvancedWithoutSave
+      let faultSummary :=
+        match outcome.fault with
+        | none => ""
+        | some fault => " fault=" ++ fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -429,6 +456,17 @@ def main : IO Unit := do
   IO.println s!"TH08 suppressed life callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08SuppressedLifePairOutcome}"
   IO.println s!"TH08 suppressed timer callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08SuppressedTimerPairOutcome}"
   IO.println s!"TH08 bind timer callback: {describeCallbackConfigOutcome TouhouFormal.Search.Callback.th08BindOutcome}"
+  IO.println ""
+  IO.println "Interrupt controls"
+  IO.println s!"TH06 interrupt opcode count: {TouhouFormal.Search.Interrupt.interruptOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 interrupt opcode count: {TouhouFormal.Search.Interrupt.interruptOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 interrupt opcode count: {TouhouFormal.Search.Interrupt.interruptOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 disabled-stack interrupt: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th06DisabledStackRunOutcome}"
+  IO.println s!"TH06 interrupt subTable fault: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th06SubTableFaultOutcome}"
+  IO.println s!"TH07 interrupt table-read fault: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th07TableReadFaultOutcome}"
+  IO.println s!"TH08 signed table write: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th08SetTableOutcome}"
+  IO.println s!"TH08 negative-sub interrupt: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th08NegativeSubNoOpOutcome}"
+  IO.println s!"TH08 signed run-index fault: {describeInterruptOutcome TouhouFormal.Search.Interrupt.th08TruncatedRunIndexFaultOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

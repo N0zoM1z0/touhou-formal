@@ -97,6 +97,10 @@ The executable model currently covers these source-backed boundaries:
   TH08 presentation suppression, unchecked four-slot life arrays, and repeated
   index resolution—so an RNG selector can produce a successful threshold write
   followed by a second-index fault instead of being silently memoized.
+- Shared interrupt effects cover each title's table-write, immediate-run, and
+  stack-disable opcodes. They preserve unchecked table accesses, TH08 signed
+  i16 storage, context-advance/save ordering, subTable policy, and the original
+  asymmetry where a disabled save still permits stack-depth increment.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -198,8 +202,8 @@ float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate movement effects, enemy-state effects, and
 shooting-control effects currently have Lean executable controls for profile
 coverage and shared-step execution, but no dedicated
-solver/materializer lane yet. Bullet-pattern and callback-configuration effects
-have the same Lean-only status for now. The boss integer-read
+solver/materializer lane yet. Bullet-pattern, callback-configuration, and
+interrupt effects have the same Lean-only status for now. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses

@@ -616,6 +616,37 @@ structure RawCallbackConfigOpShape where
   resetBossTimer : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawInterruptOpKind where
+  | setTableEntry
+  | run
+  | setStackDisabled
+deriving Repr, DecidableEq
+
+def RawInterruptOpKind.name : RawInterruptOpKind -> String
+  | .setTableEntry => "set-table-entry"
+  | .run => "run"
+  | .setStackDisabled => "set-stack-disabled"
+
+inductive RawInterruptIntPolicy where
+  | rawI32
+  | rawU8
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawInterruptIntPolicy.name : RawInterruptIntPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .rawU8 => "raw-u8"
+  | .intRValue => "int-rvalue"
+
+structure RawInterruptOpShape where
+  opcode : Int
+  kind : RawInterruptOpKind
+  intPolicy : RawInterruptIntPolicy
+  tableEntryCount : Nat := 0
+  truncateStoredSubToI16 : Bool := false
+  truncateRunIndexToI16 : Bool := false
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -838,6 +869,7 @@ structure RawInstrShape where
   shootingOps : List RawShootingOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
   callbackConfigOps : List RawCallbackConfigOpShape := []
+  interruptOps : List RawInterruptOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -907,6 +939,11 @@ def RawInstrShape.findCallbackConfigOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawCallbackConfigOpShape :=
   rawShape.callbackConfigOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findInterruptOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawInterruptOpShape :=
+  rawShape.interruptOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

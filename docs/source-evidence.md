@@ -503,6 +503,24 @@ the supplied ECL buffer.
 The Lean outcome carries partial callback writes together with the first
 invalid host-array access, which is necessary for repeated resolver reads.
 
+## Interrupt Evidence
+
+- `reference/th06/src/EclManager.cpp:688-705` writes an unchecked eight-entry
+  table, advances `currentInstr`, conditionally saves context, reads the table,
+  calls the selected subroutine, and increments depth independently of the
+  save-disable flag. Lines `905-907` set that one-bit flag from raw i32.
+- `reference/th07/src/th07/EclManager.cpp:1673-1691` repeats the same ordering
+  with a 32-entry table and resolved operands. `noStackRet` suppresses the save
+  but not the depth increment; lines `1881-1883` set it from the raw low byte.
+- `reference/th08/src/EclRunHigh.inl:488-520` stores resolved table entries and
+  the pending index as signed i16, advances context, conditionally copies the
+  stack frame, calls `CallEclSub`, and increments depth. Lines `805-809` set the
+  one-bit disable flag from a raw byte.
+
+The shared interrupt effect records writes completed before an unchecked table
+or subTable fault and deliberately does not reuse ordinary CALL's differently
+guarded depth transition.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

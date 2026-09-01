@@ -60,6 +60,13 @@ an outcome can therefore carry both writes completed before the first invalid
 host access and the resulting fault. Interrupt-driven context switching can
 consume this state later without redefining callback storage semantics.
 
+Interrupt entry reuses the shared subTable and CALL-stack profile facts but has
+its own transition body. This is intentional: unlike ordinary CALL, all three
+titles may suppress the context save and still increment stack depth. Effects
+record the advanced return cursor, any completed stack save, unchecked table
+read, subTable lookup, and state changes before the first fault, making later
+multi-step RET composition possible without erasing partial state.
+
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not
 assumed equivalent; a title module should justify differences by filling a

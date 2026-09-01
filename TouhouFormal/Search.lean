@@ -11,6 +11,7 @@ import TouhouFormal.Search.EnemyState
 import TouhouFormal.Search.Shooting
 import TouhouFormal.Search.BulletPattern
 import TouhouFormal.Search.Callback
+import TouhouFormal.Search.Interrupt
 import TouhouFormal.Search.Random
 import TouhouFormal.Search.ScalarAssignment
 import TouhouFormal.Search.SMT

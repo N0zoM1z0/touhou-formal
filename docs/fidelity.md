@@ -92,6 +92,14 @@ presentation policy is also ordered precisely: it can preserve a threshold
 write and timer reset while suppressing the corresponding subroutine-id read
 and write.
 
+Interrupt entry is not reduced to ordinary CALL. In TH06, TH07, and TH08, the
+stack-disable flag suppresses the context copy but does not guard the later
+depth increment in the interrupt handler. The model records
+`stackAdvancedWithoutSave` and keeps the return-cursor write/context save when
+an unchecked interrupt-table read or subsequent subTable lookup faults. TH08
+table entries and pending indices pass through signed i16 assignment before
+lookup, including `0xffff -> -1` and the title's negative-sub no-op policy.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and
