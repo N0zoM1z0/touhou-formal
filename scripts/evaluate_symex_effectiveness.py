@@ -2,12 +2,11 @@
 """Evaluate the current Lean + SMT symbolic-execution baseline.
 
 The report is intentionally about the implemented model, not about an imagined
-full ECL VM.  It reruns the profile-driven raw-step, body-step, integer
-resolver, integer-binary arithmetic, boss integer/float-read, CALL/RET, and
-conditional-CALL candidate queues, summarizes which modeled path classes
-are covered, records source-level opcode surface that is still outside the
-current semantics, and folds in retained retail validation evidence when those
-artifacts are present beside the repository.
+full ECL VM.  It reruns the established symbolic candidate queues, summarizes
+which modeled path classes are covered, derives the modeled opcode set from the
+Lean title profiles, records source-level opcode surface that is still outside
+the current semantics, and folds in retained retail validation evidence when
+those artifacts are present beside the repository.
 """
 
 from __future__ import annotations
@@ -280,6 +279,21 @@ SOURCE_COVERAGE = [
         "reason": "shared RawIntBinaryOpShape models ADD/SUB/MUL/DIV/MOD, title-specific assign versus in-place operand layouts, output lvalue resolution, RHS resolution, zero divisors, and signed i32 idiv overflow",
     },
     {
+        "area": "scalar assignment and integer unary updates",
+        "status": "covered-by-model",
+        "reason": "shared title profiles model integer/float SET and INC/DEC, including TH06's GetVar-pointer/SetVar behavior and TH07/TH08 operandFlags-controlled lvalues",
+    },
+    {
+        "area": "float arithmetic and scalar float functions",
+        "status": "covered-by-model",
+        "reason": "shared profiles model float ADD/SUB/MUL/DIV/MOD plus title-specific SIN/COS/ATAN2 or VectorAngle and angle normalization operand layouts; host float result bits remain explicit inputs",
+    },
+    {
+        "area": "random scalar generation",
+        "status": "covered-by-model",
+        "reason": "shared profiles model TH06 range generators, TH07 range/add/sign generators, and TH08 sign generators with explicit RNG words and the TH06 SetVar re-resolution quirk",
+    },
+    {
         "area": "boss-indexed integer reads",
         "status": "covered-by-symbolic-execution",
         "reason": "shared RawBossIntReadShape models TH07 ECL_GET_BOSS_INT and TH08 low opcode 86, including value operand flag bypass, boss index resolution, bosses[8] bounds, null boss pointers, and host/default value resolution",
@@ -293,6 +307,11 @@ SOURCE_COVERAGE = [
         "area": "integer conditional jumps",
         "status": "covered-by-symbolic-execution",
         "reason": "TH06 compare-register jumps and TH07/TH08 operand-resolved compare jumps are modeled as shared RawIntConditionJumpShape profiles",
+    },
+    {
+        "area": "float comparisons and conditional jumps",
+        "status": "covered-by-model",
+        "reason": "TH06 CMPFLOAT compare-register production and TH07/TH08 float conditional jumps share an explicit IEEE ordered/unordered relation, including NaN's unequal-only branch behavior",
     },
     {
         "area": "CALL/RET core stack semantics",
@@ -310,6 +329,11 @@ SOURCE_COVERAGE = [
         "reason": "TH06/TH07 active-bit intersection and TH08 contains(active|override) are separate profile policies",
     },
     {
+        "area": "immediate movement state writes",
+        "status": "covered-by-model",
+        "reason": "shared movement effects cover position, axis/polar velocity, angular velocity, speed, acceleration, player-relative angle, and movement bounds while preserving title-specific resolution, normalization, clamp, mode, and timer updates",
+    },
+    {
         "area": "ANM entry header/nextOffset profile",
         "status": "partially-covered",
         "reason": "entry table shape and nextOffset chain headers are modeled, but ANM opcode execution and resource side effects are not",
@@ -317,7 +341,7 @@ SOURCE_COVERAGE = [
     {
         "area": "full raw ECL opcode bodies",
         "status": "partially-covered",
-        "reason": "UNIMP, fixed JUMP, JUMPDEC, integer conditional jumps, TH06 conditional CALLs, integer ADD/SUB/MUL/DIV/MOD families, and TH07/TH08 boss integer/float-read opcodes are modeled; other opcode bodies still collapse to prefix-level ordinary advance",
+        "reason": "the Lean title profiles now provide the authoritative modeled-opcode set used by this report; unprofiled opcode bodies still collapse to prefix-level ordinary advance",
     },
     {
         "area": "interrupts, callbacks, pending-sub dispatch",
@@ -331,8 +355,8 @@ SOURCE_COVERAGE = [
     },
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
-        "status": "not-yet-modeled",
-        "reason": "requires game-state object models and invariants beyond a single raw instruction cursor transfer",
+        "status": "partially-covered",
+        "reason": "immediate enemy movement writes now have a typed host-effect boundary; bullet, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",
@@ -1212,6 +1236,131 @@ def unique_preserving(values: list[str]) -> list[str]:
     return result
 
 
+def strip_c_comments(text: str) -> str:
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    return re.sub(r"//.*", "", text)
+
+
+def enum_block(text: str, enum_name: str) -> str | None:
+    match = re.search(
+        rf"\benum\s+{re.escape(enum_name)}\s*\{{(?P<body>.*?)\}}\s*;",
+        text,
+        flags=re.DOTALL,
+    )
+    if match is None:
+        return None
+    return strip_c_comments(match.group("body"))
+
+
+def parse_sequential_enum(block: str, symbol_prefix: str) -> list[tuple[str, int]]:
+    entries: list[tuple[str, int]] = []
+    next_value = 0
+    for raw_entry in block.split(","):
+        entry = raw_entry.strip()
+        match = re.match(
+            rf"(?P<name>{re.escape(symbol_prefix)}[A-Z0-9_]+)"
+            r"(?:\s*=\s*(?P<value>-?(?:0[xX][0-9a-fA-F]+|[0-9]+)))?\s*$",
+            entry,
+        )
+        if match is None:
+            continue
+        value_text = match.group("value")
+        value = int(value_text, 0) if value_text is not None else next_value
+        entries.append((match.group("name"), value))
+        next_value = value + 1
+    return entries
+
+
+def parse_explicit_enum(block: str, symbol_prefix: str) -> list[tuple[str, int]]:
+    entries: list[tuple[str, int]] = []
+    for raw_entry in block.split(","):
+        entry = raw_entry.strip()
+        match = re.match(
+            rf"(?P<name>{re.escape(symbol_prefix)}[A-Z0-9_]+)\s*=\s*"
+            r"(?P<value>-?(?:0[xX][0-9a-fA-F]+|[0-9]+))\s*$",
+            entry,
+        )
+        if match is not None:
+            entries.append((match.group("name"), int(match.group("value"), 0)))
+    return entries
+
+
+def modeled_profile_opcodes(title: str) -> dict[str, Any]:
+    wire_path = REPO_ROOT / "TouhouFormal" / title.upper() / "Wire.lean"
+    if not wire_path.exists():
+        return {
+            "available": False,
+            "source": str(wire_path),
+            "values": [],
+            "constantsByValue": {},
+        }
+
+    text = wire_path.read_text(errors="ignore")
+    constants = {
+        name: int(value)
+        for name, value in re.findall(
+            r"^def\s+(eclOpcode[A-Za-z0-9_]+)\s*:\s*Int\s*:=\s*(-?[0-9]+)\s*$",
+            text,
+            flags=re.MULTILINE,
+        )
+    }
+    referenced_names = set(
+        re.findall(
+            r"\b(?:opcode|callOpcode|retOpcode)\s*:=\s*(eclOpcode[A-Za-z0-9_]+)\b",
+            text,
+        )
+    )
+    unresolved_names = sorted(referenced_names - constants.keys())
+    values_to_constants: dict[int, list[str]] = defaultdict(list)
+    for name in sorted(referenced_names & constants.keys()):
+        values_to_constants[constants[name]].append(name)
+
+    for value in re.findall(
+        r"\bunimplementedOpcode\s*:=\s*some\s+(-?[0-9]+)\b",
+        text,
+    ):
+        values_to_constants[int(value)].append("unimplementedOpcode")
+
+    values = sorted(values_to_constants)
+    return {
+        "available": True,
+        "source": str(wire_path),
+        "values": values,
+        "constantsByValue": {
+            str(value): sorted(set(values_to_constants[value]))
+            for value in values
+        },
+        "unresolvedConstants": unresolved_names,
+    }
+
+
+def named_opcode_coverage(
+    source_entries: list[tuple[str, int]],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    modeled_values = set(profile["values"])
+    modeled_entries = [
+        (name, value) for name, value in source_entries if value in modeled_values
+    ]
+    missing_entries = [
+        (name, value) for name, value in source_entries if value not in modeled_values
+    ]
+    source_values = {value for _, value in source_entries}
+    return {
+        "profileSource": profile["source"],
+        "profileOpcodeValues": profile["values"],
+        "profileOpcodeConstantsByValue": profile["constantsByValue"],
+        "unresolvedProfileConstants": profile["unresolvedConstants"],
+        "profileOpcodesAbsentFromSource": sorted(modeled_values - source_values),
+        "modeledOpcodeSpecificSymbols": [name for name, _ in modeled_entries],
+        "modeledOpcodeSpecificValues": [value for _, value in modeled_entries],
+        "modeledOpcodeSpecificCount": len(modeled_entries),
+        "notYetOpcodeBodyModeledSymbols": [name for name, _ in missing_entries],
+        "notYetOpcodeBodyModeledValues": [value for _, value in missing_entries],
+        "notYetOpcodeBodyModeledCountLowerBound": len(missing_entries),
+    }
+
+
 def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
     report: dict[str, Any] = {
         "referenceRoot": str(reference_root),
@@ -1228,111 +1377,58 @@ def source_opcode_surface(reference_root: Path) -> dict[str, Any]:
 
     if th06.exists():
         text = th06.read_text(errors="ignore")
-        names: list[str] = []
-        if "enum EclRawInstrOpcode" in text:
-            block = text.split("enum EclRawInstrOpcode", 1)[1].split("};", 1)[0]
-            names = unique_preserving(re.findall(r"\b(ECL_OPCODE_[A-Z0-9_]+)\b", block))
+        block = enum_block(text, "EclRawInstrOpcode")
+        entries = parse_sequential_enum(block, "ECL_OPCODE_") if block else []
+        profile = modeled_profile_opcodes("th06")
         report["titles"]["th06"] = {
             "source": str(th06),
-            "rawOpcodeSymbolCount": len(names),
-            "modeledOpcodeSpecificSymbols": [
-                "ECL_OPCODE_UNIMP",
-                "ECL_OPCODE_JUMP",
-                "ECL_OPCODE_JUMPDEC",
-                "ECL_OPCODE_JUMPLSS",
-                "ECL_OPCODE_JUMPLEQ",
-                "ECL_OPCODE_JUMPEQU",
-                "ECL_OPCODE_JUMPGRE",
-                "ECL_OPCODE_JUMPGEQ",
-                "ECL_OPCODE_JUMPNEQ",
-                "ECL_OPCODE_CALL",
-                "ECL_OPCODE_RET",
-                "ECL_OPCODE_CALLLSS",
-                "ECL_OPCODE_CALLLEQ",
-                "ECL_OPCODE_CALLEQU",
-                "ECL_OPCODE_CALLGRE",
-                "ECL_OPCODE_CALLGEQ",
-                "ECL_OPCODE_CALLNEQ",
-                "ECL_OPCODE_MATHINTADD",
-                "ECL_OPCODE_MATHINTSUB",
-                "ECL_OPCODE_MATHINTMUL",
-                "ECL_OPCODE_MATHINTDIV",
-                "ECL_OPCODE_MATHINTMOD",
-            ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 22),
-            "firstSymbols": names[:8],
-            "lastSymbols": names[-8:],
+            "rawOpcodeSymbolCount": len(entries),
+            **named_opcode_coverage(entries, profile),
+            "firstSymbols": [name for name, _ in entries[:8]],
+            "lastSymbols": [name for name, _ in entries[-8:]],
         }
 
     if th07.exists():
         text = th07.read_text(errors="ignore")
-        start = text.find("ECL_UNIMP")
-        end = text.find("ECL_FREEZE_ECL_DURING_BOMB")
-        names: list[str] = []
-        if start != -1 and end != -1:
-            block = text[start:end + len("ECL_FREEZE_ECL_DURING_BOMB")]
-            names = unique_preserving(re.findall(r"\b(ECL_[A-Z0-9_]+)\b", block))
+        block = enum_block(text, "EclOpcode")
+        entries = parse_explicit_enum(block, "ECL_") if block else []
+        profile = modeled_profile_opcodes("th07")
         report["titles"]["th07"] = {
             "source": str(th07),
-            "rawOpcodeSymbolCountApprox": len(names),
-            "modeledOpcodeSpecificSymbols": [
-                "ECL_UNIMP",
-                "ECL_JUMP",
-                "ECL_DEC_JUMP",
-                "ECL_JUMP_IF_EQUAL",
-                "ECL_JUMP_IF_NOT_EQUAL",
-                "ECL_JUMP_IF_LOWER_THAN",
-                "ECL_JUMP_IF_LEQ_THAN",
-                "ECL_JUMP_IF_GREATER_THAN",
-                "ECL_JUMP_IF_GEQ_THAN",
-                "ECL_SUB_CALL",
-                "ECL_SUB_RET",
-                "ECL_ADD",
-                "ECL_SUB",
-                "ECL_MUL",
-                "ECL_DIV",
-                "ECL_MOD",
-                "ECL_GET_BOSS_INT",
-                "ECL_GET_BOSS_FLOAT",
-            ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(names) - 18),
-            "firstSymbols": names[:8],
-            "lastSymbols": names[-8:],
+            "rawOpcodeSymbolCount": len(entries),
+            **named_opcode_coverage(entries, profile),
+            "firstSymbols": [name for name, _ in entries[:8]],
+            "lastSymbols": [name for name, _ in entries[-8:]],
         }
 
     if th08_low.exists():
         low_text = th08_low.read_text(errors="ignore")
-        case_labels = unique_preserving(re.findall(r"\bcase\s+([0-9]+)\s*:", low_text))
+        case_labels = [
+            int(value)
+            for value in unique_preserving(
+                re.findall(r"\bcase\s+([0-9]+)\s*:", low_text)
+            )
+        ]
+        profile = modeled_profile_opcodes("th08")
+        modeled_values = set(profile["values"])
+        source_values = set(case_labels)
+        modeled_cases = [value for value in case_labels if value in modeled_values]
+        missing_cases = [value for value in case_labels if value not in modeled_values]
         report["titles"]["th08"] = {
             "source": str(th08_low),
             "runSource": str(th08_run) if th08_run.exists() else None,
             "lowOpcodeCaseLabelCount": len(case_labels),
-            "modeledOpcodeSpecificCases": [
-                "case 1",
-                "case 4",
-                "case 5",
-                "case 10",
-                "case 11",
-                "case 12",
-                "case 13",
-                "case 14",
-                "case 20",
-                "case 21",
-                "case 22",
-                "case 23",
-                "case 24",
-                "case 40",
-                "case 42",
-                "case 44",
-                "case 46",
-                "case 48",
-                "case 50",
-                "case 52",
-                "case 53",
-                "case 86",
-                "case 87",
-            ],
-            "notYetOpcodeBodyModeledCountLowerBound": max(0, len(case_labels) - 23),
+            "profileSource": profile["source"],
+            "profileOpcodeValues": profile["values"],
+            "profileOpcodeConstantsByValue": profile["constantsByValue"],
+            "unresolvedProfileConstants": profile["unresolvedConstants"],
+            "profileOpcodesAbsentFromSource": sorted(modeled_values - source_values),
+            "modeledOpcodeSpecificCases": [f"case {value}" for value in modeled_cases],
+            "modeledOpcodeSpecificValues": modeled_cases,
+            "modeledOpcodeSpecificCount": len(modeled_cases),
+            "notYetOpcodeBodyModeledCases": [f"case {value}" for value in missing_cases],
+            "notYetOpcodeBodyModeledValues": missing_cases,
+            "notYetOpcodeBodyModeledCountLowerBound": len(missing_cases),
             "firstCaseLabels": case_labels[:12],
             "lastCaseLabels": case_labels[-12:],
         }

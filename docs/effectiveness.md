@@ -557,34 +557,37 @@ instruction. It now covers dispatch, `JUMP`, `JUMPDEC`, integer conditional
 jumps, TH06 conditional CALLs, integer rvalue/lvalue resolver branches,
 SET_INT/SET_FLOAT scalar assignment, INC/DEC integer unary updates, integer
 ADD/SUB/MUL/DIV/MOD single-step behavior, float ADD/SUB/MUL/DIV/MOD
-dispatch/resolver/lvalue behavior, TH07/TH08 boss integer/float reads, plain
-CALL/RET stack behavior, zero divisors, and signed idiv overflow, but not most
-gameplay host effects.
+dispatch/resolver/lvalue behavior, scalar float functions, random value
+generation, TH06 compare-register production, TH07/TH08 float conditional
+jumps, TH07/TH08 boss integer/float reads, immediate movement state writes,
+plain CALL/RET stack behavior, zero divisors, and signed idiv overflow. Most
+gameplay host effects and multi-instruction state composition remain outside
+the current model.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | `UNIMP`, `JUMP`, `JUMPDEC`, `SETINT`, `SETFLOAT`, `MATHINC`, `MATHDEC`, six integer `JUMP*` conditions, `CALL`, `RET`, six conditional `CALL*` opcodes, `MATHINTADD/SUB/MUL/DIV/MOD`, `MATHFLOATADD/SUB/MUL/DIV/MOD` | 105 |
-| TH07 | 159 raw opcode symbols, approximate source enum slice | `UNIMP`, `JUMP`, `DEC_JUMP`, `SET_INT`, `SET_FLOAT`, `INC`, `DEC`, six integer `JUMP_IF_*` conditions, `SUB_CALL`, `SUB_RET`, `ADD/SUB/MUL/DIV/MOD`, `ADD_FLOAT/SUB_FLOAT/MUL_FLOAT/DIV_FLOAT/MOD_FLOAT`, `GET_BOSS_INT` | 133 |
-| TH08 | 91 numeric low-run `case` labels | `case 1`, `case 4`, `case 5`, scalar assignment cases `6` and `7`, integer unary update cases `30` and `31`, integer arithmetic cases `10..14` and `20..24`, float arithmetic cases `15..19` and `25..29`, integer condition cases `40/42/44/46/48/50`, CALL/RET cases `52/53`, and boss integer-read `case 86` | 55 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 48: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, and immediate movement families | 88 |
+| TH07 | 159 `EclOpcode` symbols | 51: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, and immediate movement families | 108 |
+| TH08 | 91 numeric low-run `case` labels | 56: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, and immediate movement families | 35 |
 
-The lower bound is intentionally conservative. `JUMPDEC`, integer conditional
-jumps, TH06 conditional CALLs, integer resolver branches, scalar assignment,
-integer unary updates, integer binary arithmetic, float binary arithmetic
-dispatch/resolver/lvalue behavior, boss integer reads, plain CALL/RET stack
-edges, and integer div/mod fault hazards are now modeled; "ordinary advance" for
-the remaining opcodes still does not prove their internal branches.
+The report no longer carries a hand-maintained opcode list. It extracts opcode
+constants referenced by each Lean `Wire.lean` profile, maps those numeric values
+back to the local source enum or TH08 low-run `case` labels, and computes the
+remaining lower bound from the set difference. This makes new profile entries
+count automatically and flags unresolved or source-absent profile values.
+"Ordinary advance" for the remaining opcodes still does not prove their
+internal branches.
 
 Not covered:
 
 - interrupts, callback stacks, and TH08 high-opcode pending-sub dispatch;
-- persistent host-state mutation, aliasing across multiple instructions, and
-  non-integer operand-mask branches into variable reads/writes;
+- persistent host-state composition and aliasing across multiple instructions;
 - exact signed add/sub/mul overflow behavior, exact IEEE-754 f32 result
   computation, float division/fmod edge cases, and other C/C++ arithmetic
   hazards;
-- bullet, laser, enemy, item, ANM, sound, and callback side effects;
+- bullet, laser, enemy lifecycle, item, ANM, sound, and callback side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
