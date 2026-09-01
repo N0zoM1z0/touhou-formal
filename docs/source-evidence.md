@@ -32,6 +32,12 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:141`: `SETINT` and `SETFLOAT` both call
   `SetVar` with output slot 0 and raw value slot 1; `SetVar` decides whether
   the output is INT or FLOAT after resolving the output selector.
+- `reference/th06/src/EclManager.cpp:150`: the four range-random opcodes
+  resolve integer or float range/addend operands, obtain a random value, and
+  pass the local result through `SetVar`.
+- `reference/th06/src/Rng.hpp:28`: u32 range generation uses unsigned modulo
+  and returns zero for range zero; float range generation multiplies a
+  zero-to-one sample by the requested range.
 - `reference/th06/src/EclManager.cpp:215`: `CMPINT` and `CMPFLOAT` update the
   context compare register.
 - `reference/th06/src/EclManager.cpp:229`: `JUMPLSS`, `JUMPLEQ`, `JUMPEQU`,
@@ -135,6 +141,12 @@ relative to `/home/yann/yann/touhou/formal`.
   `GET_INT_PTR(enemy, 0)` from `GET_INT_VALUE(enemy, 1)`, while
   `ECL_SET_FLOAT` writes `GET_FLOAT_PTR(enemy, 0)` from
   `GET_FLOAT_VALUE(enemy, 1)`.
+- `reference/th07/src/th07/EclManager.cpp:967`: TH07 implements integer and
+  float range/random-add opcodes plus integer/float sign opcodes selected by
+  the low bit of `GetRandomU16()`.
+- `reference/th07/src/th07/Rng.hpp:16`: integer range generation is unsigned
+  u32 modulo with a zero-range special case; float range generation multiplies
+  a float sample by the range.
 - `reference/th07/src/th07/EclManager.cpp:995`: `ECL_INC` and `ECL_DEC`
   update `GET_INT_PTR(enemy, 0)` in place by `+1` or `-1`.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
@@ -228,6 +240,8 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/EclRunLow.inl:244`: TH08 low opcode 6 writes
   `WriteInt(..., 0)` from `ReadInt(..., 1)`, while low opcode 7 writes
   `WriteFloat(..., 0)` from resolved/raw float operand slot 1.
+- `reference/th08/src/EclRunLow.inl:252`: low opcodes 8 and 9 multiply resolved
+  integer/float slot 1 by a sign selected from `GetRandomU16()` parity.
 - `reference/th08/src/EclRunLow.inl:276`: TH08 low opcodes 13 and 14 perform
   integer division/modulo with operand slot 1 as divisor and no zero-divisor
   guard.

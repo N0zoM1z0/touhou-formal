@@ -1,0 +1,19 @@
+namespace TouhouFormal
+
+def word32Modulus : Int := 4294967296
+def word32SignBit : Int := 2147483648
+
+def toWord32Bits (value : Int) : Int :=
+  value % word32Modulus
+
+def word32BitsToInt (value : Int) : Int :=
+  let bits := toWord32Bits value
+  if bits < word32SignBit then bits else bits - word32Modulus
+
+def word32Add (lhs rhs : Int) : Int :=
+  toWord32Bits (toWord32Bits lhs + toWord32Bits rhs)
+
+def word32Neg (value : Int) : Int :=
+  toWord32Bits (-word32BitsToInt value)
+
+end TouhouFormal

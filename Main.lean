@@ -97,6 +97,23 @@ private def describeFloatFunctionOutcome
         " resultBits=" ++ resultBits ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeRandomOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawRandomOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let details :=
+        match outcome.result with
+        | none => "kind=none generatedWord=none writtenWord=none"
+        | some value =>
+            "kind=" ++ value.kind.name ++
+              " generatedWord=" ++ toString value.generatedWord ++
+              " writtenWord=" ++ toString value.writtenWord
+      "action=" ++ reprStr outcome.action ++
+        " " ++ details ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -205,6 +222,14 @@ def main : IO Unit := do
   IO.println s!"TH06 atan2: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th06Atan2Outcome}"
   IO.println s!"TH07 sin: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th07SinOutcome}"
   IO.println s!"TH08 vector angle: {describeFloatFunctionOutcome TouhouFormal.Search.FloatFunction.th08VectorAngleOutcome}"
+  IO.println ""
+  IO.println "Random opcode controls"
+  IO.println s!"TH06 random opcode count: {TouhouFormal.Search.Random.randomOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 random opcode count: {TouhouFormal.Search.Random.randomOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 random opcode count: {TouhouFormal.Search.Random.randomOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 int range: {describeRandomOutcome TouhouFormal.Search.Random.th06IntRandOutcome}"
+  IO.println s!"TH07 float range add: {describeRandomOutcome TouhouFormal.Search.Random.th07FloatRandAddOutcome}"
+  IO.println s!"TH08 int sign: {describeRandomOutcome TouhouFormal.Search.Random.th08IntSignOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

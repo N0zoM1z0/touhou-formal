@@ -206,6 +206,66 @@ structure RawFloatFunctionShape where
   inputOperandIndices : List Nat
 deriving Repr, DecidableEq
 
+inductive RawRandomOpKind where
+  | intRange
+  | intRangeAdd
+  | floatRange
+  | floatRangeAdd
+  | intSign
+  | floatSign
+deriving Repr, DecidableEq
+
+def RawRandomOpKind.name : RawRandomOpKind -> String
+  | .intRange => "int-range"
+  | .intRangeAdd => "int-range-add"
+  | .floatRange => "float-range"
+  | .floatRangeAdd => "float-range-add"
+  | .intSign => "int-sign"
+  | .floatSign => "float-sign"
+
+def RawRandomOpKind.scalarKind : RawRandomOpKind -> RawScalarKind
+  | .intRange | .intRangeAdd | .intSign => .int
+  | .floatRange | .floatRangeAdd | .floatSign => .float
+
+inductive RawRandomEntropyKind where
+  | u32Range
+  | floatZeroToOne
+  | u16Parity
+deriving Repr, DecidableEq
+
+def RawRandomEntropyKind.name : RawRandomEntropyKind -> String
+  | .u32Range => "u32-range"
+  | .floatZeroToOne => "float-zero-to-one"
+  | .u16Parity => "u16-parity"
+
+def RawRandomOpKind.entropyKind : RawRandomOpKind -> RawRandomEntropyKind
+  | .intRange | .intRangeAdd => .u32Range
+  | .floatRange | .floatRangeAdd => .floatZeroToOne
+  | .intSign | .floatSign => .u16Parity
+
+def RawRandomOpKind.requiresAddend : RawRandomOpKind -> Bool
+  | .intRangeAdd | .floatRangeAdd => true
+  | _ => false
+
+inductive RawRandomWritePolicy where
+  | direct
+  | sourceSetVarResolvesResultBits
+deriving Repr, DecidableEq
+
+def RawRandomWritePolicy.name : RawRandomWritePolicy -> String
+  | .direct => "direct"
+  | .sourceSetVarResolvesResultBits => "source-setvar-resolves-result-bits"
+
+structure RawRandomOpShape where
+  opcode : Int
+  kind : RawRandomOpKind
+  outputPolicy : RawScalarAssignOutputPolicy
+  writePolicy : RawRandomWritePolicy
+  outputOperandIndex : Nat
+  valueOperandIndex : Nat
+  addendOperandIndex : Option Nat := none
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -373,6 +433,7 @@ structure RawInstrShape where
   intBinaryOps : List RawIntBinaryOpShape := []
   floatBinaryOps : List RawFloatBinaryOpShape := []
   floatFunctions : List RawFloatFunctionShape := []
+  randomOps : List RawRandomOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -402,6 +463,11 @@ def RawInstrShape.findFloatFunction?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawFloatFunctionShape :=
   rawShape.floatFunctions.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findRandomOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawRandomOpShape :=
+  rawShape.randomOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

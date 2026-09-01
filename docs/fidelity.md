@@ -46,6 +46,14 @@ host/SMT float layer. TH06 normalization is intentionally separate: its source
 reads slot 0 through the integer-shaped `GetVar` pointer API and writes the f32
 result through `SetVar`, rather than using the ordinary float resolver pair.
 
+Random opcodes separate deterministic VM plumbing from entropy. Lean models
+operand resolution, output resolution, unsigned-u32 range modulo, zero-range
+behavior, 32-bit add/negate wrap, and sign selection from `GetRandomU16` parity.
+The sampled RNG word is explicit input; float multiplication/addition result
+bits remain an external float-theory value. TH06 additionally sends the local
+generated word through `SetVar`, whose first action is another `GetVar` on the
+RHS bits; the model preserves that selector-aliasing path.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and
