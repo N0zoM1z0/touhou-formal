@@ -23,9 +23,10 @@ references, and cursor-transfer classification.
 `TouhouFormal/ECL` contains the shared ECL core: scalar byte reads,
 profile-driven header loading, subTable lookup policy, timeline-prefix decoding,
 timeline cursor advancement, raw instruction-prefix decoding, and profile-driven
-fixed-operand jump decoding. It also owns profile-driven operand resolution and
-single-step integer/float binary arithmetic dispatch so TH06/TH07/TH08 title
-deltas stay in profile data instead of one-off opcode implementations. These
+fixed-operand jump decoding. It also owns profile-driven operand resolution,
+scalar assignment, and single-step integer/float binary arithmetic dispatch so
+TH06/TH07/TH08 title deltas stay in profile data instead of one-off opcode
+implementations. These
 definitions encode the original unsafe boundary and return a structured `Fault`
 at the first invalid modeled operation.
 

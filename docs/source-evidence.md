@@ -29,6 +29,9 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th06/src/EclManager.cpp:134`: `ECL_OPCODE_JUMPDEC` falls through to
   the `ECL_OPCODE_JUMP` implementation when the decremented counter remains
   positive; otherwise it only advances normally.
+- `reference/th06/src/EclManager.cpp:141`: `SETINT` and `SETFLOAT` both call
+  `SetVar` with output slot 0 and raw value slot 1; `SetVar` decides whether
+  the output is INT or FLOAT after resolving the output selector.
 - `reference/th06/src/EclManager.cpp:215`: `CMPINT` and `CMPFLOAT` update the
   context compare register.
 - `reference/th06/src/EclManager.cpp:229`: `JUMPLSS`, `JUMPLEQ`, `JUMPEQU`,
@@ -114,6 +117,10 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th07/src/th07/EclManager.cpp:946`: raw `ECL_DEC_JUMP` decrements
   operand slot 2 and only falls through into `ECL_JUMP` when the decremented
   value remains positive.
+- `reference/th07/src/th07/EclManager.cpp:956`: `ECL_SET_INT` writes
+  `GET_INT_PTR(enemy, 0)` from `GET_INT_VALUE(enemy, 1)`, while
+  `ECL_SET_FLOAT` writes `GET_FLOAT_PTR(enemy, 0)` from
+  `GET_FLOAT_VALUE(enemy, 1)`.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
 - `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
@@ -202,6 +209,9 @@ relative to `/home/yann/yann/touhou/formal`.
   from `RawInt(instruction, 0)` and jumps by `RawInt(instruction, 1)`.
 - `reference/th08/src/EclRunLow.inl:223`: TH08 low opcode 1 returns
   `ZUN_ERROR`.
+- `reference/th08/src/EclRunLow.inl:244`: TH08 low opcode 6 writes
+  `WriteInt(..., 0)` from `ReadInt(..., 1)`, while low opcode 7 writes
+  `WriteFloat(..., 0)` from resolved/raw float operand slot 1.
 - `reference/th08/src/EclRunLow.inl:276`: TH08 low opcodes 13 and 14 perform
   integer division/modulo with operand slot 1 as divisor and no zero-divisor
   guard.

@@ -78,6 +78,25 @@ private def describeFloatBinaryOutcome
         " resultBits=" ++ resultBits
         ++ " cursor=" ++ toString outcome.targetCursor
 
+private def describeScalarAssignOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let writtenKind :=
+        match outcome.writtenKind with
+        | none => "none"
+        | some kind => kind.name
+      let valueBits :=
+        match outcome.valueBits with
+        | none => "none"
+        | some value => toString value
+      "action=" ++ reprStr outcome.action ++
+        " writtenKind=" ++ writtenKind ++
+        " valueBits=" ++ valueBits ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeAnmEntry : Except Fault TouhouFormal.ANM.EntryHeader -> String
   | .ok entry =>
       "ok sprites=" ++ toString entry.numSprites ++
@@ -140,6 +159,14 @@ def main : IO Unit := do
   IO.println s!"TH06 float add: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th06FloatAddOutcome}"
   IO.println s!"TH07 float add: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th07FloatAddOutcome}"
   IO.println s!"TH08 float add in-place: {describeFloatBinaryOutcome TouhouFormal.Search.FloatArithmetic.th08FloatAddInPlaceOutcome}"
+  IO.println ""
+  IO.println "Scalar assignment controls"
+  IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 set float: {describeScalarAssignOutcome TouhouFormal.Search.ScalarAssignment.th06SetFloatOutcome}"
+  IO.println s!"TH07 set float: {describeScalarAssignOutcome TouhouFormal.Search.ScalarAssignment.th07SetFloatOutcome}"
+  IO.println s!"TH08 set int: {describeScalarAssignOutcome TouhouFormal.Search.ScalarAssignment.th08SetIntOutcome}"
   IO.println ""
   IO.println "Relative jump controls"
   IO.println s!"TH06 jump operands: {describeJumpOperands TouhouFormal.TH06.rawJumpMinusOneOperands}"

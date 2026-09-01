@@ -61,6 +61,43 @@ structure RawIntDivisorHazard where
   divisorOperandIndex : Nat
 deriving Repr, DecidableEq
 
+inductive RawScalarKind where
+  | int
+  | float
+deriving Repr, DecidableEq
+
+def RawScalarKind.name : RawScalarKind -> String
+  | .int => "int"
+  | .float => "float"
+
+inductive RawScalarAssignOutputPolicy where
+  | intLValue
+  | floatLValue
+  | sourceSetVar
+deriving Repr, DecidableEq
+
+def RawScalarAssignOutputPolicy.name : RawScalarAssignOutputPolicy -> String
+  | .intLValue => "int-lvalue"
+  | .floatLValue => "float-lvalue"
+  | .sourceSetVar => "source-set-var"
+
+inductive RawScalarAssignRValuePolicy where
+  | intBits
+  | floatBits
+deriving Repr, DecidableEq
+
+def RawScalarAssignRValuePolicy.name : RawScalarAssignRValuePolicy -> String
+  | .intBits => "int-bits"
+  | .floatBits => "float-bits"
+
+structure RawScalarAssignShape where
+  opcode : Int
+  outputPolicy : RawScalarAssignOutputPolicy
+  rvaluePolicy : RawScalarAssignRValuePolicy
+  outputOperandIndex : Nat
+  valueOperandIndex : Nat
+deriving Repr, DecidableEq
+
 inductive RawBinaryOpKind where
   | add
   | sub
@@ -273,6 +310,7 @@ structure RawInstrShape where
   intConditionJumps : List RawIntConditionJumpShape := []
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
+  scalarAssignments : List RawScalarAssignShape := []
   intBinaryOps : List RawIntBinaryOpShape := []
   floatBinaryOps : List RawFloatBinaryOpShape := []
   bossIntReads : List RawBossIntReadShape := []
@@ -314,6 +352,11 @@ def RawInstrShape.findConditionalCall?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawConditionalCallShape :=
   rawShape.conditionalCallShapes.find? (fun call => call.opcode == opcode)
+
+def RawInstrShape.findScalarAssign?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawScalarAssignShape :=
+  rawShape.scalarAssignments.find? (fun op => op.opcode == opcode)
 
 structure HeaderShape where
   title : String

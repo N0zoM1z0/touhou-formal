@@ -22,6 +22,11 @@ is non-progressing; a signed negative size can move the next decode cursor befor
 the ECL buffer. The model reports the next invalid decode boundary instead of
 pretending the instruction stream is a safe array of records.
 
+Scalar assignment preserves the source-level write boundary. In TH06,
+`SETINT` and `SETFLOAT` both enter `SetVar`, so the output selector's resolved
+type decides whether an integer or float destination is written. In TH07/TH08,
+the opcode body selects the int or float lvalue resolver directly.
+
 Float arithmetic is currently faithful at the VM boundary that matters for
 opcode dispatch: output lvalue resolution, operand-flag-controlled rvalue
 resolution, title-specific slot layouts, and the selected operation

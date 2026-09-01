@@ -87,6 +87,7 @@ when `enemy->eclDifficultyMaskOverride` is nonzero.
 | `ECL-RAW-STEP-CANDIDATE-QUEUE` | symbolic triage baseline | default queue solves/materializes raw-step path classes across five title/difficulty environments and ranks them by generic cursor/liveness/VM-error properties | 70 satisfiable materialized candidates on 2026-08-31; 45 high-priority cursor/liveness candidates |
 | `ECL-RAW-BODY-JUMPDEC` | symbolic execution baseline | shared body semantics models source-backed `JUMPDEC`: decrement operand slot 2, jump iff the decremented value is positive, otherwise advance | 40 satisfiable materialized `decjump-*` candidates across five title/difficulty environments; taken/not-taken × four cursor classes per environment |
 | `ECL-RAW-OPERAND-INT-RESOLVER` | symbolic execution baseline | shared integer rvalue resolver models TH06 always-resolve behavior and TH07/TH08 operand-mask raw/resolve/default-raw branches from title profile selector sets | 8 satisfiable materialized resolver candidates on 2026-08-31; TH06 has 2 feasible branches, TH07/TH08 have 3 each |
+| `ECL-RAW-BODY-SCALAR-ASSIGNMENT` | executable model extension | shared scalar assignment semantics model TH06 `SETINT/SETFLOAT` through source `SetVar`, and TH07/TH08 `SET_INT/SET_FLOAT` through opcode-specific int/float lvalue policies | Lean theorems check 2 TH06 opcodes, 2 TH07 opcodes, 2 TH08 low-run opcodes, plus representative TH06 SETFLOAT, TH07 SET_FLOAT, and TH08 SET_INT shared-step controls; no CE or retail mutation generated for this lane yet |
 | `ECL-RAW-BODY-INT-BINARY-LVALUE` | symbolic execution baseline | shared integer binary-op semantics model ADD/SUB/MUL/DIV/MOD over title-profiled assign/in-place layouts, output lvalue resolution, rvalue resolution, and byte materialization | 39 satisfiable materialized candidates on 2026-08-31 across five title/difficulty environments; all replay with `matchesPath=true` |
 | `ECL-RAW-BODY-FLOAT-BINARY-LVALUE` | executable model extension | shared float binary-op semantics model ADD/SUB/MUL/DIV/MOD dispatch over title-profiled assign/in-place layouts, output lvalue resolution, rvalue resolution, and externally supplied result bit patterns | Lean theorems check 5 TH06 opcodes, 5 TH07 opcodes, 10 TH08 low-run opcodes, plus TH06 assign, TH07 assign, and TH08 in-place shared-step controls; no CE or retail mutation generated for this lane yet |
 | `ECL-RAW-BODY-INT-RESOLVED-DIVISOR` | symbolic execution finding | integer div/mod RHS can be raw, resolved host state, or default-raw fallback depending on title-specific resolver policy | 13 satisfiable materialized `arithmetic-fault` candidates across the default environments |
@@ -128,6 +129,8 @@ because it exhaustively covers all modeled path classes.
 Float binary arithmetic is now modeled at the dispatch/resolver/lvalue level,
 but it is not yet part of that stronger-than-fuzzing claim because the SMT
 float-result relation and path queue have not been added.
+Scalar assignment is in the same state: modeled and Lean-checked, but not yet a
+solver-ranked finding lane.
 It is not yet stronger than fuzzing for the full ECL/ANM VM because most opcode
 bodies, writes into host state, and multi-context scheduling remain outside the
 formal semantics. See [`docs/effectiveness.md`](effectiveness.md).

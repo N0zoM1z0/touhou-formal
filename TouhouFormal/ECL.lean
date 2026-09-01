@@ -10,4 +10,5 @@ import TouhouFormal.ECL.Operand
 import TouhouFormal.ECL.Body
 import TouhouFormal.ECL.Stack
 import TouhouFormal.ECL.Arithmetic
+import TouhouFormal.ECL.Assignment
 import TouhouFormal.ECL.Boss
