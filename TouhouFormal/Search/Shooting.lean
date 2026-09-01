@@ -136,6 +136,10 @@ theorem shoot_interval_rank_32_uses_lower_endpoint :
     shootIntervalAfterRank 50 32 = 40 := by
   rfl
 
+theorem shoot_interval_small_negative_endpoint_uses_c_truncation :
+    shootIntervalAfterRank 1 32 = 1 := by
+  rfl
+
 theorem th06_shooting_profile_count :
     shootingOpcodeCount TouhouFormal.TH06.headerShape = 6 := by
   rfl

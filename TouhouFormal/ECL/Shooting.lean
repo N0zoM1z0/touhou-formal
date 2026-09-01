@@ -81,9 +81,9 @@ structure RawShootingOutcome where
 deriving Repr, DecidableEq
 
 def shootIntervalRankAdjustment (baseInterval rank : Int) : Int :=
-  let upper := baseInterval / 5
-  let lower := (-baseInterval) / 5
-  rank * (lower - upper) / 32 + upper
+  let upper := Int.tdiv baseInterval 5
+  let lower := Int.tdiv (-baseInterval) 5
+  Int.tdiv (rank * (lower - upper)) 32 + upper
 
 def shootIntervalAfterRank (baseInterval rank : Int) : Int :=
   baseInterval + shootIntervalRankAdjustment baseInterval rank

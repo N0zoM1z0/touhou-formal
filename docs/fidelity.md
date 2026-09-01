@@ -78,6 +78,10 @@ boundaries as the source, including wrap before the `<= 0` clamp. Lean accepts
 the source-side f32 rank-add and angle-normalization results as explicit values,
 but evaluates `±0`, NaN, and ordered `< 0.3f` directly from binary32 bits.
 
+Integer rank interpolation uses `Int.tdiv`, not Lean's default integer `/`.
+This matches C/C++ truncation toward zero for negative intermediate values;
+the distinction is observable for small interval endpoints such as `-1 / 5`.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and
