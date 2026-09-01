@@ -323,11 +323,15 @@ def RawMovementAnglePolicy.name : RawMovementAnglePolicy -> String
 inductive RawMovementMode where
   | axis
   | polar
+  | interpolation
+  | orbit
 deriving Repr, DecidableEq
 
 def RawMovementMode.name : RawMovementMode -> String
   | .axis => "axis"
   | .polar => "polar"
+  | .interpolation => "interpolation"
+  | .orbit => "orbit"
 
 structure RawMovementOpShape where
   opcode : Int
@@ -339,6 +343,128 @@ structure RawMovementOpShape where
   zeroPositionZ : Bool := false
   resetMovementTimers : Bool := false
 deriving Repr, DecidableEq
+
+inductive RawTimedMovementKind where
+  | direction
+  | position
+  | currentDirection
+  | playerDirection
+deriving Repr, DecidableEq
+
+def RawTimedMovementKind.name : RawTimedMovementKind -> String
+  | .direction => "direction"
+  | .position => "position"
+  | .currentDirection => "current-direction"
+  | .playerDirection => "player-direction"
+
+inductive RawTimedMovementFloatRole where
+  | angle
+  | speed
+  | targetX
+  | targetY
+  | targetZ
+deriving Repr, DecidableEq
+
+def RawTimedMovementFloatRole.name : RawTimedMovementFloatRole -> String
+  | .angle => "angle"
+  | .speed => "speed"
+  | .targetX => "target-x"
+  | .targetY => "target-y"
+  | .targetZ => "target-z"
+
+inductive RawTimedMovementValuePolicy where
+  | rawBits
+  | rValue
+deriving Repr, DecidableEq
+
+def RawTimedMovementValuePolicy.name : RawTimedMovementValuePolicy -> String
+  | .rawBits => "raw-bits"
+  | .rValue => "rvalue"
+
+structure RawTimedMovementFloatInputShape where
+  role : RawTimedMovementFloatRole
+  operandIndex : Nat
+  policy : RawTimedMovementValuePolicy
+deriving Repr, DecidableEq
+
+inductive RawTimedMovementDurationPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawTimedMovementDurationPolicy.name : RawTimedMovementDurationPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+inductive RawTimedMovementEasingPolicy where
+  | opcodeOffset (firstValue : Int)
+  | intRValue (operandIndex : Nat)
+deriving Repr, DecidableEq
+
+inductive RawTimedMovementNonpositivePolicy where
+  | alwaysInterpolate
+  | immediatePolarZeroTimers
+  | immediatePolarResolvedTimers
+deriving Repr, DecidableEq
+
+def RawTimedMovementNonpositivePolicy.name :
+    RawTimedMovementNonpositivePolicy -> String
+  | .alwaysInterpolate => "always-interpolate"
+  | .immediatePolarZeroTimers => "immediate-polar-zero-timers"
+  | .immediatePolarResolvedTimers => "immediate-polar-resolved-timers"
+
+inductive RawTimedMovementVectorSource where
+  | position
+  | worldPosition
+deriving Repr, DecidableEq
+
+def RawTimedMovementVectorSource.name : RawTimedMovementVectorSource -> String
+  | .position => "position"
+  | .worldPosition => "world-position"
+
+/--
+One consecutive timed-movement opcode family.  TH06 encodes easing in three
+opcode ranges; TH07/TH08 use singleton families whose easing is an operand.
+-/
+structure RawTimedMovementFamilyShape where
+  firstOpcode : Int
+  lastOpcode : Int
+  kind : RawTimedMovementKind
+  floatInputs : List RawTimedMovementFloatInputShape := []
+  durationOperandIndex : Nat := 0
+  durationPolicy : RawTimedMovementDurationPolicy
+  easingPolicy : RawTimedMovementEasingPolicy
+  nonpositivePolicy : RawTimedMovementNonpositivePolicy := .alwaysInterpolate
+  originSource : RawTimedMovementVectorSource := .position
+  deltaBaseSource : RawTimedMovementVectorSource := .position
+  normalizeDirectionAngle : Bool := false
+  halfDurationDisplacement : Bool := false
+  mirrorDeltaX : Bool := false
+  zeroVelocity : Bool := false
+  zeroTargetZ : Bool := false
+  zeroDirectionDeltaZ : Bool := true
+deriving Repr, DecidableEq
+
+structure RawTimedMovementFamilyMatch where
+  family : RawTimedMovementFamilyShape
+  opcode : Int
+  easingFromOpcode : Option Int
+deriving Repr, DecidableEq
+
+def RawTimedMovementFamilyShape.matches
+    (family : RawTimedMovementFamilyShape)
+    (opcode : Int) : Bool :=
+  decide (family.firstOpcode <= opcode ∧ opcode <= family.lastOpcode)
+
+def RawTimedMovementFamilyShape.easingFromOpcode?
+    (family : RawTimedMovementFamilyShape)
+    (opcode : Int) : Option Int :=
+  if !family.matches opcode then
+    none
+  else
+    match family.easingPolicy with
+    | .opcodeOffset firstValue => some (firstValue + opcode - family.firstOpcode)
+    | .intRValue _ => none
 
 inductive RawEnemyStateFloatInputPolicy where
   | floatRValue
@@ -865,6 +991,7 @@ structure RawInstrShape where
   floatFunctions : List RawFloatFunctionShape := []
   randomOps : List RawRandomOpShape := []
   movementOps : List RawMovementOpShape := []
+  timedMovementFamilies : List RawTimedMovementFamilyShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
@@ -909,6 +1036,25 @@ def RawInstrShape.findMovementOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawMovementOpShape :=
   rawShape.movementOps.find? (fun op => op.opcode == opcode)
+
+private def findTimedMovementFamilyInList?
+    (families : List RawTimedMovementFamilyShape)
+    (opcode : Int) : Option RawTimedMovementFamilyMatch :=
+  match families with
+  | [] => none
+  | family :: rest =>
+      if family.matches opcode then
+        some
+          { family := family
+            opcode := opcode
+            easingFromOpcode := family.easingFromOpcode? opcode }
+      else
+        findTimedMovementFamilyInList? rest opcode
+
+def RawInstrShape.findTimedMovementFamily?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawTimedMovementFamilyMatch :=
+  findTimedMovementFamilyInList? rawShape.timedMovementFamilies opcode
 
 def RawInstrShape.findEnemyStateOp?
     (rawShape : RawInstrShape)

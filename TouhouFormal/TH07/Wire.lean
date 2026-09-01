@@ -56,6 +56,8 @@ def eclOpcodeSetAngularVelocity : Int := 48
 def eclOpcodeSetMoveSpeed : Int := 49
 def eclOpcodeSetMoveAcceleration : Int := 50
 def eclOpcodeMoveAtPlayer : Int := 53
+def eclOpcodeMoveDirectionTimed : Int := 54
+def eclOpcodeMovePositionTimed : Int := 55
 def eclOpcodeSetMovementBounds : Int := 62
 def eclOpcodeDisableMovementBounds : Int := 63
 def eclOpcodeSpawnBulletPatternFirst : Int := 64
@@ -527,6 +529,29 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .floatRValue } ] },
               { opcode := eclOpcodeDisableMovementBounds
                 kind := .disableBounds } ]
+          timedMovementFamilies :=
+            [ { firstOpcode := eclOpcodeMoveDirectionTimed
+                lastOpcode := eclOpcodeMoveDirectionTimed
+                kind := .direction
+                floatInputs :=
+                  [ { role := .angle, operandIndex := 2, policy := .rValue },
+                    { role := .speed, operandIndex := 3, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                nonpositivePolicy := .immediatePolarResolvedTimers
+                normalizeDirectionAngle := true
+                mirrorDeltaX := true },
+              { firstOpcode := eclOpcodeMovePositionTimed
+                lastOpcode := eclOpcodeMovePositionTimed
+                kind := .position
+                floatInputs :=
+                  [ { role := .targetX, operandIndex := 2, policy := .rValue },
+                    { role := .targetY, operandIndex := 3, policy := .rValue },
+                    { role := .targetZ, operandIndex := 4, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                mirrorDeltaX := true
+                zeroVelocity := true } ]
           enemyStateOps :=
             [ { opcode := eclOpcodeSetHitboxSize
                 kind := .setPrimaryHitbox 3

@@ -6,6 +6,7 @@ def f32SignificandMask : Int := 0x7fffff
 def f32MagnitudeMask : Int := 0x7fffffff
 def f32ExponentDivisor : Int := 0x800000
 def f32ExponentMask : Int := 0xff
+def f32SignMask : Int := 0x80000000
 
 def f32MagnitudeBits (value : Int) : Int :=
   toWord32Bits value % (f32MagnitudeMask + 1)
@@ -18,6 +19,11 @@ def f32SignificandBits (value : Int) : Int :=
 
 def f32SignBitSet (value : Int) : Bool :=
   word32BitSet value 31
+
+/-- Toggle the IEEE-754 binary32 sign bit without evaluating the payload. -/
+def f32NegBits (value : Int) : Int :=
+  let bits := toWord32Bits value
+  if f32SignBitSet bits then bits - f32SignMask else bits + f32SignMask
 
 def f32IsZeroBits (value : Int) : Bool :=
   f32MagnitudeBits value == 0

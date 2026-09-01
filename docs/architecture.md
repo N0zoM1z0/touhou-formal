@@ -38,10 +38,15 @@ behavior is preserved without embedding a second ad hoc float evaluator.
 
 Movement opcodes emit a shared `RawMovementEffect` rather than mutating three
 title-specific enemy structs. The effect names stable writes—position,
-velocity, angle, speed, acceleration, bounds, mode, and timers—while profiles
-own operand slots, raw-versus-resolved reads, forced values, and title-only
-side effects. Host math such as `atan2f`, normalized player-relative angles,
-and position clamping remains an explicit boundary value/event.
+velocity, interpolation delta/origin, angle, speed, acceleration, easing,
+bounds, mode, and timers—while profiles own operand slots,
+raw-versus-resolved reads, forced values, and title-only side effects. Timed
+movement uses consecutive opcode families, so TH06's thirteen fixed-easing
+handlers and TH07/TH08's operand-driven handlers execute the same transition
+code. Per-occurrence host samples prevent source macro calls from being
+silently memoized. Host math such as trig, binary32 vector arithmetic,
+`atan2f`, normalized player-relative angles, and position clamping remains an
+explicit boundary value/event.
 
 Primary bullet-pattern opcodes use one consecutive-family profile rather than
 27 copied cases. The opcode delta becomes aim mode; a shared descriptor effect

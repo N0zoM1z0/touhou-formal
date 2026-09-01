@@ -154,6 +154,27 @@ private def describeMovementOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeTimedMovementOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawTimedMovementOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "mode=" ++ reprStr effect.modeWrite ++
+              " angle=" ++ reprStr effect.angleWrite ++
+              " delta=" ++ reprStr effect.interpolationDeltaWrite ++
+              " origin=" ++ reprStr effect.interpolationOriginWrite ++
+              " easing=" ++ reprStr effect.easingWrite ++
+              " timers=" ++ reprStr
+                (effect.movementDurationWrite, effect.movementTimerWrite)
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeEnemyStateOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawEnemyStateOutcome) :
     String :=
@@ -408,6 +429,12 @@ def main : IO Unit := do
   IO.println s!"TH07 axis velocity: {describeMovementOutcome TouhouFormal.Search.Movement.th07AxisVelocityOutcome}"
   IO.println s!"TH08 polar velocity: {describeMovementOutcome TouhouFormal.Search.Movement.th08PolarVelocityOutcome}"
   IO.println s!"TH08 position: {describeMovementOutcome TouhouFormal.Search.Movement.th08PositionOutcome}"
+  IO.println s!"TH06 timed movement opcode count: {TouhouFormal.Search.TimedMovement.timedMovementOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 timed movement opcode count: {TouhouFormal.Search.TimedMovement.timedMovementOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 timed movement opcode count: {TouhouFormal.Search.TimedMovement.timedMovementOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 timed position: {describeTimedMovementOutcome TouhouFormal.Search.TimedMovement.th06PositionOutcome}"
+  IO.println s!"TH07 immediate timed direction: {describeTimedMovementOutcome TouhouFormal.Search.TimedMovement.th07ImmediateDirectionOutcome}"
+  IO.println s!"TH08 timed player direction: {describeTimedMovementOutcome TouhouFormal.Search.TimedMovement.th08InterpolatedPlayerDirectionOutcome}"
   IO.println ""
   IO.println "Enemy state controls"
   IO.println s!"TH06 enemy-state opcode count: {TouhouFormal.Search.EnemyState.enemyStateOpcodeCount TouhouFormal.TH06.headerShape}"

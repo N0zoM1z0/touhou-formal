@@ -22,6 +22,12 @@ structure RawMovementFloatInput where
   hostValue : Int
 deriving Repr, DecidableEq
 
+structure RawMovementTimerWrite where
+  current : Int
+  subFrameBits : Int
+  previous : Int
+deriving Repr, DecidableEq
+
 structure RawMovementOperands where
   floatInputs : List RawMovementFloatInput
   derivedAngleBits : Int := 0
@@ -39,15 +45,19 @@ def RawMovementFloatResolution.bits : RawMovementFloatResolution -> Int
 structure RawMovementEffect where
   positionWrite : Option RawVec3Bits := none
   velocityWrite : Option RawVec3Bits := none
+  interpolationDeltaWrite : Option RawVec3Bits := none
+  interpolationOriginWrite : Option RawVec3Bits := none
   angleWrite : Option Int := none
   angularVelocityWrite : Option Int := none
   speedWrite : Option Int := none
   accelerationWrite : Option Int := none
+  easingWrite : Option Int := none
   boundsWrite : Option RawMovementBoundsBits := none
   boundsEnabledWrite : Option Bool := none
   modeWrite : Option RawMovementMode := none
   movementDurationWrite : Option Int := none
   movementTimerWrite : Option Int := none
+  movementTimerStateWrite : Option RawMovementTimerWrite := none
   clampPosition : Bool := false
 deriving Repr, DecidableEq
 
@@ -152,6 +162,11 @@ private def movementEffect
   let modeWrite := op.modeUpdate
   let durationWrite := if op.resetMovementTimers then some 0 else none
   let timerWrite := if op.resetMovementTimers then some 0 else none
+  let timerStateWrite :=
+    if op.resetMovementTimers then
+      some { current := 0, subFrameBits := 0, previous := -999 }
+    else
+      none
   match op.kind with
   | .setPosition =>
       { positionWrite :=
@@ -162,6 +177,7 @@ private def movementEffect
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
         movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite
         clampPosition := op.clampPosition }
   | .setAxisVelocity =>
       { velocityWrite :=
@@ -172,34 +188,40 @@ private def movementEffect
         angleWrite := movementAngleWrite op inputBits derivedAngleBits
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .setPolarVelocity =>
       { angleWrite := movementAngleWrite op inputBits derivedAngleBits
         speedWrite := inputBits[1]?
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .setAngularVelocity =>
       { angularVelocityWrite := inputBits[0]?
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .setSpeed =>
       { speedWrite := inputBits[0]?
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .setAcceleration =>
       { accelerationWrite := inputBits[0]?
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .moveAtPlayer =>
       { angleWrite := movementAngleWrite op inputBits derivedAngleBits
         speedWrite := inputBits[1]?
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .setBounds =>
       { boundsWrite :=
           some
@@ -210,12 +232,14 @@ private def movementEffect
         boundsEnabledWrite := some true
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
   | .disableBounds =>
       { boundsEnabledWrite := some false
         modeWrite := modeWrite
         movementDurationWrite := durationWrite
-        movementTimerWrite := timerWrite }
+        movementTimerWrite := timerWrite
+        movementTimerStateWrite := timerStateWrite }
 
 def rawMovementPrepare
     (shape : HeaderShape)

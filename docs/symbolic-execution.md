@@ -36,6 +36,13 @@ covers 24 position/velocity/scalar/bounds handlers across the three titles and
 records derived-angle/clamp host boundaries. These effects have Lean profile
 and step controls but are not yet included in the solver lane.
 
+Timed movement adds 18 direction/position interpolation handlers to the same
+effect vocabulary. Its executable reads are occurrence-indexed, so later SMT
+work can vary resolver-backed RNG values between the duration test, delta
+construction, and timer assignment without changing the Lean semantics. The
+current controls exercise those paths directly; a dedicated solver/materializer
+lane remains pending.
+
 Enemy state writes use a second shared effect layer covering 24 handlers. It
 keeps raw versus resolved hitbox and scalar inputs, one-bit/three-bit C
 bitfield truncation, TH08's replace/disable/enable mask polarity, optional

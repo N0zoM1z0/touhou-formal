@@ -65,6 +65,13 @@ relative to `/home/yann/yann/touhou/formal`.
   `MOVEATPLAYER`'s angle offset, which is added as a raw float word.
 - `reference/th06/src/EclManager.cpp:612`: movement bounds are copied directly
   from four raw float fields and toggle `shouldClampPos`.
+- `reference/th06/src/EnemyEclInstr.cpp:41`: `MoveDirTime` resolves only its
+  angle operand, computes a half-duration polar delta, snapshots position, and
+  starts interpolation mode; `MovePosTime` and `MoveTime` share the same timer
+  and origin writes with their distinct input sources.
+- `reference/th06/src/EclManager.cpp:560`: opcodes 52 through 64 reuse those
+  three helpers and select easing values 0 through 4 from consecutive opcode
+  ranges.
 - `reference/th06/src/EnemyEclInstr.cpp:100`: `GetVar` resolves known negative
   `EclVarId` selectors and falls through to the operand-cell pointer for
   unknown operands, which reads back as the raw integer in rvalue positions.
@@ -167,6 +174,13 @@ relative to `/home/yann/yann/touhou/formal`.
   player-relative operands; axis velocity additionally writes `atan2f(y, x)`.
 - `reference/th07/src/th07/EclManager.cpp:1573`: movement bounds resolve four
   float operands and toggle `hasMovementBounds`.
+- `reference/th07/src/th07/EclManager.cpp:576`: timed direction and position
+  helpers resolve duration/speed operands at every macro occurrence, snapshot
+  the origin, install three-bit easing/mode state, and optionally mirror the
+  interpolation delta's X component.
+- `reference/th07/src/th07/EclManager.cpp:1538`: timed direction takes a
+  nonpositive-duration polar fast path and resolves duration again for its
+  timer write; opcodes 54 and 55 otherwise call the shared helpers.
 - `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
   bit `1 << index` to choose raw operand versus `GetVarValue` resolution.
 - `reference/th07/src/th07/EclManager.cpp:116`: `GetVarValue` resolves known
@@ -305,6 +319,14 @@ relative to `/home/yann/yann/touhou/formal`.
   distinct mode/timer updates.
 - `reference/th08/src/EclRunLow.inl:617`: low opcodes 75 and 76 resolve four
   movement-bound floats and toggle the bounds flag.
+- `reference/th08/src/EclHelpers.cpp:21`: the timed polar and relative-position
+  helpers preserve repeated `ReadInt`/`ReadFloat` calls, use different
+  position/world-position sources, set interpolation mode/easing/timers, and
+  apply mirror-X after delta construction.
+- `reference/th08/src/EclRunLow.inl:502`: low opcodes 64, 66, and 69 dispatch
+  timed position, absolute direction, and player-directed motion. Opcodes 66
+  and 69 have different nonpositive timer writes, and opcode 69's positive
+  branch calls the absolute polar helper.
 - `reference/th08/src/EclDependencies.cpp:466`: `CallSubOnEnemy` stores the
   next instruction context at `activeEclCallStack[activeEclCallStackDepth]`
   before `CallEclSub`, then increments only while depth `< 15`.

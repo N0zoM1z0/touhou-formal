@@ -53,6 +53,12 @@ def eclOpcodeMoveAngularVelocity : Int := 46
 def eclOpcodeMoveSpeed : Int := 47
 def eclOpcodeMoveAcceleration : Int := 48
 def eclOpcodeMoveAtPlayer : Int := 51
+def eclOpcodeMoveDirTimeFirst : Int := 52
+def eclOpcodeMoveDirTimeLast : Int := 55
+def eclOpcodeMovePositionTimeFirst : Int := 56
+def eclOpcodeMovePositionTimeLast : Int := 60
+def eclOpcodeMoveCurrentTimeFirst : Int := 61
+def eclOpcodeMoveCurrentTimeLast : Int := 64
 def eclOpcodeMoveBoundsSet : Int := 65
 def eclOpcodeMoveBoundsDisable : Int := 66
 def eclOpcodeSpawnBulletPatternFirst : Int := 67
@@ -502,6 +508,32 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .rawBits } ] },
               { opcode := eclOpcodeMoveBoundsDisable
                 kind := .disableBounds } ]
+          timedMovementFamilies :=
+            [ { firstOpcode := eclOpcodeMoveDirTimeFirst
+                lastOpcode := eclOpcodeMoveDirTimeLast
+                kind := .direction
+                floatInputs :=
+                  [ { role := .angle, operandIndex := 1, policy := .rValue },
+                    { role := .speed, operandIndex := 2, policy := .rawBits } ]
+                durationPolicy := .rawI32
+                easingPolicy := .opcodeOffset 1
+                halfDurationDisplacement := true },
+              { firstOpcode := eclOpcodeMovePositionTimeFirst
+                lastOpcode := eclOpcodeMovePositionTimeLast
+                kind := .position
+                floatInputs :=
+                  [ { role := .targetX, operandIndex := 1, policy := .rValue },
+                    { role := .targetY, operandIndex := 2, policy := .rValue },
+                    { role := .targetZ, operandIndex := 3, policy := .rValue } ]
+                durationPolicy := .rawI32
+                easingPolicy := .opcodeOffset 0
+                zeroVelocity := true },
+              { firstOpcode := eclOpcodeMoveCurrentTimeFirst
+                lastOpcode := eclOpcodeMoveCurrentTimeLast
+                kind := .currentDirection
+                durationPolicy := .rawI32
+                easingPolicy := .opcodeOffset 1
+                halfDurationDisplacement := true } ]
           enemyStateOps :=
             [ { opcode := eclOpcodeSetHitbox
                 kind := .setPrimaryHitbox 3

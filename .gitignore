@@ -4,6 +4,8 @@ build/
 *.ilean
 *.trace
 *.log
+__pycache__/
+*.pyc
 
 # Keep proprietary retail binaries and local dynamic traces out of this repo.
 *.exe

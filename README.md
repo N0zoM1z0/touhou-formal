@@ -76,6 +76,14 @@ The executable model currently covers these source-backed boundaries:
   player-relative motion, and movement bounds. Shared effects retain title
   differences such as TH06's raw player-angle offset/bounds, TH07's derived
   axis angle, and TH08's forced-zero Z plus timer-reset behavior.
+- Timed movement adds 18 more opcode bodies through one consecutive-family
+  semantics: TH06's opcode-selected easing ranges and TH07/TH08's
+  operand-selected direction/position interpolation. The model retains every
+  repeated resolver call, three-bit easing writes, mirror-X sign toggling,
+  position-versus-world-position origins, and the nonpositive-duration fast
+  paths—including exact timer subframe/history resets, TH08's distinct timer
+  policies, and opcode 69's
+  player-relative/absolute-angle branch split.
 - Shared enemy-state effects cover 24 hitbox, collision/damage flag,
   death-mode, life, and boss-timer opcodes. The model retains TH06/TH07
   bitfield truncation, TH08's inverted replace-mask rules, alignment-effect
@@ -199,9 +207,9 @@ integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
-float conditional jumps, immediate movement effects, enemy-state effects, and
-shooting-control effects currently have Lean executable controls for profile
-coverage and shared-step execution, but no dedicated
+float conditional jumps, immediate and timed movement effects, enemy-state
+effects, and shooting-control effects currently have Lean
+executable controls for profile coverage and shared-step execution, but no dedicated
 solver/materializer lane yet. Bullet-pattern, callback-configuration, and
 interrupt effects have the same Lean-only status for now. The boss integer-read
 materializer covers TH07/TH08

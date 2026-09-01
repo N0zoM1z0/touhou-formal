@@ -56,8 +56,11 @@ def eclOpcodeNormalizeAngle : Int := 37
 def eclOpcodeSubCall : Int := 52
 def eclOpcodeSubRet : Int := 53
 def eclOpcodeSetPosition : Int := 63
+def eclOpcodeMovePositionTimed : Int := 64
 def eclOpcodeSetPolarVelocity : Int := 65
+def eclOpcodeMoveDirectionTimed : Int := 66
 def eclOpcodeMoveAtPlayer : Int := 68
+def eclOpcodeMoveAtPlayerTimed : Int := 69
 def eclOpcodeSetAngularVelocity : Int := 70
 def eclOpcodeSetAcceleration : Int := 71
 def eclOpcodeSetMovementBounds : Int := 75
@@ -535,6 +538,46 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .floatRValue } ] },
               { opcode := eclOpcodeDisableMovementBounds
                 kind := .disableBounds } ]
+          timedMovementFamilies :=
+            [ { firstOpcode := eclOpcodeMovePositionTimed
+                lastOpcode := eclOpcodeMovePositionTimed
+                kind := .position
+                floatInputs :=
+                  [ { role := .targetX, operandIndex := 2, policy := .rValue },
+                    { role := .targetY, operandIndex := 3, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                originSource := .position
+                deltaBaseSource := .worldPosition
+                mirrorDeltaX := true
+                zeroVelocity := true
+                zeroTargetZ := true },
+              { firstOpcode := eclOpcodeMoveDirectionTimed
+                lastOpcode := eclOpcodeMoveDirectionTimed
+                kind := .direction
+                floatInputs :=
+                  [ { role := .angle, operandIndex := 2, policy := .rValue },
+                    { role := .speed, operandIndex := 3, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                nonpositivePolicy := .immediatePolarZeroTimers
+                originSource := .worldPosition
+                deltaBaseSource := .worldPosition
+                normalizeDirectionAngle := true
+                mirrorDeltaX := true },
+              { firstOpcode := eclOpcodeMoveAtPlayerTimed
+                lastOpcode := eclOpcodeMoveAtPlayerTimed
+                kind := .playerDirection
+                floatInputs :=
+                  [ { role := .angle, operandIndex := 2, policy := .rValue },
+                    { role := .speed, operandIndex := 3, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                nonpositivePolicy := .immediatePolarResolvedTimers
+                originSource := .worldPosition
+                deltaBaseSource := .worldPosition
+                normalizeDirectionAngle := true
+                mirrorDeltaX := true } ]
           enemyStateOps :=
             [ { opcode := eclOpcodeSetPrimaryHitbox
                 kind := .setPrimaryHitbox 2

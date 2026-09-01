@@ -334,6 +334,11 @@ SOURCE_COVERAGE = [
         "reason": "shared movement effects cover position, axis/polar velocity, angular velocity, speed, acceleration, player-relative angle, and movement bounds while preserving title-specific resolution, normalization, clamp, mode, and timer updates",
     },
     {
+        "area": "timed movement state writes",
+        "status": "covered-by-model",
+        "reason": "one consecutive-family model covers TH06 opcode-selected easing and TH07/TH08 operand-driven direction/position interpolation, including repeated resolver reads, nonpositive-duration branches, mirror-X, origin/delta source differences, and timer writes",
+    },
+    {
         "area": "enemy hitbox and flag state writes",
         "status": "covered-by-model",
         "reason": "shared enemy-state effects cover primary/secondary hitboxes, source-width flag truncation, TH08 replace/disable/enable masks, alignment-effect collision mirroring, presentation-guarded death-mode writes, life/gauge updates, and exact timer-history resets",
@@ -355,8 +360,8 @@ SOURCE_COVERAGE = [
     },
     {
         "area": "interrupts, callbacks, pending-sub dispatch",
-        "status": "not-yet-modeled",
-        "reason": "plain CALL/RET stack edges and TH06 conditional CALL dispatch are modeled; interrupt entry, periodic callbacks, high-opcode pending sub dispatch, and callback lifecycles still need bounded multi-context state",
+        "status": "partially-covered",
+        "reason": "callback configuration and explicit interrupt entry are modeled with partial-write/fault ordering; automatic callback triggers, high-opcode pending-sub dispatch, and their bounded multi-context lifecycles remain",
     },
     {
         "area": "remaining arithmetic body faults",
@@ -366,7 +371,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate enemy movement, hitbox/flag/death-mode/life/timer writes, and shooting controls now have typed host-effect boundaries; bullet-pattern construction, laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
+        "reason": "immediate/timed enemy movement, hitbox/flag/death-mode/life/timer writes, shooting controls, and primary bullet-pattern construction now have typed host-effect boundaries; laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",

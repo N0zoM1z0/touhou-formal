@@ -68,6 +68,18 @@ requests clamping. Derived angle bits and the post-clamp host calculation are
 not fabricated by Lean—the effect records the source inputs and the explicit
 host result/event boundary.
 
+Timed movement preserves source call multiplicity as well as final writes.
+Direction interpolation can resolve duration four times and speed twice in one
+handler; each occurrence therefore has its own host sample. Fixed TH06 easing
+comes from opcode offset, whereas TH07/TH08 resolve an easing operand and write
+only its low three bits. TH08 opcode 66 resets both movement timers to zero on
+a nonpositive first duration, while opcode 69 resolves duration again and can
+write a different value. That opcode also uses a player-relative angle only in
+the immediate branch; its positive-duration branch calls the ordinary absolute
+polar helper. Every timer assignment records `current`, zero subframe bits, and
+the source sentinel `previous = -999`. Binary32 trig/subtraction products remain explicit results, but
+mirror-X is modeled exactly by toggling the delta's sign bit.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies
