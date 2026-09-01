@@ -26,3 +26,15 @@ Lean currently checks these deltas as executable theorems: TH06 raw bytes flow
 through the shared loader/decoder/lookup path, TH07 preserves unchecked negative
 lookup, and TH08 rejects wrong versions before rebasing and treats negative
 sub ids as no-ops.
+
+## Primary Bullet-Pattern Family
+
+| Title | Opcodes | Bullet type | Dead enemy | Rank/clamp during spellcard | Shooting gate | Extra pre-dispatch filters |
+| --- | --- | --- | --- | --- | --- | --- |
+| TH06 | 67–75 | raw packed i16 | still builds descriptor | always applied | descriptor written, spawn suppressed | primary angle normalized |
+| TH07 | 64–72 | mask-controlled resolver | skipped | bypassed | descriptor written, spawn suppressed | none |
+| TH08 | 96–104 | mask-controlled resolver | skipped | bypassed | raw `0x2c` instruction copied for later dispatch | player alignment, then minimum distance |
+
+All three ranges share the same semantic operand order and use
+`opcode - firstOpcode` for aim mode. The Lean profile therefore stores one
+range per title rather than nine independently maintained opcode records.

@@ -43,6 +43,15 @@ own operand slots, raw-versus-resolved reads, forced values, and title-only
 side effects. Host math such as `atan2f`, normalized player-relative angles,
 and position clamping remains an explicit boundary value/event.
 
+Primary bullet-pattern opcodes use one consecutive-family profile rather than
+27 copied cases. The opcode delta becomes aim mode; a shared descriptor effect
+owns packed operand resolution, signed-i16 writes, rank/clamp control flow, and
+spawn disposition. Profiles own only real deltas: TH06 raw bullet type and
+angle normalization, TH07/TH08 spellcard bypass and dead gate, and TH08's
+deferred raw copy plus alignment/distance filters. Source-side float arithmetic
+results remain explicit host-boundary values, while IEEE binary32 zero, NaN,
+and ordered minimum-speed comparisons execute directly from their bits.
+
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not
 assumed equivalent; a title module should justify differences by filling a

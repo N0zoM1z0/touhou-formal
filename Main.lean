@@ -200,6 +200,24 @@ private def describeShootingOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeBulletPatternOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBulletPatternOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "disposition=" ++ effect.disposition.name ++
+              " pending=" ++ toString effect.pendingInstructionWrite.isSome ++
+              " descriptor=" ++ toString effect.descriptorWrite.isSome ++
+              " spawn=" ++ toString effect.spawnCall
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -358,6 +376,18 @@ def main : IO Unit := do
   IO.println s!"TH08 random interval: {describeShootingOutcome TouhouFormal.Search.Shooting.th08RandomIntervalOutcome}"
   IO.println s!"TH06 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th06OffsetOutcome}"
   IO.println s!"TH08 offset: {describeShootingOutcome TouhouFormal.Search.Shooting.th08OffsetOutcome}"
+  IO.println ""
+  IO.println "Bullet-pattern controls"
+  IO.println s!"TH06 bullet-pattern opcode count: {TouhouFormal.Search.BulletPattern.bulletPatternOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 bullet-pattern opcode count: {TouhouFormal.Search.BulletPattern.bulletPatternOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 bullet-pattern opcode count: {TouhouFormal.Search.BulletPattern.bulletPatternOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 suppressed pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th06SuppressedOutcome}"
+  IO.println s!"TH07 dead pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th07DeadOutcome}"
+  IO.println s!"TH07 spellcard pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th07SpellcardOutcome}"
+  IO.println s!"TH08 deferred pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08DeferredOutcome}"
+  IO.println s!"TH08 alignment-filtered pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08AlignmentFilteredOutcome}"
+  IO.println s!"TH08 distance-filtered pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08DistanceFilteredOutcome}"
+  IO.println s!"TH08 spawned pattern: {describeBulletPatternOutcome TouhouFormal.Search.BulletPattern.th08SpawnOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

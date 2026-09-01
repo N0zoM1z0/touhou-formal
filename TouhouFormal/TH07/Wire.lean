@@ -58,6 +58,8 @@ def eclOpcodeSetMoveAcceleration : Int := 50
 def eclOpcodeMoveAtPlayer : Int := 53
 def eclOpcodeSetMovementBounds : Int := 62
 def eclOpcodeDisableMovementBounds : Int := 63
+def eclOpcodeSpawnBulletPatternFirst : Int := 64
+def eclOpcodeSpawnBulletPatternLast : Int := 72
 def eclOpcodeSetShootInterval : Int := 73
 def eclOpcodeSetRandomShootInterval : Int := 74
 def eclOpcodeDisableShooting : Int := 75
@@ -212,6 +214,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
         startLine := 1345
         endLine := 1376
         claim := "Shoot-control opcodes 73 through 78 resolve nonzero intervals before rank scaling, initialize the interval timer immediately or randomly, toggle a suppress-spawn bit, spawn the previous pattern, and resolve three offset floats." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1265
+        endLine := 1329
+        claim := "Bullet-pattern opcodes 64 through 72 skip dead enemies, derive aim mode from the opcode, resolve packed sprite/color plus count/float operands with their shifted mask bits, omit rank and clamps during spellcards, and let disableBullets suppress only the spawn call." },
       { path := "reference/th07/src/th07/EclManager.cpp"
         startLine := 1168
         endLine := 1195
@@ -544,6 +550,12 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          bulletPatternFamilies :=
+            [ { firstOpcode := eclOpcodeSpawnBulletPatternFirst
+                lastOpcode := eclOpcodeSpawnBulletPatternLast
+                bulletTypePolicy := .intRValue
+                rankPolicy := .unlessSpellcardActive
+                skipWhenEnemyDead := true } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeInc
                 kind := .inc

@@ -18,4 +18,5 @@ import TouhouFormal.ECL.Random
 import TouhouFormal.ECL.Movement
 import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.Shooting
+import TouhouFormal.ECL.BulletPattern
 import TouhouFormal.ECL.Boss

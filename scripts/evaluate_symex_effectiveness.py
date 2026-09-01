@@ -1316,14 +1316,31 @@ def modeled_profile_opcodes(title: str) -> dict[str, Any]:
     }
     referenced_names = set(
         re.findall(
-            r"\b(?:opcode|callOpcode|retOpcode)\s*:=\s*(eclOpcode[A-Za-z0-9_]+)\b",
+            r"\b(?:opcode|callOpcode|retOpcode|firstOpcode|lastOpcode)\s*:=\s*"
+            r"(eclOpcode[A-Za-z0-9_]+)\b",
             text,
         )
+    )
+    family_ranges = re.findall(
+        r"\bfirstOpcode\s*:=\s*(eclOpcode[A-Za-z0-9_]+)\s+"
+        r"lastOpcode\s*:=\s*(eclOpcode[A-Za-z0-9_]+)\b",
+        text,
     )
     unresolved_names = sorted(referenced_names - constants.keys())
     values_to_constants: dict[int, list[str]] = defaultdict(list)
     for name in sorted(referenced_names & constants.keys()):
         values_to_constants[constants[name]].append(name)
+
+    for first_name, last_name in family_ranges:
+        if first_name not in constants or last_name not in constants:
+            continue
+        first_value = constants[first_name]
+        last_value = constants[last_name]
+        if last_value < first_value:
+            continue
+        family_name = f"{first_name}..{last_name}"
+        for value in range(first_value, last_value + 1):
+            values_to_constants[value].append(family_name)
 
     for value in re.findall(
         r"\bunimplementedOpcode\s*:=\s*some\s+(-?[0-9]+)\b",

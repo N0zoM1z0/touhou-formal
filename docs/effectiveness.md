@@ -561,19 +561,21 @@ dispatch/resolver/lvalue behavior, scalar float functions, random value
 generation, TH06 compare-register production, TH07/TH08 float conditional
 jumps, TH07/TH08 boss integer/float reads, immediate movement state writes,
 enemy hitbox/flag/death-mode/life/timer writes, plain CALL/RET stack behavior, zero
-divisors, shooting-control state writes, and signed idiv overflow. Most gameplay host effects and
+divisors, shooting-control state writes, primary bullet-pattern descriptor
+construction/gates, and signed idiv overflow. Most gameplay host effects and
 multi-instruction state composition remain outside the current model.
 
 Source opcode surface from the local reference clones:
 
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
-| TH06 | 136 `ECL_OPCODE_*` symbols | 61: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate movement, enemy-state, and shooting-control families | 75 |
-| TH07 | 159 `EclOpcode` symbols | 66: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, enemy-state, and shooting-control families | 93 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 70: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, enemy-state, and shooting-control families | 114 |
+| TH06 | 136 `ECL_OPCODE_*` symbols | 70: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate movement, enemy-state, shooting-control, and bullet-pattern families | 66 |
+| TH07 | 159 `EclOpcode` symbols | 75: dispatch/control, scalar assignment, random, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, enemy-state, shooting-control, and bullet-pattern families | 84 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 79: dispatch/control, scalar assignment, random sign, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate movement, enemy-state, shooting-control, and bullet-pattern families | 105 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
-constants referenced by each Lean `Wire.lean` profile, maps those numeric values
+constants and consecutive family ranges referenced by each Lean `Wire.lean`
+profile, maps those numeric values
 back to the local source enum or TH08's integrated low/high `case` labels, and computes the
 remaining lower bound from the set difference. This makes new profile entries
 count automatically and flags unresolved or source-absent profile values.
@@ -587,7 +589,8 @@ Not covered:
 - exact signed add/sub/mul overflow behavior, exact IEEE-754 f32 result
   computation, float division/fmod edge cases, and other C/C++ arithmetic
   hazards;
-- bullet, laser, enemy lifecycle, item, ANM, sound, and callback side effects;
+- BulletManager allocation/transform execution, lasers, enemy lifecycle, item,
+  ANM, sound, and callback side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
@@ -618,6 +621,9 @@ complete for the implemented float binary-op dispatch/resolver/lvalue
 complete for the implemented TH07/TH08 boss integer-read abstraction;
 complete for the implemented plain CALL/RET stack abstraction;
 complete for the implemented TH06 conditional-CALL abstraction;
+complete for the implemented primary bullet-pattern descriptor/gate
+  abstraction, with source-side f32 arithmetic supplied by the explicit host
+  boundary;
 incomplete for full ECL/ANM VM opcode semantics.
 ```
 

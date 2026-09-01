@@ -451,6 +451,35 @@ timer effects retain title-specific operand resolution and secondary writes.
 The model shares that interpolation and the u32 RNG range operation but keeps
 the timer guard and gate meaning in title profiles.
 
+## Primary Bullet-Pattern Evidence
+
+- `reference/th06/src/EclManager.cpp:357-410` sends opcodes 67–75 through one
+  descriptor body and sets `aimMode = opcode - 67`. Bullet type stays raw;
+  counts, color, and float fields use `GetVar`/`GetVarFloat`; count rank/clamps,
+  angle normalization, and speed rank/clamps always execute. The shooting flag
+  suppresses only the final manager call.
+- `reference/th07/src/th07/EclManager.cpp:1265-1329` uses the same nine-mode
+  layout at opcodes 64–72, but exits when life is nonpositive. Its packed
+  sprite/color occupy mask bits 0/1, counts bits 2/3, speeds bits 4/5, and
+  angles bits 6/7. Active spellcards bypass all rank additions and clamps;
+  `disableBullets` is checked after descriptor writes.
+- `reference/th08/src/EclRunHigh.inl:165-184` exits for dead enemies and, when
+  the defer bit is set, copies `sizeof(pendingShotInstruction) = 0x2c` bytes
+  from the raw instruction before calling the common dispatcher.
+- `reference/th08/src/EclDependencies.cpp:687-780` checks transform alignment
+  and squared player distance before resolving operands. It then uses the same
+  shifted operand-flag layout and spellcard rank bypass as TH07 before calling
+  `SpawnBulletPattern`.
+- The descriptor count fields are signed i16 in
+  `reference/th06/src/Enemy.hpp`,
+  `reference/th07/src/th07/BulletManager.hpp`, and
+  `reference/th08/src/BulletManager.hpp`; compound rank writes therefore
+  truncate before the source tests `count <= 0`.
+
+The Lean family model retains these ordering boundaries and represents the
+fixed TH08 copy span explicitly, including whether its source bytes lie within
+the supplied ECL buffer.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

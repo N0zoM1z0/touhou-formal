@@ -68,6 +68,16 @@ requests clamping. Derived angle bits and the post-clamp host calculation are
 not fabricated by Lean—the effect records the source inputs and the explicit
 host result/event boundary.
 
+Bullet-pattern semantics preserve write and early-exit ordering, not merely the
+eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
+when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies
+the raw `0x2c`-byte instruction before resolving any operand when deferral is
+enabled. TH08's dead, alignment, and minimum-distance filters likewise leave no
+descriptor write. Counts are truncated through signed i16 at the same assignment
+boundaries as the source, including wrap before the `<= 0` clamp. Lean accepts
+the source-side f32 rank-add and angle-normalization results as explicit values,
+but evaluates `±0`, NaN, and ordered `< 0.3f` directly from binary32 bits.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

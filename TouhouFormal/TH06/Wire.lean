@@ -55,6 +55,8 @@ def eclOpcodeMoveAcceleration : Int := 48
 def eclOpcodeMoveAtPlayer : Int := 51
 def eclOpcodeMoveBoundsSet : Int := 65
 def eclOpcodeMoveBoundsDisable : Int := 66
+def eclOpcodeSpawnBulletPatternFirst : Int := 67
+def eclOpcodeSpawnBulletPatternLast : Int := 75
 def eclOpcodeSetShootInterval : Int := 76
 def eclOpcodeSetRandomShootInterval : Int := 77
 def eclOpcodeDisableShooting : Int := 78
@@ -201,6 +203,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 428
       endLine := 454
       claim := "Shoot-control opcodes 76 through 81 use a raw interval plus rank scaling, immediate/random timer initialization, a suppress-spawn bit, explicit previous-pattern spawn, and three GetVarFloat-resolved offset components." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 357
+      endLine := 410
+      claim := "Bullet-pattern opcodes 67 through 75 share one descriptor body: the opcode delta selects aim mode, counts and floats always use GetVar/GetVarFloat, rank adjustment and minimum-speed clamps always run, angle1 is normalized, and shootingDisabled suppresses only the final spawn call." },
     { path := "reference/th06/src/Enemy.hpp"
       startLine := 195
       endLine := 197
@@ -513,6 +519,12 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue },
                     { operandIndex := 1, policy := .floatRValue },
                     { operandIndex := 2, policy := .floatRValue } ] } ]
+          bulletPatternFamilies :=
+            [ { firstOpcode := eclOpcodeSpawnBulletPatternFirst
+                lastOpcode := eclOpcodeSpawnBulletPatternLast
+                bulletTypePolicy := .rawI16
+                normalizePrimaryAngle := true
+                rankPolicy := .always } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeMathInc
                 kind := .inc

@@ -86,6 +86,12 @@ The executable model currently covers these source-backed boundaries:
   while profiles retain TH06's unconditional zero-interval timer reset,
   TH07/TH08's nonzero guard, TH08's defer-versus-suppress gate meaning, and
   TH08's forced-zero offset Z.
+- One consecutive-family profile now covers all 27 primary bullet-pattern
+  opcodes (nine aim modes per title). The shared effect preserves packed-i16
+  type/color reads, shifted resolver bits, i16 count writes, spellcard rank
+  bypass, binary32 zero/minimum-speed tests, and descriptor-versus-spawn
+  ordering. TH08 additionally exposes dead/defer/alignment/distance exits and
+  records its unchecked fixed `0x2c`-byte pending-instruction copy boundary.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -187,7 +193,8 @@ float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate movement effects, enemy-state effects, and
 shooting-control effects currently have Lean executable controls for profile
 coverage and shared-step execution, but no dedicated
-solver/materializer lane yet. The boss integer-read
+solver/materializer lane yet. Bullet-pattern descriptor effects have the same
+Lean-only status for now. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses

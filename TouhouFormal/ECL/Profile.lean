@@ -512,6 +512,64 @@ structure RawShootingOpShape where
   zeroOffsetZ : Bool := false
 deriving Repr, DecidableEq
 
+inductive RawBulletPatternPackedTypePolicy where
+  | rawI16
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawBulletPatternPackedTypePolicy.name :
+    RawBulletPatternPackedTypePolicy -> String
+  | .rawI16 => "raw-i16"
+  | .intRValue => "int-rvalue"
+
+inductive RawBulletPatternRankPolicy where
+  | always
+  | unlessSpellcardActive
+deriving Repr, DecidableEq
+
+def RawBulletPatternRankPolicy.name : RawBulletPatternRankPolicy -> String
+  | .always => "always"
+  | .unlessSpellcardActive => "unless-spellcard-active"
+
+/--
+One source switch family whose consecutive opcodes select aim modes 0 through
+`lastOpcode - firstOpcode`.  The serialized descriptor operands have the same
+packed order in TH06, TH07, and TH08; title profiles contain only genuine
+semantic deltas.
+-/
+structure RawBulletPatternFamilyShape where
+  firstOpcode : Int
+  lastOpcode : Int
+  bulletTypePolicy : RawBulletPatternPackedTypePolicy
+  normalizePrimaryAngle : Bool := false
+  rankPolicy : RawBulletPatternRankPolicy
+  skipWhenEnemyDead : Bool := false
+  gatePolicy : RawShootingGatePolicy := .suppressSpawn
+  deferredCopyBytes : Nat := 0
+  filterPlayerAlignment : Bool := false
+  filterMinimumPlayerDistance : Bool := false
+deriving Repr, DecidableEq
+
+def RawBulletPatternFamilyShape.opcodeCount
+    (family : RawBulletPatternFamilyShape) : Nat :=
+  if family.lastOpcode < family.firstOpcode then
+    0
+  else
+    (family.lastOpcode - family.firstOpcode + 1).toNat
+
+def RawBulletPatternFamilyShape.aimMode?
+    (family : RawBulletPatternFamilyShape)
+    (opcode : Int) : Option Int :=
+  if decide (family.firstOpcode <= opcode ∧ opcode <= family.lastOpcode) then
+    some (opcode - family.firstOpcode)
+  else
+    none
+
+structure RawBulletPatternFamilyMatch where
+  family : RawBulletPatternFamilyShape
+  aimMode : Int
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -732,6 +790,7 @@ structure RawInstrShape where
   movementOps : List RawMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
+  bulletPatternFamilies : List RawBulletPatternFamilyShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -781,6 +840,21 @@ def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawShootingOpShape :=
   rawShape.shootingOps.find? (fun op => op.opcode == opcode)
+
+private def findBulletPatternFamilyInList?
+    (families : List RawBulletPatternFamilyShape)
+    (opcode : Int) : Option RawBulletPatternFamilyMatch :=
+  match families with
+  | [] => none
+  | family :: rest =>
+      match family.aimMode? opcode with
+      | some aimMode => some { family := family, aimMode := aimMode }
+      | none => findBulletPatternFamilyInList? rest opcode
+
+def RawInstrShape.findBulletPatternFamily?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBulletPatternFamilyMatch :=
+  findBulletPatternFamilyInList? rawShape.bulletPatternFamilies opcode
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)
