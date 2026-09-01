@@ -10,6 +10,7 @@ trap 'rm -f "$solver_output"' EXIT
 python3 -m py_compile \
   scripts/ecl_wire_patch.py \
   scripts/evaluate_symex_effectiveness.py \
+  scripts/run_ce_campaign.py \
   scripts/retail_confirm_boss_float_read.py \
   scripts/retail_confirm_boss_int_read.py \
   scripts/retail_pbg.py \

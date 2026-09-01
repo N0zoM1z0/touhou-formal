@@ -1,0 +1,2599 @@
+{
+  "candidateCount": 70,
+  "candidates": [
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:advanced-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:advanced-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000002000000000100000000000014000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "20",
+        "targetTime": "0"
+      },
+      "id": "th06:formal-active-bit0:jumped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 20,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000020000000001000000000000ffffffff",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "-1",
+        "targetTime": "0"
+      },
+      "id": "th06:formal-active-bit0:jumped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": -1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:skipped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:skipped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000080000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:advanced-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00080000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:advanced-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000002000000000800000000000014000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "20",
+        "targetTime": "0"
+      },
+      "id": "th06:retail-lunatic-bit3:jumped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 20,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000020000000008000000000000ffffffff",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "-1",
+        "targetTime": "0"
+      },
+      "id": "th06:retail-lunatic-bit3:jumped-before-buffer",
+      "nextAction": "retained Wine confirmation exists; use as regression oracle",
+      "overrideMask": 0,
+      "path": "jumped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": -1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:skipped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:skipped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:advanced-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:advanced-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000002000000000100000000000014000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "20",
+        "targetTime": "0"
+      },
+      "id": "th07:formal-active-bit0:jumped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 20,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000020000000001000000000000ffffffff",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "-1",
+        "targetTime": "0"
+      },
+      "id": "th07:formal-active-bit0:jumped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": -1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:skipped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:skipped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:advanced-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:advanced-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000004000000000100000000000014000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "20",
+        "targetTime": "0"
+      },
+      "id": "th08:formal-active-bit0:jumped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 20,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000040000000001000000000000ffffffff",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "-1",
+        "targetTime": "0"
+      },
+      "id": "th08:formal-active-bit0:jumped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": -1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:skipped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:skipped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000030000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:advanced-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "advanced-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00030000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:advanced-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "advanced-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000004000000000300000000000014000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "20",
+        "targetTime": "0"
+      },
+      "id": "th08:override-mask-delta:jumped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "jumped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 20,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000040000000003000000000000ffffffff",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "-1",
+        "targetTime": "0"
+      },
+      "id": "th08:override-mask-delta:jumped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "jumped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": -1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "12",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:skipped-at-or-past-end",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "skipped-at-or-past-end",
+      "risk": {
+        "class": "cursor-out-of-range",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is at or beyond the available raw ECL buffer"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 12,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-1",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:skipped-before-buffer",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "skipped-before-buffer",
+      "risk": {
+        "class": "cursor-underflow",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "the next instruction cursor is negative"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": -1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:advanced-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "non-progress",
+        "hex": "0000000002000000000100000000000000000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "0",
+        "targetTime": "0"
+      },
+      "id": "th06:formal-active-bit0:jumped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:skipped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000080000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:advanced-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "non-progress",
+        "hex": "0000000002000000000800000000000000000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "0",
+        "targetTime": "0"
+      },
+      "id": "th06:retail-lunatic-bit3:jumped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:skipped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:advanced-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "non-progress",
+        "hex": "0000000002000000000100000000000000000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "0",
+        "targetTime": "0"
+      },
+      "id": "th07:formal-active-bit0:jumped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:skipped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:advanced-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "advanced-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "non-progress",
+        "hex": "0000000004000000000100000000000000000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "0",
+        "targetTime": "0"
+      },
+      "id": "th08:formal-active-bit0:jumped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "jumped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:skipped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 0,
+      "path": "skipped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000030000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:advanced-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "advanced-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "non-progress",
+        "hex": "0000000004000000000300000000000000000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "0",
+        "targetTime": "0"
+      },
+      "id": "th08:override-mask-delta:jumped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "jumped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "non-progress",
+        "hex": "000000000000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "0",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:skipped-non-progress",
+      "nextAction": "splice fixture into a reachable ECL site and run retail confirmation",
+      "overrideMask": 2,
+      "path": "skipped-non-progress",
+      "risk": {
+        "class": "liveness",
+        "priority": "high",
+        "priorityRank": 1,
+        "reason": "the step leaves the instruction cursor at the same file offset"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "vm-error",
+        "cursorClass": "-",
+        "hex": "000000000100000000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:vm-error",
+      "nextAction": "validate whether the retail caller treats ZUN_ERROR as recoverable, dialog, or crash",
+      "overrideMask": 0,
+      "path": "vm-error",
+      "risk": {
+        "class": "explicit-vm-error",
+        "priority": "medium",
+        "priorityRank": 2,
+        "reason": "source-backed unimplemented opcode reaches the VM error return path"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 1,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "vm-error",
+        "cursorClass": "-",
+        "hex": "000000000100000000080000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:vm-error",
+      "nextAction": "validate whether the retail caller treats ZUN_ERROR as recoverable, dialog, or crash",
+      "overrideMask": 0,
+      "path": "vm-error",
+      "risk": {
+        "class": "explicit-vm-error",
+        "priority": "medium",
+        "priorityRank": 2,
+        "reason": "source-backed unimplemented opcode reaches the VM error return path"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 1,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "vm-error",
+        "cursorClass": "-",
+        "hex": "000000000100000000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:vm-error",
+      "nextAction": "validate whether the retail caller treats ZUN_ERROR as recoverable, dialog, or crash",
+      "overrideMask": 0,
+      "path": "vm-error",
+      "risk": {
+        "class": "explicit-vm-error",
+        "priority": "medium",
+        "priorityRank": 2,
+        "reason": "source-backed unimplemented opcode reaches the VM error return path"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 1,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "vm-error",
+        "cursorClass": "-",
+        "hex": "000000000100000000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:vm-error",
+      "nextAction": "validate whether the retail caller treats ZUN_ERROR as recoverable, dialog, or crash",
+      "overrideMask": 0,
+      "path": "vm-error",
+      "risk": {
+        "class": "explicit-vm-error",
+        "priority": "medium",
+        "priorityRank": 2,
+        "reason": "source-backed unimplemented opcode reaches the VM error return path"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 1,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "vm-error",
+        "cursorClass": "-",
+        "hex": "000000000100000000030000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:vm-error",
+      "nextAction": "validate whether the retail caller treats ZUN_ERROR as recoverable, dialog, or crash",
+      "overrideMask": 2,
+      "path": "vm-error",
+      "risk": {
+        "class": "explicit-vm-error",
+        "priority": "medium",
+        "priorityRank": 2,
+        "reason": "source-backed unimplemented opcode reaches the VM error return path"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 1,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:advanced-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "advanced-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "in-bounds",
+        "hex": "0000000002000000000100000000000001000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "1",
+        "targetTime": "0"
+      },
+      "id": "th06:formal-active-bit0:jumped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "jumped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:skipped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "skipped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000080000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:advanced-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "advanced-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "in-bounds",
+        "hex": "0000000002000000000800000000000001000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "1",
+        "targetTime": "0"
+      },
+      "id": "th06:retail-lunatic-bit3:jumped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "jumped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 8,
+        "jumpDisplacement": 1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:skipped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "skipped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:advanced-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "advanced-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "in-bounds",
+        "hex": "0000000002000000000100000000000001000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "1",
+        "targetTime": "0"
+      },
+      "id": "th07:formal-active-bit0:jumped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "jumped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 2,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:skipped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "skipped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000010000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:advanced-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "advanced-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "in-bounds",
+        "hex": "0000000004000000000100000000000001000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "1",
+        "targetTime": "0"
+      },
+      "id": "th08:formal-active-bit0:jumped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "jumped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 1,
+        "jumpDisplacement": 1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:skipped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "skipped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "advanced",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000030000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:advanced-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 2,
+      "path": "advanced-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "jumped",
+        "cursorClass": "in-bounds",
+        "hex": "0000000004000000000300000000000001000000",
+        "matchesPath": "true",
+        "size": 20,
+        "targetCursor": "1",
+        "targetTime": "0"
+      },
+      "id": "th08:override-mask-delta:jumped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 2,
+      "path": "jumped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 20,
+        "currentTime": 0,
+        "difficultyPass": true,
+        "instrTime": 0,
+        "instructionMask": 3,
+        "jumpDisplacement": 1,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 4,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "skipped",
+        "cursorClass": "in-bounds",
+        "hex": "000000000000010000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "1",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:skipped-in-bounds",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 2,
+      "path": "skipped-in-bounds",
+      "risk": {
+        "class": "reachable-control-path",
+        "priority": "low",
+        "priorityRank": 3,
+        "reason": "the path is reachable but remains in-bounds in the current one-step model"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 1,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "yielded",
+        "cursorClass": "-",
+        "hex": "ffffffff0000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th06:formal-active-bit0:yielded",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "yielded",
+      "risk": {
+        "class": "time-gate-control",
+        "priority": "control",
+        "priorityRank": 4,
+        "reason": "current time does not equal instruction time, so dispatch yields without touching opcode semantics"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": -1,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 8,
+      "environment": "retail-lunatic-bit3",
+      "fixture": {
+        "action": "yielded",
+        "cursorClass": "-",
+        "hex": "ffffffff0000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th06:retail-lunatic-bit3:yielded",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "yielded",
+      "risk": {
+        "class": "time-gate-control",
+        "priority": "control",
+        "priorityRank": 4,
+        "reason": "current time does not equal instruction time, so dispatch yields without touching opcode semantics"
+      },
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": -1,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "yielded",
+        "cursorClass": "-",
+        "hex": "000000000000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th07:formal-active-bit0:yielded",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "yielded",
+      "risk": {
+        "class": "time-gate-control",
+        "priority": "control",
+        "priorityRank": 4,
+        "reason": "current time does not equal instruction time, so dispatch yields without touching opcode semantics"
+      },
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 1,
+        "difficultyPass": false,
+        "instrTime": 0,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "formal-active-bit0",
+      "fixture": {
+        "action": "yielded",
+        "cursorClass": "-",
+        "hex": "ffffffff0000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th08:formal-active-bit0:yielded",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 0,
+      "path": "yielded",
+      "risk": {
+        "class": "time-gate-control",
+        "priority": "control",
+        "priorityRank": 4,
+        "reason": "current time does not equal instruction time, so dispatch yields without touching opcode semantics"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": -1,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    },
+    {
+      "activeMask": 1,
+      "environment": "override-mask-delta",
+      "fixture": {
+        "action": "yielded",
+        "cursorClass": "-",
+        "hex": "ffffffff0000000000000000",
+        "matchesPath": "true",
+        "size": 12,
+        "targetCursor": "-",
+        "targetTime": "-"
+      },
+      "id": "th08:override-mask-delta:yielded",
+      "nextAction": "keep as path-coverage control unless later multi-step constraints make it interesting",
+      "overrideMask": 2,
+      "path": "yielded",
+      "risk": {
+        "class": "time-gate-control",
+        "priority": "control",
+        "priorityRank": 4,
+        "reason": "current time does not equal instruction time, so dispatch yields without touching opcode semantics"
+      },
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "bufferSize": 12,
+        "currentTime": 0,
+        "difficultyPass": false,
+        "instrTime": -1,
+        "instructionMask": 0,
+        "jumpDisplacement": 0,
+        "jumpTargetTime": 0,
+        "nextOffset": 0,
+        "opcode": 0,
+        "operandMask": 0
+      }
+    }
+  ],
+  "environmentCount": 5,
+  "generator": "scripts/symex_candidate_queue.py",
+  "pathRequest": "all",
+  "schema": "touhou-formal-symex-candidate-queue-v1"
+}
