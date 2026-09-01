@@ -140,6 +140,22 @@ def th08RankOutcome : Except TouhouFormal.Fault RawBulletControlOutcome :=
           { rawValue := 10004, hostValue := 32768 },
           { rawValue := 10005, hostValue := 32767 } ] }
 
+def th08RadiusOutcome : Except TouhouFormal.Fault RawBulletControlOutcome :=
+  rawBulletControlStep
+    TouhouFormal.TH08.headerShape
+    0 1 0 8 64
+    (mkPrefix TouhouFormal.TH08.eclOpcodeRemoveBulletsRadius (some 1))
+    { floatInputs :=
+        [ { rawBits := 1176256512, hostBits := 456 } ] }
+
+def th08RemoveMode4Outcome :
+    Except TouhouFormal.Fault RawBulletControlOutcome :=
+  rawBulletControlStep
+    TouhouFormal.TH08.headerShape
+    0 1 0 8 64
+    (mkPrefix TouhouFormal.TH08.eclOpcodeRemoveAllBulletsMode4)
+    {}
+
 theorem th06_bullet_control_profile_count :
     bulletControlOpcodeCount TouhouFormal.TH06.headerShape = 3 := by
   rfl
@@ -149,7 +165,7 @@ theorem th07_bullet_control_profile_count :
   rfl
 
 theorem th08_bullet_control_profile_count :
-    bulletControlOpcodeCount TouhouFormal.TH08.headerShape = 3 := by
+    bulletControlOpcodeCount TouhouFormal.TH08.headerShape = 5 := by
   rfl
 
 theorem th06_cancel_turns_all_bullets_into_points :
@@ -261,6 +277,18 @@ theorem th08_rank_influence_resolves_operands_and_truncates_counts :
           count1High := -1
           count2Low := -32768
           count2High := 32767 } := by
+  rfl
+
+theorem th08_radius_uses_world_position_and_resolved_radius_boundary :
+    (outcomeEffect? th08RadiusOutcome).bind
+      (fun effect => effect.clear) =
+      some { mode := .removeRadius, radiusBits := some 456 } := by
+  rfl
+
+theorem th08_remove_all_preserves_mode_4_argument :
+    (outcomeEffect? th08RemoveMode4Outcome).bind
+      (fun effect => effect.clear) =
+      some { mode := .removeAllMode 4 } := by
   rfl
 
 end TouhouFormal.Search.BulletControl

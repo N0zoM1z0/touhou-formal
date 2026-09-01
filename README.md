@@ -145,9 +145,10 @@ The executable model currently covers these source-backed boundaries:
   TH07 and TH08 decrement the timer and pre-tail context time, then the normal
   frame tail restores script time, giving a net stall without fusing scheduler
   and opcode semantics.
-- Shared bullet-control effects cover 11 cross-title opcodes: TH06's point
-  conversion, TH07 item/no-item/radius removal, TH08 transition clearing,
-  sound flag toggles and overrides, and bullet-rank influence writes. The model
+- Shared bullet-control effects cover 13 cross-title opcodes: TH06's point
+  conversion, TH07 item/no-item/radius removal, TH08 transition/world-radius/
+  mode-4 clearing, sound flag toggles and overrides, and bullet-rank influence
+  writes. The model
   preserves TH06 raw operands, TH07/TH08 `operandFlags` resolution, repeated
   primary sound reads before override reads, and signed-i16 count truncation.
 - Shared laser-spawn descriptor effects cover the six fixed/aimed laser spawn
@@ -161,8 +162,8 @@ The executable model currently covers these source-backed boundaries:
   enemy laser pointer-slot reads, null-pointer guards that suppress later
   operand reads, TH06's non-normalized angle add, TH07/TH08 stop-width copies,
   and TH08's inverted in-use test value.
-- Shared animation-control effects cover the first 28 ECL/ANM bridge opcodes:
-  TH06/TH07 primary enemy script selection, packed move/death animation fields,
+- Shared animation-control effects cover 29 ECL/ANM bridge opcodes:
+  TH06/TH07 primary enemy script selection, cross-title packed move/death animation fields,
   raw bitfield auto-rotation, primary VM interrupts, TH07/TH08 primary
   rotation-Z writes, TH08's primary/alternate script-table bank policy, and
   unchecked secondary VM slot accesses. The model records host ANM calls, table

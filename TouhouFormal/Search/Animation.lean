@@ -206,6 +206,16 @@ def th08RotationOutcome : Except TouhouFormal.Fault RawAnimationOutcome :=
     (mkPrefix TouhouFormal.TH08.eclOpcodeSetPrimaryVmRotZ (some 1))
     { floatInputs := [ { rawValue := 1176272896, hostValue := 123 } ] }
 
+def th08DeathOutcome : Except TouhouFormal.Fault RawAnimationOutcome :=
+  rawAnimationStep
+    TouhouFormal.TH08.headerShape
+    0 1 0 8 64
+    (mkPrefix TouhouFormal.TH08.eclOpcodeSetDeathAnm)
+    { intInputs :=
+        [ { rawValue := 0x00aa7f80 },
+          { rawValue := 0x00aa7f80 },
+          { rawValue := 0x00aa7f80 } ] }
+
 theorem th06_animation_profile_count :
     animationOpcodeCount TouhouFormal.TH06.headerShape = 7 := by
   rfl
@@ -215,7 +225,7 @@ theorem th07_animation_profile_count :
   rfl
 
 theorem th08_animation_profile_count :
-    animationOpcodeCount TouhouFormal.TH08.headerShape = 13 := by
+    animationOpcodeCount TouhouFormal.TH08.headerShape = 14 := by
   rfl
 
 theorem th06_set_anm_adds_enemy_script_base :
@@ -370,6 +380,12 @@ theorem th08_secondary_interrupt_negative_index_faults_without_diagnostic :
 theorem th08_primary_rotation_resolves_float_operand :
     (outcomeEffect? th08RotationOutcome).bind
       (fun effect => effect.primaryRotationZWrite) = some 123 := by
+  rfl
+
+theorem th08_death_copies_three_raw_bytes :
+    (outcomeEffect? th08DeathOutcome).bind
+      (fun effect => effect.deathScriptsWrite) =
+      some { first := 128, second := 127, third := 170 } := by
   rfl
 
 end TouhouFormal.Search.Animation

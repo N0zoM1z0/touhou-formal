@@ -127,6 +127,7 @@ def eclOpcodeSetTimerCallback : Int := 134
 def eclOpcodeSetChildContext : Int := 135
 def eclOpcodeRunExtension : Int := 136
 def eclOpcodeSetExtension : Int := 137
+def eclOpcodeSetDeathAnm : Int := 138
 def eclOpcodeSpawnEffect : Int := 139
 def eclOpcodeSpawnMovingEffect : Int := 140
 def eclOpcodeSpawnItem : Int := 141
@@ -146,6 +147,8 @@ def eclOpcodeBindTimerCallbackToDeath : Int := 153
 def eclOpcodeClearLasers : Int := 154
 def eclOpcodeSetTimeoutSpell : Int := 155
 def eclOpcodeSetBossGauge : Int := 158
+def eclOpcodeRemoveBulletsRadius : Int := 161
+def eclOpcodeRemoveAllBulletsMode4 : Int := 162
 def eclOpcodeSetSpellcardEffectTracking : Int := 164
 def eclOpcodeSetPrimaryVmRotZ : Int := 165
 def eclOpcodeVectorFromAngleMagnitude : Int := 166
@@ -1157,7 +1160,13 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 2, policy := .intRValue },
                     { operandIndex := 3, policy := .intRValue },
                     { operandIndex := 4, policy := .intRValue },
-                    { operandIndex := 5, policy := .intRValue } ] } ]
+                    { operandIndex := 5, policy := .intRValue } ] },
+              { opcode := eclOpcodeRemoveBulletsRadius
+                kind := .clear .removeRadius
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ] },
+              { opcode := eclOpcodeRemoveAllBulletsMode4
+                kind := .clear (.removeAllMode 4) } ]
           bulletTransformOps :=
             [ { opcode := eclOpcodeInitBulletTransform
                 kind := .transformRecord
@@ -1315,6 +1324,12 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 kind := .playPrimarySpecialScript
                 bankPolicy := .runtimeFlag
                 scriptSource := some .runtimeSpecial },
+              { opcode := eclOpcodeSetDeathAnm
+                kind := .setDeathScripts
+                intInputs :=
+                  [ { operandIndex := 0, policy := .rawByte, byteIndex := 0 },
+                    { operandIndex := 0, policy := .rawByte, byteIndex := 1 },
+                    { operandIndex := 0, policy := .rawByte, byteIndex := 2 } ] },
               { opcode := eclOpcodeSetRotateAnmWithMovement
                 kind := .setAutoRotate
                 intInputs :=

@@ -386,7 +386,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet control host effects",
         "status": "covered-by-model",
-        "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition clear variants, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
+        "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition variants, TH08's integer mode-4 call, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
     },
     {
         "area": "laser spawn descriptors",

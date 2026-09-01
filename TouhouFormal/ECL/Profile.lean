@@ -829,6 +829,7 @@ deriving Repr, DecidableEq
 inductive RawBulletClearMode where
   | turnAllIntoPoints
   | removeAll (awardItems : Bool)
+  | removeAllMode (mode : Int)
   | clearForTransition
   | removeRadius
 deriving Repr, DecidableEq
@@ -837,6 +838,7 @@ def RawBulletClearMode.name : RawBulletClearMode -> String
   | .turnAllIntoPoints => "turn-all-into-points"
   | .removeAll true => "remove-all-award-items"
   | .removeAll false => "remove-all-no-items"
+  | .removeAllMode mode => "remove-all-mode-" ++ toString mode
   | .clearForTransition => "clear-for-transition"
   | .removeRadius => "remove-radius"
 

@@ -624,6 +624,12 @@ The shared model makes the fixed table sizes and first-access ordering
 executable. An out-of-range index faults before later operands are resolved,
 while an in-range entry retains each title's distinct field layout.
 
+- `reference/th08/src/EclRunHigh.inl:832-855` also supplies the remaining
+  raw-byte death-animation triple and the world-position radius/mode-4 bullet
+  clear calls. These reuse the shared animation and bullet-control semantics;
+  mode `4` is retained as an integer host argument rather than collapsed into
+  TH07's boolean item-award variants.
+
 ## Effect, Particle, and Sound Host-Boundary Evidence
 
 - `reference/th06/src/EclManager.cpp:412-421` resolves four integer and four
