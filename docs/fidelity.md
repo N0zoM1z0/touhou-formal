@@ -54,6 +54,12 @@ bits remain an external float-theory value. TH06 additionally sends the local
 generated word through `SetVar`, whose first action is another `GetVar` on the
 RHS bits; the model preserves that selector-aliasing path.
 
+Float comparison does not compare encoded words as integers. The VM layer
+accepts an IEEE order class from the float-theory boundary. Equality is true
+only for `equal`, inequality is true for every class except `equal`, ordered
+relations reject `unordered`, and TH06's ternary compare-register code maps
+`unordered` to `1` exactly as the source does.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

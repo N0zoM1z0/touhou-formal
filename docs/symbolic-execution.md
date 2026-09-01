@@ -26,6 +26,11 @@ The first opcode-body layer is also modeled through shared title profiles:
 3. integer div/mod hazards use source-backed opcode lists and divisor operand
    slots on the immediate/raw branch.
 
+The executable body model now also includes TH06 `CMPINT`/`CMPFLOAT` register
+producers and TH07/TH08 float conditional jumps. Float predicates consume an
+IEEE order class, including `unordered`; these new paths have Lean controls but
+are not yet part of the Z3 path enumerator/materializer described below.
+
 The integer rvalue resolver is modeled as its own shared layer: TH06 always
 calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
 or selector resolution. Known selector ranges, source-backed exclusions, and

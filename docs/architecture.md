@@ -30,6 +30,12 @@ title deltas stay in profile data instead of one-off opcode implementations. The
 definitions encode the original unsafe boundary and return a structured `Fault`
 at the first invalid modeled operation.
 
+Comparison semantics use one relation vocabulary across titles. TH06 profiles
+the two instructions that produce its persistent compare register; TH07/TH08
+profile direct integer and float branch opcodes. Float comparisons consume an
+explicit IEEE order class (`less`, `equal`, `greater`, or `unordered`) so NaN
+behavior is preserved without embedding a second ad hoc float evaluator.
+
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not
 assumed equivalent; a title module should justify differences by filling a

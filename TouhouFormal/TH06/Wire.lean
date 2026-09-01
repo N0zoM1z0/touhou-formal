@@ -36,6 +36,8 @@ def eclOpcodeMathFloatDiv : Int := 23
 def eclOpcodeMathFloatMod : Int := 24
 def eclOpcodeMathAtan2 : Int := 25
 def eclOpcodeMathNormAngle : Int := 26
+def eclOpcodeCmpInt : Int := 27
+def eclOpcodeCmpFloat : Int := 28
 def eclOpcodeCall : Int := 35
 def eclOpcodeRet : Int := 36
 def eclOpcodeCallLss : Int := 37
@@ -129,6 +131,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 215
       endLine := 247
       claim := "CMPINT/CMPFLOAT set compareRegister, and JUMP* opcodes branch on compareRegister while reusing the raw jump operands." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 215
+      endLine := 225
+      claim := "CMPINT resolves both operands with GetVar; CMPFLOAT resolves both with GetVarFloat, and unordered float comparisons fall through the ternary chain to compareRegister = 1." },
     { path := "reference/th06/src/EclManager.cpp"
       startLine := 249
       endLine := 272
@@ -230,6 +236,15 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                       [ { first := -10008, last := -10005 },
                         { first := -10017, last := -10015 } ]
                     exclusions := [] } }
+          compareRegisterOps :=
+            [ { opcode := eclOpcodeCmpInt
+                scalarKind := .int
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1 },
+              { opcode := eclOpcodeCmpFloat
+                scalarKind := .float
+                lhsOperandIndex := 0
+                rhsOperandIndex := 1 } ]
           intConditionJumps :=
             [ { opcode := eclOpcodeJumpLss
                 op := .lt

@@ -24,6 +24,16 @@ structure RawIntConditionJumpOperands where
   displacement : Int
 deriving Repr, DecidableEq
 
+structure RawFloatConditionJumpOperands where
+  lhsRaw : Int
+  rhsRaw : Int
+  lhsHost : Int
+  rhsHost : Int
+  order : RawFloatOrder
+  targetTime : Int
+  displacement : Int
+deriving Repr, DecidableEq
+
 private def missingRawInstrShapeFault (shape : HeaderShape) : Fault :=
   { kind := .invalidInstruction
     title := shape.title
@@ -41,6 +51,15 @@ private def missingIntConditionJumpShapeFault (shape : HeaderShape) (opcode : In
     title := shape.title
     component := "EclRun.body.intConditionJump"
     detail := "profile does not define source-backed integer conditional jump semantics for opcode"
+    index := some opcode }
+
+private def missingFloatConditionJumpShapeFault
+    (shape : HeaderShape)
+    (opcode : Int) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.body.floatConditionJump"
+    detail := "profile does not define source-backed float conditional jump semantics for opcode"
     index := some opcode }
 
 private def divideByZeroFault
@@ -190,6 +209,62 @@ def rawIntConditionJumpStep
                         operands.rhsHost
                     .ok (condShape.op.holds lhs.value rhs.value)
               if takeBranch then
+                .ok
+                  (cursorOutcome
+                    .jumped
+                    rawPrefix.fileOffset
+                    (Int.ofNat rawPrefix.fileOffset + operands.displacement)
+                    bufferSize
+                    (some operands.targetTime))
+              else
+                .ok
+                  (cursorOutcome
+                    .advanced
+                    rawPrefix.fileOffset
+                    rawPrefix.nextCursor
+                    bufferSize)
+
+def rawFloatConditionJumpStep
+    (shape : HeaderShape)
+    (currentTime : Int)
+    (activeMask overrideMask maxBits bufferSize : Nat)
+    (rawPrefix : RawInstrPrefix)
+    (operands : RawFloatConditionJumpOperands) : Except Fault RawStepOutcome :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      if currentTime != rawPrefix.time then
+        .ok { action := .yielded }
+      else do
+        let difficultyPass <-
+          rawDifficultyPass shape rawShape rawPrefix activeMask overrideMask maxBits
+        if !difficultyPass then
+          .ok
+            (cursorOutcome
+              .skipped
+              rawPrefix.fileOffset
+              rawPrefix.nextCursor
+              bufferSize)
+        else
+          match rawShape.findFloatConditionJump? rawPrefix.opcode with
+          | none =>
+              .error (missingFloatConditionJumpShapeFault shape rawPrefix.opcode)
+          | some condShape => do
+              let _lhs <-
+                resolveFloatRValue
+                  shape
+                  rawPrefix
+                  condShape.lhsOperandIndex
+                  operands.lhsRaw
+                  operands.lhsHost
+              let _rhs <-
+                resolveFloatRValue
+                  shape
+                  rawPrefix
+                  condShape.rhsOperandIndex
+                  operands.rhsRaw
+                  operands.rhsHost
+              if condShape.op.holdsFloatOrder operands.order then
                 .ok
                   (cursorOutcome
                     .jumped

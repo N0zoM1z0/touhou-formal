@@ -75,8 +75,10 @@ The executable model currently covers these source-backed boundaries:
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
   resolution.
-- The first control-flow body slice includes `JUMPDEC` and integer conditional
-  jumps; the older immediate/raw div/mod check is kept as a small regression
+- The control-flow body includes `JUMPDEC`, integer conditional jumps, TH06
+  integer/float compare-register producers, and TH07/TH08 direct float
+  conditional jumps. Float ordering explicitly includes IEEE unordered/NaN
+  behavior; the older immediate/raw div/mod check remains as a regression
   beside the fuller integer-binary model.
 - Plain CALL/RET stack behavior is modeled with shared semantics for stack
   saves/restores, depth guards, subTable lookup, and TH08 child-context RET
@@ -166,7 +168,8 @@ rvalue `operandFlags` branches separately from opcode-body effects. The
 integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
-float functions, and random-value opcodes currently have Lean executable
+float functions, random-value opcodes, compare-register producers, and direct
+float conditional jumps currently have Lean executable
 controls for profile coverage and shared-step execution, but no dedicated
 solver/materializer lane yet. The boss integer-read
 materializer covers TH07/TH08

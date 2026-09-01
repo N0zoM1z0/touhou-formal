@@ -40,6 +40,9 @@ relative to `/home/yann/yann/touhou/formal`.
   zero-to-one sample by the requested range.
 - `reference/th06/src/EclManager.cpp:215`: `CMPINT` and `CMPFLOAT` update the
   context compare register.
+- `reference/th06/src/EclManager.cpp:215`: `CMPINT` resolves both inputs with
+  `GetVar`; `CMPFLOAT` uses `GetVarFloat` and maps the unordered case to `1`
+  because both equality and less-than tests are false.
 - `reference/th06/src/EclManager.cpp:229`: `JUMPLSS`, `JUMPLEQ`, `JUMPEQU`,
   `JUMPGRE`, `JUMPGEQ`, and `JUMPNEQ` branch on the compare register before
   falling into the shared raw jump body.
@@ -151,6 +154,9 @@ relative to `/home/yann/yann/touhou/formal`.
   update `GET_INT_PTR(enemy, 0)` in place by `+1` or `-1`.
 - `reference/th07/src/th07/EclManager.cpp:952`: `ECL_JUMP` sets context time
   from `args[0].i` and advances by `args[1].i`.
+- `reference/th07/src/th07/EclManager.cpp:1098`: six interleaved float
+  conditional jumps resolve float slots 0 and 1 and share the integer branch
+  family's raw target-time and displacement operands in slots 2 and 3.
 - `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
   bit `1 << index` to choose raw operand versus `GetVarValue` resolution.
 - `reference/th07/src/th07/EclManager.cpp:116`: `GetVarValue` resolves known
@@ -278,6 +284,9 @@ relative to `/home/yann/yann/touhou/formal`.
   `bosses[8]`.
 - `reference/th08/src/EclRunLow.inl:166`: TH08 conditional jump helper sets time
   from operand 2 and jumps by operand 3 when the branch is taken.
+- `reference/th08/src/EclRunLow.inl:140`: the same helper interleaves six
+  `ReadFloat` predicates with the six integer predicates for opcodes 40 through
+  51.
 - `reference/th08/src/EclRunLow.inl:415`: low opcodes 52 and 53 call
   `CallSubOnEnemy` and `PopEclContext`.
 - `reference/th08/src/EclDependencies.cpp:466`: `CallSubOnEnemy` stores the

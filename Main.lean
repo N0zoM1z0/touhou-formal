@@ -114,6 +114,25 @@ private def describeRandomOutcome
         " " ++ details ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeCompareRegisterOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawCompareRegisterOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      "action=" ++ reprStr outcome.action ++
+        " compareRegister=" ++ toString outcome.compareRegister ++
+        " cursor=" ++ toString outcome.targetCursor
+
+private def describeRawStepOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawStepOutcome) : String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      "action=" ++ reprStr outcome.action ++
+        " targetTime=" ++ toString outcome.targetTime ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeScalarAssignOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawScalarAssignOutcome) :
     String :=
@@ -230,6 +249,15 @@ def main : IO Unit := do
   IO.println s!"TH06 int range: {describeRandomOutcome TouhouFormal.Search.Random.th06IntRandOutcome}"
   IO.println s!"TH07 float range add: {describeRandomOutcome TouhouFormal.Search.Random.th07FloatRandAddOutcome}"
   IO.println s!"TH08 int sign: {describeRandomOutcome TouhouFormal.Search.Random.th08IntSignOutcome}"
+  IO.println ""
+  IO.println "Comparison controls"
+  IO.println s!"TH06 compare-register opcode count: {TouhouFormal.Search.Comparison.compareRegisterOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 float conditional-jump count: {TouhouFormal.Search.Comparison.floatConditionJumpOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 float conditional-jump count: {TouhouFormal.Search.Comparison.floatConditionJumpOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 cmp int: {describeCompareRegisterOutcome TouhouFormal.Search.Comparison.th06CmpIntOutcome}"
+  IO.println s!"TH06 cmp float unordered: {describeCompareRegisterOutcome TouhouFormal.Search.Comparison.th06CmpFloatUnorderedOutcome}"
+  IO.println s!"TH07 float neq unordered: {describeRawStepOutcome TouhouFormal.Search.Comparison.th07FloatNeqUnorderedOutcome}"
+  IO.println s!"TH08 float ge less: {describeRawStepOutcome TouhouFormal.Search.Comparison.th08FloatGeLessOutcome}"
   IO.println ""
   IO.println "Scalar assignment controls"
   IO.println s!"TH06 scalar assignment opcode count: {TouhouFormal.Search.ScalarAssignment.scalarAssignOpcodeCount TouhouFormal.TH06.headerShape}"

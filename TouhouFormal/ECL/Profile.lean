@@ -360,6 +360,44 @@ def RawIntCompareOp.holds (op : RawIntCompareOp) (lhs rhs : Int) : Bool :=
   | .gt => decide (lhs > rhs)
   | .ge => decide (lhs >= rhs)
 
+inductive RawFloatOrder where
+  | less
+  | equal
+  | greater
+  | unordered
+deriving Repr, DecidableEq
+
+def RawFloatOrder.name : RawFloatOrder -> String
+  | .less => "less"
+  | .equal => "equal"
+  | .greater => "greater"
+  | .unordered => "unordered"
+
+def RawIntCompareOp.holdsFloatOrder
+    (op : RawIntCompareOp)
+    (order : RawFloatOrder) : Bool :=
+  match op, order with
+  | .eq, .equal => true
+  | .neq, .equal => false
+  | .neq, _ => true
+  | .lt, .less => true
+  | .le, .less | .le, .equal => true
+  | .gt, .greater => true
+  | .ge, .greater | .ge, .equal => true
+  | _, _ => false
+
+def RawFloatOrder.compareRegister : RawFloatOrder -> Int
+  | .less => -1
+  | .equal => 0
+  | .greater | .unordered => 1
+
+structure RawCompareRegisterShape where
+  opcode : Int
+  scalarKind : RawScalarKind
+  lhsOperandIndex : Nat
+  rhsOperandIndex : Nat
+deriving Repr, DecidableEq
+
 inductive RawIntConditionSource where
   | compareRegister
   | resolvedOperands
@@ -373,6 +411,15 @@ structure RawIntConditionJumpShape where
   opcode : Int
   op : RawIntCompareOp
   source : RawIntConditionSource
+  lhsOperandIndex : Nat
+  rhsOperandIndex : Nat
+  targetTimeOperandIndex : Nat
+  displacementOperandIndex : Nat
+deriving Repr, DecidableEq
+
+structure RawFloatConditionJumpShape where
+  opcode : Int
+  op : RawIntCompareOp
   lhsOperandIndex : Nat
   rhsOperandIndex : Nat
   targetTimeOperandIndex : Nat
@@ -425,7 +472,9 @@ structure RawInstrShape where
   fixedDecJumpShape : Option RawDecJumpShape := none
   intRValueResolver : Option RawIntOperandResolverShape := none
   floatRValueResolver : Option RawFloatOperandResolverShape := none
+  compareRegisterOps : List RawCompareRegisterShape := []
   intConditionJumps : List RawIntConditionJumpShape := []
+  floatConditionJumps : List RawFloatConditionJumpShape := []
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
   scalarAssignments : List RawScalarAssignShape := []
@@ -478,6 +527,16 @@ def RawInstrShape.findIntConditionJump?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawIntConditionJumpShape :=
   rawShape.intConditionJumps.find? (fun jump => jump.opcode == opcode)
+
+def RawInstrShape.findFloatConditionJump?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawFloatConditionJumpShape :=
+  rawShape.floatConditionJumps.find? (fun jump => jump.opcode == opcode)
+
+def RawInstrShape.findCompareRegisterOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawCompareRegisterShape :=
+  rawShape.compareRegisterOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findConditionalCall?
     (rawShape : RawInstrShape)
