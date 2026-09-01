@@ -102,6 +102,13 @@ for the stored spawn sound, and only then reads slot 1 for the override. Rank
 counts pass through signed-i16 assignment, so values like `32768` and `65535`
 become `-32768` and `-1`.
 
+Laser-spawn semantics split descriptor construction from slot mutation. TH06
+and TH07 populate `EnemyLaserShooter`; TH08 populates `BulletSpawnDescriptor`.
+The model records the title-specific position source, shifted operand-flag
+indices, 16-bit sprite/color storage, and fixed-versus-aimed encoded value.
+The unchecked selected-slot write is checked only after the descriptor and
+spawn request are present, matching the source order.
+
 Callback array operands are not memoized unless the source is. TH07 and TH08
 spell out the indexed life-callback operand more than once, and their integer
 resolvers include RNG selectors. The model accepts one host value per read

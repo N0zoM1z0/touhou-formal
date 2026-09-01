@@ -13,6 +13,7 @@ import TouhouFormal.Search.OrbitMovement
 import TouhouFormal.Search.EnemyState
 import TouhouFormal.Search.Shooting
 import TouhouFormal.Search.BulletControl
+import TouhouFormal.Search.LaserSpawn
 import TouhouFormal.Search.Laser
 import TouhouFormal.Search.Animation
 import TouhouFormal.Search.BulletPattern

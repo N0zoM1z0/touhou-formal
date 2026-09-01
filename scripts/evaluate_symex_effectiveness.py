@@ -354,6 +354,11 @@ SOURCE_COVERAGE = [
         "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition clear variants, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
     },
     {
+        "area": "laser spawn descriptors",
+        "status": "covered-by-model",
+        "reason": "shared laser-spawn effects cover fixed/aimed descriptor writes, shifted TH07/TH08 operandFlags, title-specific descriptor targets and position sources, spawn requests, and unchecked selected-slot pointer writes after the spawn call",
+    },
+    {
         "area": "ANM entry header/nextOffset profile",
         "status": "partially-covered",
         "reason": "entry table shape and nextOffset chain headers are modeled, but ANM opcode execution and resource side effects are not",
@@ -1328,6 +1333,12 @@ def modeled_profile_opcodes(title: str) -> dict[str, Any]:
         re.findall(
             r"\b(?:opcode|callOpcode|retOpcode|firstOpcode|lastOpcode)\s*:=\s*"
             r"(eclOpcode[A-Za-z0-9_]+)\b",
+            text,
+        )
+    )
+    referenced_names.update(
+        re.findall(
+            r"\b[A-Za-z0-9_]*Op\s+(eclOpcode[A-Za-z0-9_]+)\b",
             text,
         )
     )

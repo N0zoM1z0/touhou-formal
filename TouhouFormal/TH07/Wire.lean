@@ -127,6 +127,68 @@ def enemyAnmScriptBase : Int := 0x900
 def secondaryAnmVmCount : Nat := 2
 def laserSlotCount : Nat := 32
 
+def laserSpawnIntInputs :
+    List TouhouFormal.ECL.RawLaserSpawnIntInputShape :=
+  [ { operandIndex := 0
+      flagIndex := 0
+      policy := .raw
+      storePolicy := .signedI16 },
+    { operandIndex := 1
+      flagIndex := 1
+      policy := .intRValue
+      storePolicy := .signedI16 },
+    { operandIndex := 7
+      flagIndex := 7
+      policy := .raw },
+    { operandIndex := 8
+      flagIndex := 8
+      policy := .raw },
+    { operandIndex := 9
+      flagIndex := 9
+      policy := .raw },
+    { operandIndex := 10
+      flagIndex := 10
+      policy := .raw },
+    { operandIndex := 11
+      flagIndex := 11
+      policy := .raw },
+    { operandIndex := 12
+      flagIndex := 12
+      policy := .raw
+      storePolicy := .u32 } ]
+
+def laserSpawnFloatInputs :
+    List TouhouFormal.ECL.RawLaserSpawnFloatInputShape :=
+  [ { operandIndex := 1
+      flagIndex := 2
+      policy := .floatRValue },
+    { operandIndex := 2
+      flagIndex := 3
+      policy := .floatRValue },
+    { operandIndex := 3
+      flagIndex := 4
+      policy := .floatRValue },
+    { operandIndex := 4
+      flagIndex := 5
+      policy := .floatRValue },
+    { operandIndex := 5
+      flagIndex := 6
+      policy := .floatRValue },
+    { operandIndex := 6
+      flagIndex := 7
+      policy := .rawBits } ]
+
+def laserSpawnOp
+    (opcode : Int)
+    (aimKind : TouhouFormal.ECL.RawLaserSpawnAimKind) :
+    TouhouFormal.ECL.RawLaserSpawnOpShape :=
+  { opcode := opcode
+    descriptorTarget := .enemyLaserShooter
+    aimKind := aimKind
+    intInputs := laserSpawnIntInputs
+    floatInputs := laserSpawnFloatInputs
+    slotCount := laserSlotCount }
+
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th07/src/th07/EclManager.hpp"
       startLine := 277
@@ -285,6 +347,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
         startLine := 1934
         endLine := 1946
         claim := "Bullet-control radius/no-item opcodes remove bullets in a resolved radius or remove all bullets without spawning items." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1378
+        endLine := 1410
+        claim := "Laser-spawn opcodes copy a descriptor from mixed raw and operand-mask-resolved fields, set type 0 only for the moving/aimed opcode, call SpawnLaserPattern, and store the returned pointer in enemy->lasers[laserIdx]." },
+      { path := "reference/th07/src/th07/BulletManager.cpp"
+        startLine := 665
+        endLine := 716
+        claim := "SpawnLaserPattern may return early during screen clear, otherwise fills a free laser slot, applies player angle only for type 0, initializes timer/state fields, and returns the Laser pointer." },
       { path := "reference/th07/src/th07/EclManager.cpp"
         startLine := 1265
         endLine := 1329
@@ -764,6 +834,9 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                   [ { operandIndex := 0, policy := .floatRValue } ] },
               { opcode := eclOpcodeRemoveAllBulletsNoItems
                 kind := .clear (.removeAll false) } ]
+          laserSpawnOps :=
+            [ laserSpawnOp eclOpcodeSpawnLaserPatternFixed .fixed,
+              laserSpawnOp eclOpcodeSpawnLaserPatternMoving .aimedAtPlayer ]
           laserOps :=
             [ { opcode := eclOpcodeSetLaserIdx
                 kind := .setSelectedSlot

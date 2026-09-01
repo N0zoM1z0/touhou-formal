@@ -829,6 +829,96 @@ structure RawBulletControlOpShape where
   rankIntValuesTruncateToI16 : Bool := true
 deriving Repr, DecidableEq
 
+inductive RawLaserSpawnDescriptorTarget where
+  | enemyLaserShooter
+  | bulletSpawnDescriptor
+deriving Repr, DecidableEq
+
+def RawLaserSpawnDescriptorTarget.name :
+    RawLaserSpawnDescriptorTarget -> String
+  | .enemyLaserShooter => "enemy-laser-shooter"
+  | .bulletSpawnDescriptor => "bullet-spawn-descriptor"
+
+inductive RawLaserSpawnAimKind where
+  | fixed
+  | aimedAtPlayer
+deriving Repr, DecidableEq
+
+def RawLaserSpawnAimKind.name : RawLaserSpawnAimKind -> String
+  | .fixed => "fixed"
+  | .aimedAtPlayer => "aimed-at-player"
+
+def RawLaserSpawnAimKind.storedValue : RawLaserSpawnAimKind -> Int
+  | .fixed => 1
+  | .aimedAtPlayer => 0
+
+inductive RawLaserSpawnIntInputPolicy where
+  | raw
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawLaserSpawnIntInputPolicy.name :
+    RawLaserSpawnIntInputPolicy -> String
+  | .raw => "raw"
+  | .intRValue => "int-rvalue"
+
+inductive RawLaserSpawnIntStorePolicy where
+  | i32
+  | signedI16
+  | u32
+deriving Repr, DecidableEq
+
+def RawLaserSpawnIntStorePolicy.name :
+    RawLaserSpawnIntStorePolicy -> String
+  | .i32 => "i32"
+  | .signedI16 => "signed-i16"
+  | .u32 => "u32"
+
+structure RawLaserSpawnIntInputShape where
+  operandIndex : Nat
+  flagIndex : Nat
+  policy : RawLaserSpawnIntInputPolicy
+  storePolicy : RawLaserSpawnIntStorePolicy := .i32
+deriving Repr, DecidableEq
+
+inductive RawLaserSpawnFloatInputPolicy where
+  | rawBits
+  | floatRValue
+deriving Repr, DecidableEq
+
+def RawLaserSpawnFloatInputPolicy.name :
+    RawLaserSpawnFloatInputPolicy -> String
+  | .rawBits => "raw-bits"
+  | .floatRValue => "float-rvalue"
+
+structure RawLaserSpawnFloatInputShape where
+  operandIndex : Nat
+  flagIndex : Nat
+  policy : RawLaserSpawnFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawLaserSpawnPositionSource where
+  | enemyPositionPlusShootOffset
+  | enemyWorldPositionPlusShootOffset
+deriving Repr, DecidableEq
+
+def RawLaserSpawnPositionSource.name :
+    RawLaserSpawnPositionSource -> String
+  | .enemyPositionPlusShootOffset => "enemy-position-plus-shoot-offset"
+  | .enemyWorldPositionPlusShootOffset =>
+      "enemy-world-position-plus-shoot-offset"
+
+structure RawLaserSpawnOpShape where
+  opcode : Int
+  descriptorTarget : RawLaserSpawnDescriptorTarget
+  aimKind : RawLaserSpawnAimKind
+  positionSource : RawLaserSpawnPositionSource :=
+    .enemyPositionPlusShootOffset
+  intInputs : List RawLaserSpawnIntInputShape := []
+  floatInputs : List RawLaserSpawnFloatInputShape := []
+  slotCount : Nat := 32
+deriving Repr, DecidableEq
+
 inductive RawLaserIntInputPolicy where
   | intRValue
   | rawI32
@@ -1408,6 +1498,7 @@ structure RawInstrShape where
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
+  laserSpawnOps : List RawLaserSpawnOpShape := []
   laserOps : List RawLaserOpShape := []
   animationOps : List RawAnimationOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
@@ -1496,6 +1587,11 @@ def RawInstrShape.findBulletControlOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawBulletControlOpShape :=
   rawShape.bulletControlOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findLaserSpawnOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawLaserSpawnOpShape :=
+  rawShape.laserSpawnOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findLaserOp?
     (rawShape : RawInstrShape)

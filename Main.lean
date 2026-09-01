@@ -283,6 +283,24 @@ private def describeBulletControlOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeLaserSpawnOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawLaserSpawnOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "descriptor=" ++ reprStr effect.descriptorWrite ++
+              " spawnRequest=" ++ toString effect.spawnRequest ++
+              " slotWrite=" ++ reprStr effect.slotWrite
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " fault=" ++ reprStr outcome.fault ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeLaserOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawLaserOutcome) :
     String :=
@@ -598,6 +616,16 @@ def main : IO Unit := do
   IO.println s!"TH07 radius: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th07RadiusOutcome}"
   IO.println s!"TH08 transition clear: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th08ClearTransitionOutcome}"
   IO.println s!"TH08 sound: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th08SoundPositiveOutcome}"
+  IO.println ""
+  IO.println "Laser spawn controls"
+  IO.println s!"TH06 laser-spawn opcode count: {TouhouFormal.Search.LaserSpawn.laserSpawnOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 laser-spawn opcode count: {TouhouFormal.Search.LaserSpawn.laserSpawnOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 laser-spawn opcode count: {TouhouFormal.Search.LaserSpawn.laserSpawnOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 fixed laser spawn: {describeLaserSpawnOutcome TouhouFormal.Search.LaserSpawn.th06FixedOutcome}"
+  IO.println s!"TH07 fixed laser spawn: {describeLaserSpawnOutcome TouhouFormal.Search.LaserSpawn.th07FixedOutcome}"
+  IO.println s!"TH07 laser spawn slot fault: {describeLaserSpawnOutcome TouhouFormal.Search.LaserSpawn.th07AimedSlotFaultOutcome}"
+  IO.println s!"TH08 aimed laser spawn: {describeLaserSpawnOutcome TouhouFormal.Search.LaserSpawn.th08AimedOutcome}"
+  IO.println s!"TH08 laser spawn slot fault: {describeLaserSpawnOutcome TouhouFormal.Search.LaserSpawn.th08FixedSlotFaultOutcome}"
   IO.println ""
   IO.println "Laser slot controls"
   IO.println s!"TH06 laser opcode count: {TouhouFormal.Search.Laser.laserOpcodeCount TouhouFormal.TH06.headerShape}"

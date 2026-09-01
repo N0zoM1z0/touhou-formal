@@ -23,6 +23,7 @@ import TouhouFormal.ECL.OrbitMovement
 import TouhouFormal.ECL.EnemyState
 import TouhouFormal.ECL.Shooting
 import TouhouFormal.ECL.BulletControl
+import TouhouFormal.ECL.LaserSpawn
 import TouhouFormal.ECL.Laser
 import TouhouFormal.ECL.Animation
 import TouhouFormal.ECL.BulletPattern

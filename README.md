@@ -111,6 +111,11 @@ The executable model currently covers these source-backed boundaries:
   sound flag toggles and overrides, and bullet-rank influence writes. The model
   preserves TH06 raw operands, TH07/TH08 `operandFlags` resolution, repeated
   primary sound reads before override reads, and signed-i16 count truncation.
+- Shared laser-spawn descriptor effects cover the six fixed/aimed laser spawn
+  opcodes. They preserve title-specific descriptor targets, position sources,
+  shifted TH07/TH08 operand flags, 16-bit sprite/color storage, spawn requests,
+  and the unchecked selected-slot pointer write that happens after
+  `SpawnLaserPattern`.
 - Shared laser slot controls cover 29 cross-title opcodes for selected-slot
   writes, indexed angle/position/start-length/offset/hide updates, active-state
   tests, stop transitions, and clear-all loops. The model preserves unchecked
@@ -239,9 +244,9 @@ overflow. Scalar assignment, integer unary updates, float binary arithmetic,
 float functions, random-value opcodes, compare-register producers, direct
 float conditional jumps, immediate and timed movement effects, enemy-state
 effects, shooting-control effects, bullet-control effects, laser slot controls,
-animation-control effects, bullet-pattern effects, callback-configuration
-effects, and interrupt effects currently have Lean executable controls for
-profile coverage and shared-step execution, but no dedicated
+laser-spawn descriptor effects, animation-control effects, bullet-pattern
+effects, callback-configuration effects, and interrupt effects currently have
+Lean executable controls for profile coverage and shared-step execution, but no dedicated
 solver/materializer lane yet. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds

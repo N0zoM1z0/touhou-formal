@@ -517,6 +517,35 @@ flag toggles, and signed truncation while leaving bullet allocation,
 transforms, item spawning, and runtime bullet simulation as later host
 boundaries.
 
+## Laser Spawn Evidence
+
+- `reference/th06/src/EclManager.cpp:455-484` copies raw sprite/color/time/flag
+  fields and `GetVarFloat`-resolved angle/speed/range fields into
+  `enemy->laserProps`, stores type `0` for the aimed opcode and `1` for the
+  fixed opcode, calls `SpawnLaserPattern`, and writes the returned pointer into
+  `enemy->lasers[enemy->laserStore]`.
+- `reference/th07/src/th07/EclManager.cpp:1378-1410` uses the same descriptor
+  shape but resolves color through param-mask bit 1, resolves angle through
+  start-length through shifted float bits 2 through 6, keeps width/time fields
+  raw, sets type `0` only for the moving/aimed opcode, and writes the returned
+  pointer into `enemy->lasers[enemy->laserIdx]`.
+- `reference/th08/src/EclRunHigh.inl:260-335` writes
+  `laserSpawnDescriptor` from `LaserSpawnArgs`, uses `worldPosition +
+  shootOffset`, resolves color/floats/times through operandFlags bits 1 through
+  10, sets `BULLET_AIM_FAN_AIMED` only for opcode 115, calls
+  `SpawnLaserPattern`, and writes the result into
+  `laserSlots[selectedLaserSlot]`.
+- `reference/th06/src/BulletManager.cpp:560-613`,
+  `reference/th07/src/th07/BulletManager.cpp:665-716`, and
+  `reference/th08/src/BulletManager.cpp:720-758` consume the descriptor and
+  allocate or return a laser pointer. The ECL model currently records that as a
+  spawn request rather than simulating the whole manager pool.
+
+The slot write is intentionally modeled after the spawn request. This captures
+the source ordering: an invalid selected slot is not a precondition failure
+before descriptor construction; it is an unchecked host write boundary reached
+after the call to `SpawnLaserPattern`.
+
 ## Primary Bullet-Pattern Evidence
 
 - `reference/th06/src/EclManager.cpp:357-410` sends opcodes 67–75 through one

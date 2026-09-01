@@ -47,8 +47,8 @@ host boundary should have an explicit assumption or a model.
 
 Current status: the shared ECL body now includes control flow, arithmetic,
 randoms, movement, primary bullet patterns, bullet-control host effects, laser
-slot controls, enemy state, callbacks, interrupts, boss reads, and the first
-ECL-to-ANM bridge layer. ANM bridge
+spawn descriptors, laser slot controls, enemy state, callbacks, interrupts,
+boss reads, and the first ECL-to-ANM bridge layer. ANM bridge
 coverage currently records
 primary VM host calls, packed move/death animation fields, TH08 primary script
 tables, bank flag writes, primary/secondary pending interrupts, secondary slot
