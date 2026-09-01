@@ -46,6 +46,15 @@ def eclOpcodeCallEqu : Int := 39
 def eclOpcodeCallGre : Int := 40
 def eclOpcodeCallGeq : Int := 41
 def eclOpcodeCallNeq : Int := 42
+def eclOpcodeMovePosition : Int := 43
+def eclOpcodeMoveAxisVelocity : Int := 44
+def eclOpcodeMoveVelocity : Int := 45
+def eclOpcodeMoveAngularVelocity : Int := 46
+def eclOpcodeMoveSpeed : Int := 47
+def eclOpcodeMoveAcceleration : Int := 48
+def eclOpcodeMoveAtPlayer : Int := 51
+def eclOpcodeMoveBoundsSet : Int := 65
+def eclOpcodeMoveBoundsDisable : Int := 66
 
 def isTimelineSpawnOpcode (opcode : Int) : Bool :=
   decide (0 <= opcode /\ opcode <= 7)
@@ -147,6 +156,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 274
       endLine := 302
       claim := "CALLLSS/CALLLEQ/CALLEQU/CALLGRE/CALLGEQ/CALLNEQ resolve cmpLhs with GetVar, compare against raw cmpRhs, and jump to the same HANDLE_CALL body only when the condition holds." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 316
+      endLine := 356
+      claim := "Immediate movement opcodes set position, axis/polar velocity, angular velocity, speed, acceleration, and player-relative movement with title-specific GetVarFloat use and movement-mode writes." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 612
+      endLine := 620
+      claim := "Movement-bound opcodes copy four raw float fields and toggle the shouldClampPos flag without resolving those bounds through GetVarFloat." },
     { path := "reference/th06/src/Enemy.hpp"
       startLine := 195
       endLine := 197
@@ -360,6 +377,59 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 outputOperandIndex := 0
                 valueOperandIndex := 1
                 addendOperandIndex := some 2 } ]
+          movementOps :=
+            [ { opcode := eclOpcodeMovePosition
+                kind := .setPosition
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue },
+                    { operandIndex := 2, policy := .floatRValue } ]
+                clampPosition := true },
+              { opcode := eclOpcodeMoveAxisVelocity
+                kind := .setAxisVelocity
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue },
+                    { operandIndex := 2, policy := .floatRValue } ]
+                modeUpdate := some .axis },
+              { opcode := eclOpcodeMoveVelocity
+                kind := .setPolarVelocity
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                anglePolicy := .firstInput
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeMoveAngularVelocity
+                kind := .setAngularVelocity
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ]
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeMoveSpeed
+                kind := .setSpeed
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ]
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeMoveAcceleration
+                kind := .setAcceleration
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ]
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeMoveAtPlayer
+                kind := .moveAtPlayer
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .rawBits },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                anglePolicy := .derivedPlayerRelative
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeMoveBoundsSet
+                kind := .setBounds
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .rawBits },
+                    { operandIndex := 1, policy := .rawBits },
+                    { operandIndex := 2, policy := .rawBits },
+                    { operandIndex := 3, policy := .rawBits } ] },
+              { opcode := eclOpcodeMoveBoundsDisable
+                kind := .disableBounds } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeMathInc
                 kind := .inc

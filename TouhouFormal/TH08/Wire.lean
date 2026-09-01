@@ -55,6 +55,13 @@ def eclOpcodeVectorAngle : Int := 34
 def eclOpcodeNormalizeAngle : Int := 37
 def eclOpcodeSubCall : Int := 52
 def eclOpcodeSubRet : Int := 53
+def eclOpcodeSetPosition : Int := 63
+def eclOpcodeSetPolarVelocity : Int := 65
+def eclOpcodeMoveAtPlayer : Int := 68
+def eclOpcodeSetAngularVelocity : Int := 70
+def eclOpcodeSetAcceleration : Int := 71
+def eclOpcodeSetMovementBounds : Int := 75
+def eclOpcodeDisableMovementBounds : Int := 76
 def eclOpcodeGetBossInt : Int := 86
 def eclOpcodeGetBossFloat : Int := 87
 
@@ -167,6 +174,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 415
       endLine := 421
       claim := "Low opcodes 52 and 53 delegate to CallSubOnEnemy and PopEclContext for SUB_CALL/SUB_RET." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 496
+      endLine := 571
+      claim := "Immediate movement opcodes set a clamped XY position, normalized polar velocity, normalized player-relative motion, angular velocity, or acceleration with opcode-specific mode/timer updates." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 617
+      endLine := 631
+      claim := "Low opcodes 75 and 76 resolve four float movement bounds and toggle the movement-bounds flag." },
     { path := "reference/th08/src/EclDependencies.cpp"
       startLine := 466
       endLine := 493
@@ -404,6 +419,47 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 writePolicy := .direct
                 outputOperandIndex := 0
                 valueOperandIndex := 1 } ]
+          movementOps :=
+            [ { opcode := eclOpcodeSetPosition
+                kind := .setPosition
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                clampPosition := true
+                zeroPositionZ := true },
+              { opcode := eclOpcodeSetPolarVelocity
+                kind := .setPolarVelocity
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                anglePolicy := .derivedNormalizedInput
+                modeUpdate := some .polar
+                resetMovementTimers := true },
+              { opcode := eclOpcodeMoveAtPlayer
+                kind := .moveAtPlayer
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue } ]
+                anglePolicy := .derivedNormalizedPlayerRelative },
+              { opcode := eclOpcodeSetAngularVelocity
+                kind := .setAngularVelocity
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ]
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeSetAcceleration
+                kind := .setAcceleration
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue } ]
+                modeUpdate := some .polar },
+              { opcode := eclOpcodeSetMovementBounds
+                kind := .setBounds
+                floatInputs :=
+                  [ { operandIndex := 0, policy := .floatRValue },
+                    { operandIndex := 1, policy := .floatRValue },
+                    { operandIndex := 2, policy := .floatRValue },
+                    { operandIndex := 3, policy := .floatRValue } ] },
+              { opcode := eclOpcodeDisableMovementBounds
+                kind := .disableBounds } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeInc
                 kind := .inc

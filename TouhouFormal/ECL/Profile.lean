@@ -266,6 +266,80 @@ structure RawRandomOpShape where
   addendOperandIndex : Option Nat := none
 deriving Repr, DecidableEq
 
+inductive RawMovementOpKind where
+  | setPosition
+  | setAxisVelocity
+  | setPolarVelocity
+  | setAngularVelocity
+  | setSpeed
+  | setAcceleration
+  | moveAtPlayer
+  | setBounds
+  | disableBounds
+deriving Repr, DecidableEq
+
+def RawMovementOpKind.name : RawMovementOpKind -> String
+  | .setPosition => "set-position"
+  | .setAxisVelocity => "set-axis-velocity"
+  | .setPolarVelocity => "set-polar-velocity"
+  | .setAngularVelocity => "set-angular-velocity"
+  | .setSpeed => "set-speed"
+  | .setAcceleration => "set-acceleration"
+  | .moveAtPlayer => "move-at-player"
+  | .setBounds => "set-bounds"
+  | .disableBounds => "disable-bounds"
+
+inductive RawMovementFloatInputPolicy where
+  | floatRValue
+  | rawBits
+deriving Repr, DecidableEq
+
+def RawMovementFloatInputPolicy.name : RawMovementFloatInputPolicy -> String
+  | .floatRValue => "float-rvalue"
+  | .rawBits => "raw-bits"
+
+structure RawMovementFloatInputShape where
+  operandIndex : Nat
+  policy : RawMovementFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawMovementAnglePolicy where
+  | unchanged
+  | firstInput
+  | derivedAtan2
+  | derivedNormalizedInput
+  | derivedPlayerRelative
+  | derivedNormalizedPlayerRelative
+deriving Repr, DecidableEq
+
+def RawMovementAnglePolicy.name : RawMovementAnglePolicy -> String
+  | .unchanged => "unchanged"
+  | .firstInput => "first-input"
+  | .derivedAtan2 => "derived-atan2"
+  | .derivedNormalizedInput => "derived-normalized-input"
+  | .derivedPlayerRelative => "derived-player-relative"
+  | .derivedNormalizedPlayerRelative => "derived-normalized-player-relative"
+
+inductive RawMovementMode where
+  | axis
+  | polar
+deriving Repr, DecidableEq
+
+def RawMovementMode.name : RawMovementMode -> String
+  | .axis => "axis"
+  | .polar => "polar"
+
+structure RawMovementOpShape where
+  opcode : Int
+  kind : RawMovementOpKind
+  floatInputs : List RawMovementFloatInputShape := []
+  anglePolicy : RawMovementAnglePolicy := .unchanged
+  modeUpdate : Option RawMovementMode := none
+  clampPosition : Bool := false
+  zeroPositionZ : Bool := false
+  resetMovementTimers : Bool := false
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -483,6 +557,7 @@ structure RawInstrShape where
   floatBinaryOps : List RawFloatBinaryOpShape := []
   floatFunctions : List RawFloatFunctionShape := []
   randomOps : List RawRandomOpShape := []
+  movementOps : List RawMovementOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -517,6 +592,11 @@ def RawInstrShape.findRandomOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawRandomOpShape :=
   rawShape.randomOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findMovementOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawMovementOpShape :=
+  rawShape.movementOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

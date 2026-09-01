@@ -31,6 +31,11 @@ producers and TH07/TH08 float conditional jumps. Float predicates consume an
 IEEE order class, including `unordered`; these new paths have Lean controls but
 are not yet part of the Z3 path enumerator/materializer described below.
 
+Immediate movement opcodes now share an executable effect layer as well. It
+covers 24 position/velocity/scalar/bounds handlers across the three titles and
+records derived-angle/clamp host boundaries. These effects have Lean profile
+and step controls but are not yet included in the solver lane.
+
 The integer rvalue resolver is modeled as its own shared layer: TH06 always
 calls `GetVar`, while TH07/TH08 use operand-mask bits to choose raw immediates
 or selector resolution. Known selector ranges, source-backed exclusions, and

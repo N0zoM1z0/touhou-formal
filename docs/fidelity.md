@@ -60,6 +60,14 @@ only for `equal`, inequality is true for every class except `equal`, ordered
 relations reject `unordered`, and TH06's ternary compare-register code maps
 `unordered` to `1` exactly as the source does.
 
+Immediate movement effects preserve resolver and write ordering visible at the
+opcode boundary. For example, TH06 `MOVEATPLAYER` leaves the angle-offset word
+raw but resolves speed through `GetVarFloat`; TH07 axis velocity also writes an
+`atan2f`-derived angle; TH08 position writes only X/Y, forces Z to zero, and
+requests clamping. Derived angle bits and the post-clamp host calculation are
+not fabricated by Lean—the effect records the source inputs and the explicit
+host result/event boundary.
+
 ## Host Effects
 
 Timeline dispatch, enemy creation, bullet allocation, RNG, ANM state, sound, and

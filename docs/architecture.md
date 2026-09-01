@@ -36,6 +36,13 @@ profile direct integer and float branch opcodes. Float comparisons consume an
 explicit IEEE order class (`less`, `equal`, `greater`, or `unordered`) so NaN
 behavior is preserved without embedding a second ad hoc float evaluator.
 
+Movement opcodes emit a shared `RawMovementEffect` rather than mutating three
+title-specific enemy structs. The effect names stable writes—position,
+velocity, angle, speed, acceleration, bounds, mode, and timers—while profiles
+own operand slots, raw-versus-resolved reads, forced values, and title-only
+side effects. Host math such as `atan2f`, normalized player-relative angles,
+and position clamping remains an explicit boundary value/event.
+
 `TouhouFormal/TH06`, `TouhouFormal/TH07`, and `TouhouFormal/TH08` should mostly
 contain profile facts and title deltas. Similar names across titles are not
 assumed equivalent; a title module should justify differences by filling a

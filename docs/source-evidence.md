@@ -60,6 +60,11 @@ relative to `/home/yann/yann/touhou/formal`.
   `CALLGRE`, `CALLGEQ`, and `CALLNEQ` resolve `cmpLhs` with `GetVar`, compare
   it against raw `cmpRhs`, and jump to the same `HANDLE_CALL` body only when
   the condition holds.
+- `reference/th06/src/EclManager.cpp:316`: immediate movement handlers resolve
+  position/velocity/speed fields through `GetVarFloat`, except
+  `MOVEATPLAYER`'s angle offset, which is added as a raw float word.
+- `reference/th06/src/EclManager.cpp:612`: movement bounds are copied directly
+  from four raw float fields and toggle `shouldClampPos`.
 - `reference/th06/src/EnemyEclInstr.cpp:100`: `GetVar` resolves known negative
   `EclVarId` selectors and falls through to the operand-cell pointer for
   unknown operands, which reads back as the raw integer in rvalue positions.
@@ -157,6 +162,11 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th07/src/th07/EclManager.cpp:1098`: six interleaved float
   conditional jumps resolve float slots 0 and 1 and share the integer branch
   family's raw target-time and displacement operands in slots 2 and 3.
+- `reference/th07/src/th07/EclManager.cpp:1218`: immediate movement handlers
+  resolve position, axis velocity, angular velocity, speed, acceleration, and
+  player-relative operands; axis velocity additionally writes `atan2f(y, x)`.
+- `reference/th07/src/th07/EclManager.cpp:1573`: movement bounds resolve four
+  float operands and toggle `hasMovementBounds`.
 - `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
   bit `1 << index` to choose raw operand versus `GetVarValue` resolution.
 - `reference/th07/src/th07/EclManager.cpp:116`: `GetVarValue` resolves known
@@ -289,6 +299,12 @@ relative to `/home/yann/yann/touhou/formal`.
   51.
 - `reference/th08/src/EclRunLow.inl:415`: low opcodes 52 and 53 call
   `CallSubOnEnemy` and `PopEclContext`.
+- `reference/th08/src/EclRunLow.inl:496`: low opcode 63 writes resolved X/Y,
+  forces position Z to zero, and clamps; opcodes 65, 68, 70, and 71 implement
+  normalized polar/player-relative motion and scalar movement writes with
+  distinct mode/timer updates.
+- `reference/th08/src/EclRunLow.inl:617`: low opcodes 75 and 76 resolve four
+  movement-bound floats and toggle the bounds flag.
 - `reference/th08/src/EclDependencies.cpp:466`: `CallSubOnEnemy` stores the
   next instruction context at `activeEclCallStack[activeEclCallStackDepth]`
   before `CallEclSub`, then increments only while depth `< 15`.

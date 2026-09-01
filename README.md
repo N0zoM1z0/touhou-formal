@@ -71,6 +71,11 @@ The executable model currently covers these source-backed boundaries:
   arithmetic; float RNG results stay at the host/SMT boundary. TH06 preserves
   the extra `SetVar` RHS lookup that can reinterpret generated result bits as
   an ECL selector.
+- The first gameplay host-effect family covers 24 immediate movement opcodes:
+  position, axis/polar velocity, angular velocity, speed, acceleration,
+  player-relative motion, and movement bounds. Shared effects retain title
+  differences such as TH06's raw player-angle offset/bounds, TH07's derived
+  axis angle, and TH08's forced-zero Z plus timer-reset behavior.
 - TH07 `ECL_GET_BOSS_INT` and TH08 low opcode `86` are modeled through one
   shared boss-indexed integer-read shape, including operand-flag bypass,
   `bosses[8]` index bounds, null boss pointers, and host/default selector
@@ -168,8 +173,8 @@ rvalue `operandFlags` branches separately from opcode-body effects. The
 integer-binary materializer covers title-specific ADD/SUB/MUL/DIV/MOD layouts,
 output lvalue resolution, resolver-driven divisor faults, and signed idiv
 overflow. Scalar assignment, integer unary updates, float binary arithmetic,
-float functions, random-value opcodes, compare-register producers, and direct
-float conditional jumps currently have Lean executable
+float functions, random-value opcodes, compare-register producers, direct
+float conditional jumps, and immediate movement effects currently have Lean executable
 controls for profile coverage and shared-step execution, but no dedicated
 solver/materializer lane yet. The boss integer-read
 materializer covers TH07/TH08

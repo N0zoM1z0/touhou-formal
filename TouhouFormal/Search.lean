@@ -6,6 +6,7 @@ import TouhouFormal.Search.Difficulty
 import TouhouFormal.Search.FloatArithmetic
 import TouhouFormal.Search.FloatFunction
 import TouhouFormal.Search.IntUnaryUpdate
+import TouhouFormal.Search.Movement
 import TouhouFormal.Search.Random
 import TouhouFormal.Search.ScalarAssignment
 import TouhouFormal.Search.SMT
