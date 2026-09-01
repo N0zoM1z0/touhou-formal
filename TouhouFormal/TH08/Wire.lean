@@ -30,6 +30,7 @@ def eclOpcodeIntMod : Int := 24
 def eclOpcodeSubCall : Int := 52
 def eclOpcodeSubRet : Int := 53
 def eclOpcodeGetBossInt : Int := 86
+def eclOpcodeGetBossFloat : Int := 87
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th08/src/EclManager.hpp"
@@ -88,6 +89,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 703
       endLine := 710
       claim := "The adjacent float boss-read opcode checks the boss pointer before resolving, providing a source-level contrast with opcode 86's unguarded integer path." },
+    { path := "reference/th08/src/EclOperandsFloat.cpp"
+      startLine := 23
+      endLine := 147
+      claim := "Enemy::ResolveFloat casts the f32 operand to i32, resolves known selector ids, and returns the raw operand for default cases including selector 0x2772." },
+    { path := "reference/th08/src/EclOperandsFloat.cpp"
+      startLine := 155
+      endLine := 210
+      claim := "ResolveFloatLValue returns the raw f32 operand cell when the flag bit is clear and maps a sparse writable float selector subset when the bit is set." },
     { path := "reference/th08/src/EnemyManager.hpp"
       startLine := 447
       endLine := 447
@@ -208,6 +217,21 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                         { first := 10053, last := 10056 },
                         { first := 10061, last := 10064 },
                         { first := 10092, last := 10093 } ]
+                    exclusions := [] } }
+          floatRValueResolver :=
+            some
+              { maskPolicy := .bitSetMeansResolve
+                knownRValueSelectors :=
+                  { ranges := [ { first := 1176256512, last := 1176358911 } ]
+                    exclusions := []
+                    excludedRanges := [ { first := 1176356864, last := 1176357887 } ] }
+                knownLValueSelectors :=
+                  { ranges :=
+                      [ { first := 1176272896, last := 1176289279 },
+                        { first := 1176299520, last := 1176305663 },
+                        { first := 1176314880, last := 1176318975 },
+                        { first := 1176323072, last := 1176340479 },
+                        { first := 1176352768, last := 1176354815 } ]
                     exclusions := [] } }
           intConditionJumps :=
             [ { opcode := eclOpcodeJumpIfEq
@@ -330,6 +354,16 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 bossSlotCount := 8
                 nullDerefValueSelectors :=
                   { ranges := [ { first := 10000, last := 10000 } ]
+                    exclusions := [] } } ]
+          bossFloatReads :=
+            [ { opcode := eclOpcodeGetBossFloat
+                outputOperandIndex := 0
+                valueOperandIndex := 1
+                bossIndexOperandIndex := 2
+                bossSlotCount := 8
+                nullPolicy := .guardedSkip
+                nullDerefValueSelectors :=
+                  { ranges := [ { first := 1176272896, last := 1176289279 } ]
                     exclusions := [] } } ]
           intDivisorHazards :=
             [ { opcode := eclOpcodeIntDivInPlace

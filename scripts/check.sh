@@ -10,7 +10,9 @@ trap 'rm -f "$solver_output"' EXIT
 python3 -m py_compile \
   scripts/ecl_wire_patch.py \
   scripts/retail_confirm_boss_int_read.py \
-  scripts/retail_pbg.py
+  scripts/retail_pbg.py \
+  scripts/symex_boss_float_candidate_queue.py \
+  scripts/symex_materialize_boss_float_read.py
 
 lake exe smt th06-sub-oob | z3 -in | tee "$solver_output"
 grep -q '^sat$' "$solver_output"
@@ -135,6 +137,27 @@ python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 
 python3 scripts/symex_boss_int_candidate_queue.py > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 18; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert sum(1 for c in data["candidates"] if c["risk"]["priority"] == "high") == 9; assert {c["risk"]["class"] for c in data["candidates"] if c["risk"]["priority"] == "high"} == {"boss-index-oob-read", "boss-null-deref"}' "$solver_output"
+
+lake exe symex query-boss-float th06 boss-float-index-before-array 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-boss-float th07 boss-float-null-guarded-skip 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-boss-float th08 boss-float-null-deref 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+python3 scripts/symex_materialize_boss_float_read.py th07 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 7; sat=[r for r in xs if r["status"] == "sat"]; unsat=[r for r in xs if r["status"] == "unsat"]; assert len(sat) == 6 and len(unsat) == 1; assert all(r["fixture"]["matchesPath"] == "true" for r in sat); assert {r["path"] for r in sat} == {"boss-float-value-raw-no-boss-read", "boss-float-index-before-array", "boss-float-index-at-or-past-array", "boss-float-null-deref", "boss-float-value-resolved-host", "boss-float-value-resolved-default-raw"}; assert any(r["path"] == "boss-float-null-deref" and r["witness"]["valueRaw"] == 1176260608 and r["fixture"]["faultKind"] == "null-dereference" for r in sat); assert unsat[0]["path"] == "boss-float-null-guarded-skip"' "$solver_output"
+
+python3 scripts/symex_materialize_boss_float_read.py th08 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 7; sat=[r for r in xs if r["status"] == "sat"]; unsat=[r for r in xs if r["status"] == "unsat"]; assert len(sat) == 6 and len(unsat) == 1; assert all(r["fixture"]["matchesPath"] == "true" for r in sat); assert {r["path"] for r in sat} == {"boss-float-value-raw-no-boss-read", "boss-float-index-before-array", "boss-float-index-at-or-past-array", "boss-float-null-guarded-skip", "boss-float-value-resolved-host", "boss-float-value-resolved-default-raw"}; assert any(r["path"] == "boss-float-null-guarded-skip" and r["fixture"]["action"] == "null-guarded-skip" for r in sat); assert unsat[0]["path"] == "boss-float-null-deref"' "$solver_output"
+
+python3 scripts/symex_boss_float_candidate_queue.py > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 18; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert sum(1 for c in data["candidates"] if c["risk"]["priority"] == "high") == 7; assert {c["risk"]["class"] for c in data["candidates"] if c["risk"]["priority"] == "high"} == {"boss-index-oob-read", "boss-null-deref"}; assert sum(1 for c in data["candidates"] if c["risk"]["class"] == "boss-null-guarded-skip") == 2' "$solver_output"
 
 lake exe symex query-callret th06 call-no-op 1 0 | z3 -in | tee "$solver_output"
 grep -q '^unsat$' "$solver_output"

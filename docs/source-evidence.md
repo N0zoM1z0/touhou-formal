@@ -260,6 +260,31 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th08/src/AnmManager.cpp:2354`: TH08 counts entries, scripts, and
   sprites while walking the same `nextOffset` chain.
 
+## Boss Float Read Evidence
+
+The boss-float lane is source-backed by the same host array boundary as
+boss-int:
+
+- `reference/th07/src/th07/EclManager.hpp:112-113` assigns
+  `ECL_GET_BOSS_INT = 43` and `ECL_GET_BOSS_FLOAT = 44`.
+- `reference/th07/src/th07/EclManager.cpp:1006-1010` writes through
+  `GET_FLOAT_PTR(enemy, 0)` from
+  `GET_FLOAT_VALUE(g_EnemyManager.bosses[GET_INT_VALUE(enemy, 2)], 1)`.
+- `reference/th08/src/EclRunLow.inl:703-710` implements low opcode `87` with
+  `if (g_EnemyManager.bosses[ReadInt(enemy, instruction, 2)])` before the
+  value-resolution dereference.
+- `reference/th07/src/th07/EclManager.cpp:327-482` and
+  `reference/th08/src/EclOperandsFloat.cpp:23-147` cast float operands to
+  integer selector ids and default back to the raw operand when no selector
+  matches.
+- `reference/th07/src/th07/EclManager.cpp:486-571` and
+  `reference/th08/src/EclOperandsFloat.cpp:155-210` provide the writable
+  float-lvalue selector subsets.
+
+The model records this as a shared `RawBossFloatReadShape` with the same
+`bossSlotCount = 8` index boundary as boss-int, plus a title-specific
+`RawBossReadNullPolicy`: TH07 is `unguarded-deref`, TH08 is `guarded-skip`.
+
 ## Retail Calibration
 
 The TH06 `arg0 = 256` timeline mutation has been retail-checked under Wine in

@@ -103,6 +103,8 @@ lake exe symex list-int-binary-paths
 lake exe symex query-int-binary-values th08 int-binary-divide-overflow-resolved-host 1 0 | z3 -in
 lake exe symex list-boss-int-paths
 lake exe symex query-boss-int-values th08 boss-int-null-deref 1 0 | z3 -in
+lake exe symex list-boss-float-paths
+lake exe symex query-boss-float-values th07 boss-float-null-deref 1 0 | z3 -in
 lake exe symex list-callret-paths
 lake exe symex query-callret-values th08 ret-child-index-before-array 1 0 | z3 -in
 lake exe symex list-condcall-paths
@@ -119,6 +121,8 @@ lake exe symex query-condcall-values th06 condcall-lookup-fault 1 0 | z3 -in
 ./scripts/symex_int_binary_candidate_queue.py
 ./scripts/symex_materialize_boss_int_read.py th08 all 1 0
 ./scripts/symex_boss_int_candidate_queue.py
+./scripts/symex_materialize_boss_float_read.py th08 all 1 0
+./scripts/symex_boss_float_candidate_queue.py
 ./scripts/symex_materialize_callret_step.py th08 all 1 0
 ./scripts/symex_callret_candidate_queue.py
 ./scripts/symex_materialize_condcall_step.py th06 all 1 0

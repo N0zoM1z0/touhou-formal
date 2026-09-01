@@ -5,11 +5,14 @@ namespace SymexMain
 private def usage : String :=
   "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|" ++
   "list-callret-paths|list-condcall-paths|list-int-binary-paths|list-boss-int-paths|" ++
+  "list-boss-float-paths|" ++
   "query|query-values|query-body|query-body-values|query-int-resolver|query-int-resolver-values|" ++
   "query-callret|query-callret-values|query-condcall|query-condcall-values|" ++
   "query-int-binary|query-int-binary-values|query-boss-int|query-boss-int-values|" ++
+  "query-boss-float|query-boss-float-values|" ++
   "materialize|materialize-file|materialize-body|materialize-int-resolver|" ++
-  "materialize-callret|materialize-condcall|materialize-int-binary|materialize-boss-int ...>"
+  "materialize-callret|materialize-condcall|materialize-int-binary|" ++
+  "materialize-boss-int|materialize-boss-float ...>"
 
 private def parseNat? (value : String) : Option Nat :=
   value.toNat?
@@ -219,6 +222,35 @@ private def runBossIntReadQuery
         return 2
     | _, none =>
         IO.eprintln s!"unknown boss integer-read path: {pathText}"
+        IO.eprintln usage
+        return 2
+
+private def runBossFloatReadQuery
+    (valuesOnly : Bool)
+    (titleText pathText : String)
+    (activeMask overrideMask : Nat) :
+    IO UInt32 := do
+  if 255 < activeMask || 255 < overrideMask then
+    IO.eprintln "activeMask and overrideMask must fit in an unsigned byte"
+    IO.eprintln usage
+    return 2
+  else
+    match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+          TouhouFormal.Search.Symbolic.RawBossFloatReadPath.parse? pathText with
+    | some title, some path =>
+        if valuesOnly then
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawBossFloatReadValuesQuery title path activeMask overrideMask)
+        else
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawBossFloatReadQuery title path activeMask overrideMask)
+        return 0
+    | none, _ =>
+        IO.eprintln s!"unknown title: {titleText}"
+        IO.eprintln usage
+        return 2
+    | _, none =>
+        IO.eprintln s!"unknown boss float-read path: {pathText}"
         IO.eprintln usage
         return 2
 
@@ -648,6 +680,73 @@ private def runBossIntReadMaterialize
       IO.eprintln usage
       return 2
 
+private def runBossFloatReadMaterialize
+    (titleText pathText currentTimeText instrTimeText opcodeText nextOffsetText
+      instructionMaskText operandMaskText activeMaskText overrideMaskText outputRawText
+      outputHostBeforeText valueRawText valueHostText bossIndexRawText bossIndexHostText
+      bossPresentText bufferSizeText : String) :
+    IO UInt32 := do
+  match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+        TouhouFormal.Search.Symbolic.RawBossFloatReadPath.parse? pathText,
+        parseInt? currentTimeText,
+        parseInt? instrTimeText,
+        parseInt? opcodeText,
+        parseInt? nextOffsetText,
+        parseNat? instructionMaskText,
+        parseInt? operandMaskText,
+        parseNat? activeMaskText,
+        parseNat? overrideMaskText,
+        parseInt? outputRawText,
+        parseInt? outputHostBeforeText,
+        parseInt? valueRawText,
+        parseInt? valueHostText,
+        parseInt? bossIndexRawText,
+        parseInt? bossIndexHostText,
+        parseBool? bossPresentText,
+        parseNat? bufferSizeText with
+  | some title, some path, some currentTime, some instrTime, some opcode, some nextOffset,
+      some instructionMask, some operandMask, some activeMask, some overrideMask,
+      some outputRaw, some outputHostBefore, some valueRaw, some valueHost,
+      some bossIndexRaw, some bossIndexHost, some bossPresent, some bufferSize =>
+      let witness : TouhouFormal.Search.Symbolic.RawBossFloatReadWitness :=
+        { currentTime := currentTime
+          instrTime := instrTime
+          opcode := opcode
+          nextOffset := nextOffset
+          instructionMask := instructionMask
+          operandMask := operandMask
+          activeMask := activeMask
+          overrideMask := overrideMask
+          jumpTargetTime := 0
+          jumpDisplacement := 0
+          bufferSize := bufferSize
+          outputRaw := outputRaw
+          outputHostBefore := outputHostBefore
+          valueRaw := valueRaw
+          valueHost := valueHost
+          bossIndexRaw := bossIndexRaw
+          bossIndexHost := bossIndexHost
+          bossPresent := bossPresent }
+      match TouhouFormal.Search.Symbolic.rawBossFloatReadMaterialize title path witness with
+      | .ok materialization =>
+          IO.print materialization.report
+          return 0
+      | .error message =>
+          IO.eprintln message
+          return 1
+  | none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown title: {titleText}"
+      IO.eprintln usage
+      return 2
+  | _, none, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown boss float-read path: {pathText}"
+      IO.eprintln usage
+      return 2
+  | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln "invalid materialize-boss-float witness field"
+      IO.eprintln usage
+      return 2
+
 def main (args : List String) : IO UInt32 := do
   match args with
   | ["list-paths"] =>
@@ -670,6 +769,9 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["list-boss-int-paths"] =>
       IO.print TouhouFormal.Search.Symbolic.listRawBossIntReadPathsText
+      return 0
+  | ["list-boss-float-paths"] =>
+      IO.print TouhouFormal.Search.Symbolic.listRawBossFloatReadPathsText
       return 0
   | ["query", title, path] =>
       runQuery false title path 1 0
@@ -699,6 +801,10 @@ def main (args : List String) : IO UInt32 := do
       runBossIntReadQuery false title path 1 0
   | ["query-boss-int-values", title, path] =>
       runBossIntReadQuery true title path 1 0
+  | ["query-boss-float", title, path] =>
+      runBossFloatReadQuery false title path 1 0
+  | ["query-boss-float-values", title, path] =>
+      runBossFloatReadQuery true title path 1 0
   | ["query", title, path, activeMaskText, overrideMaskText] =>
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
@@ -791,6 +897,22 @@ def main (args : List String) : IO UInt32 := do
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
           runBossIntReadQuery true title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-boss-float", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runBossFloatReadQuery false title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-boss-float-values", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runBossFloatReadQuery true title path activeMask overrideMask
       | _, _ =>
           IO.eprintln "activeMask and overrideMask must be natural numbers"
           IO.eprintln usage
@@ -939,6 +1061,28 @@ def main (args : List String) : IO UInt32 := do
       instructionMask, operandMask, activeMask, overrideMask, outputRaw, outputHostBefore,
       valueRaw, valueHost, bossIndexRaw, bossIndexHost, bossPresent, bufferSize ] =>
       runBossIntReadMaterialize
+        title
+        path
+        currentTime
+        instrTime
+        opcode
+        nextOffset
+        instructionMask
+        operandMask
+        activeMask
+        overrideMask
+        outputRaw
+        outputHostBefore
+        valueRaw
+        valueHost
+        bossIndexRaw
+        bossIndexHost
+        bossPresent
+        bufferSize
+  | [ "materialize-boss-float", title, path, currentTime, instrTime, opcode, nextOffset,
+      instructionMask, operandMask, activeMask, overrideMask, outputRaw, outputHostBefore,
+      valueRaw, valueHost, bossIndexRaw, bossIndexHost, bossPresent, bufferSize ] =>
+      runBossFloatReadMaterialize
         title
         path
         currentTime

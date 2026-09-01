@@ -326,6 +326,44 @@ def allRawBossIntReadPaths : List RawBossIntReadPath :=
   , .bossValueResolvedHost
   , .bossValueResolvedDefaultRaw ]
 
+inductive RawBossFloatReadPath where
+  | valueRawNoBossRead
+  | bossIndexBeforeArray
+  | bossIndexAtOrPastArray
+  | bossNullDeref
+  | bossNullGuardedSkip
+  | bossValueResolvedHost
+  | bossValueResolvedDefaultRaw
+deriving Repr, DecidableEq
+
+def RawBossFloatReadPath.name : RawBossFloatReadPath -> String
+  | .valueRawNoBossRead => "boss-float-value-raw-no-boss-read"
+  | .bossIndexBeforeArray => "boss-float-index-before-array"
+  | .bossIndexAtOrPastArray => "boss-float-index-at-or-past-array"
+  | .bossNullDeref => "boss-float-null-deref"
+  | .bossNullGuardedSkip => "boss-float-null-guarded-skip"
+  | .bossValueResolvedHost => "boss-float-value-resolved-host"
+  | .bossValueResolvedDefaultRaw => "boss-float-value-resolved-default-raw"
+
+def RawBossFloatReadPath.parse? : String -> Option RawBossFloatReadPath
+  | "boss-float-value-raw-no-boss-read" => some .valueRawNoBossRead
+  | "boss-float-index-before-array" => some .bossIndexBeforeArray
+  | "boss-float-index-at-or-past-array" => some .bossIndexAtOrPastArray
+  | "boss-float-null-deref" => some .bossNullDeref
+  | "boss-float-null-guarded-skip" => some .bossNullGuardedSkip
+  | "boss-float-value-resolved-host" => some .bossValueResolvedHost
+  | "boss-float-value-resolved-default-raw" => some .bossValueResolvedDefaultRaw
+  | _ => none
+
+def allRawBossFloatReadPaths : List RawBossFloatReadPath :=
+  [ .valueRawNoBossRead
+  , .bossIndexBeforeArray
+  , .bossIndexAtOrPastArray
+  , .bossNullDeref
+  , .bossNullGuardedSkip
+  , .bossValueResolvedHost
+  , .bossValueResolvedDefaultRaw ]
+
 private def joinLines : List String -> String
   | [] => ""
   | line :: rest => line ++ "\n" ++ joinLines rest
@@ -423,6 +461,12 @@ private def maxBossIntReadOperandIndex
     (Nat.max read.outputOperandIndex read.valueOperandIndex)
     read.bossIndexOperandIndex
 
+private def maxBossFloatReadOperandIndex
+    (read : TouhouFormal.ECL.RawBossFloatReadShape) : Nat :=
+  Nat.max
+    (Nat.max read.outputOperandIndex read.valueOperandIndex)
+    read.bossIndexOperandIndex
+
 private def maxNatList (values : List Nat) : Nat :=
   values.foldl (fun acc value => Nat.max acc value) 0
 
@@ -451,18 +495,39 @@ private def intSelectorSetPredicate
           joinWith " " (exclusions.map fun value =>
             "(not (= " ++ valueName ++ " " ++ toString value ++ "))") ++
           ")"
-  "(and " ++ rangePredicate ++ " " ++ exclusionPredicate ++ ")"
+  let excludedRangePredicate :=
+    match set.excludedRanges with
+    | [] => "true"
+    | ranges =>
+        "(and " ++
+          joinWith " " (ranges.map fun range =>
+            "(not " ++ intSelectorRangePredicate valueName range ++ ")") ++
+          ")"
+  "(and " ++ rangePredicate ++ " " ++ exclusionPredicate ++ " " ++
+    excludedRangePredicate ++ ")"
 
 private def intMaskBitSetPredicate (maskName : String) (slot : Nat) : String :=
   "(= (mod (div " ++ maskName ++ " " ++ toString (2 ^ slot) ++ ") 2) 1)"
+
+private def rawOperandSwitchPredicate
+    (maskPolicy : TouhouFormal.ECL.RawIntOperandMaskPolicy)
+    (slot : Nat)
+    (maskName : String) : String :=
+  match maskPolicy with
+  | .noMaskAlwaysResolve => "true"
+  | .bitSetMeansResolve => intMaskBitSetPredicate maskName slot
 
 private def intResolverSwitchPredicate
     (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
     (slot : Nat)
     (maskName : String) : String :=
-  match resolver.maskPolicy with
-  | .noMaskAlwaysResolve => "true"
-  | .bitSetMeansResolve => intMaskBitSetPredicate maskName slot
+  rawOperandSwitchPredicate resolver.maskPolicy slot maskName
+
+private def floatResolverSwitchPredicate
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (slot : Nat)
+    (maskName : String) : String :=
+  rawOperandSwitchPredicate resolver.maskPolicy slot maskName
 
 private def rawIntResolvedValueExpr
     (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
@@ -535,6 +600,62 @@ private def rawIntLValueValueExpr
   "(ite (and " ++ intResolverSwitchPredicate resolver slot "operandMask" ++
     " " ++ intSelectorSetPredicate rawName resolver.knownLValueSelectors ++
     ") " ++ hostBeforeName ++ " " ++ rawName ++ ")"
+
+private def rawFloatResolvedValueExpr
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (slot : Nat)
+    (rawName hostName : String) : String :=
+  "(ite (and " ++ floatResolverSwitchPredicate resolver slot "operandMask" ++
+    " " ++ intSelectorSetPredicate rawName resolver.knownRValueSelectors ++
+    ") " ++ hostName ++ " " ++ rawName ++ ")"
+
+private def rawFloatRValuePathPredicate
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (slot : Nat)
+    (rawName : String)
+    (path : RawIntResolverPath) : String :=
+  let switchPredicate := floatResolverSwitchPredicate resolver slot "operandMask"
+  let knownPredicate := intSelectorSetPredicate rawName resolver.knownRValueSelectors
+  match path with
+  | .rawImmediate =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "false"
+      | .bitSetMeansResolve => "(not " ++ switchPredicate ++ ")"
+  | .resolvedHost =>
+      "(and " ++ switchPredicate ++ " " ++ knownPredicate ++ ")"
+  | .resolvedDefaultRaw =>
+      "(and " ++ switchPredicate ++ " (not " ++ knownPredicate ++ "))"
+
+private def rawFloatLValuePathPredicate
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (slot : Nat)
+    (rawName : String)
+    (kind : TouhouFormal.ECL.RawFloatLValueResolutionKind) : String :=
+  let switchPredicate := floatResolverSwitchPredicate resolver slot "operandMask"
+  let knownPredicate := intSelectorSetPredicate rawName resolver.knownLValueSelectors
+  match kind with
+  | .rawOperandCell =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "false"
+      | .bitSetMeansResolve => "(not " ++ switchPredicate ++ ")"
+  | .resolvedHost =>
+      "(and " ++ switchPredicate ++ " " ++ knownPredicate ++ ")"
+  | .resolvedDefaultRawCell =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "false"
+      | .bitSetMeansResolve => "(and " ++ switchPredicate ++ " (not " ++ knownPredicate ++ "))"
+  | .nonFloatOutput =>
+      match resolver.maskPolicy with
+      | .noMaskAlwaysResolve => "(not " ++ knownPredicate ++ ")"
+      | .bitSetMeansResolve => "false"
+
+private def rawFloatLValueWritablePredicate
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (_slot : Nat)
+    (_rawName : String) : String :=
+  match resolver.maskPolicy with
+  | .noMaskAlwaysResolve => intSelectorSetPredicate _rawName resolver.knownLValueSelectors
+  | .bitSetMeansResolve => "true"
 
 private def rawIntBinaryLhsValueExpr
     (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
@@ -641,6 +762,18 @@ private def requiredBossIntReadInstructionBytes
   | some baseOffset =>
       let maxOperand := maxNatList (rawShape.bossIntReads.map maxBossIntReadOperandIndex)
       if rawShape.bossIntReads.isEmpty then
+        rawShape.fixedPrefixBytes
+      else
+        baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
+
+private def requiredBossFloatReadInstructionBytes
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (_path : RawBossFloatReadPath) : Nat :=
+  match rawShape.fixedI32OperandBaseOffset with
+  | none => rawShape.fixedPrefixBytes
+  | some baseOffset =>
+      let maxOperand := maxNatList (rawShape.bossFloatReads.map maxBossFloatReadOperandIndex)
+      if rawShape.bossFloatReads.isEmpty then
         rawShape.fixedPrefixBytes
       else
         baseOffset + rawShape.fixedI32OperandStride * (maxOperand + 1)
@@ -1120,6 +1253,95 @@ private def rawBossIntReadPathConstraints
         [ bossIntReadSetAssertion rawShape.bossIntReads fun read =>
             bossIntReadPathPredicate resolver read path ]
 
+private def bossFloatReadSetAssertion
+    (reads : List TouhouFormal.ECL.RawBossFloatReadShape)
+    (extraPredicate : TouhouFormal.ECL.RawBossFloatReadShape -> String) : String :=
+  match reads with
+  | [] => "(assert false) ; profile has no source-backed boss float-read opcode for this path"
+  | [read] =>
+      "(assert (and (= opcode " ++ toString read.opcode ++ ") " ++ extraPredicate read ++ "))"
+  | reads =>
+      "(assert (or " ++
+        joinWith " " (reads.map fun read =>
+          "(and (= opcode " ++ toString read.opcode ++ ") " ++ extraPredicate read ++ ")") ++
+        "))"
+
+private def bossFloatValueNeedsBossPredicate
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossFloatReadShape) : String :=
+  floatResolverSwitchPredicate resolver read.valueOperandIndex "operandMask"
+
+private def bossFloatIndexValueExpr
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossFloatReadShape) : String :=
+  rawIntResolvedValueExpr resolver read.bossIndexOperandIndex "bossIndexRaw" "bossIndexHost"
+
+private def bossFloatOutputWritablePredicate
+    (resolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossFloatReadShape) : String :=
+  rawFloatLValueWritablePredicate resolver read.outputOperandIndex "outputRaw"
+
+private def bossFloatIndexInBoundsPredicate
+    (resolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossFloatReadShape) : String :=
+  let indexExpr := bossFloatIndexValueExpr resolver read
+  "(and (<= 0 " ++ indexExpr ++ ") (< " ++ indexExpr ++ " " ++
+    toString read.bossSlotCount ++ "))"
+
+private def bossFloatNullPolicyPredicate
+    (read : TouhouFormal.ECL.RawBossFloatReadShape)
+    (policy : TouhouFormal.ECL.RawBossReadNullPolicy) : String :=
+  if read.nullPolicy == policy then "true" else "false"
+
+private def bossFloatReadPathPredicate
+    (intResolver : TouhouFormal.ECL.RawIntOperandResolverShape)
+    (floatResolver : TouhouFormal.ECL.RawFloatOperandResolverShape)
+    (read : TouhouFormal.ECL.RawBossFloatReadShape)
+    (path : RawBossFloatReadPath) : String :=
+  let valueNeedsBoss := bossFloatValueNeedsBossPredicate floatResolver read
+  let indexExpr := bossFloatIndexValueExpr intResolver read
+  let outputWritable := bossFloatOutputWritablePredicate floatResolver read
+  let indexInBounds := bossFloatIndexInBoundsPredicate intResolver read
+  match path with
+  | .valueRawNoBossRead =>
+      "(and " ++ outputWritable ++ " (not " ++ valueNeedsBoss ++ "))"
+  | .bossIndexBeforeArray =>
+      "(and " ++ outputWritable ++ " " ++ valueNeedsBoss ++ " (< " ++ indexExpr ++ " 0))"
+  | .bossIndexAtOrPastArray =>
+      "(and " ++ outputWritable ++ " " ++ valueNeedsBoss ++ " (<= " ++
+        toString read.bossSlotCount ++ " " ++ indexExpr ++ "))"
+  | .bossNullDeref =>
+      "(and " ++ outputWritable ++ " " ++ valueNeedsBoss ++
+        " " ++ bossFloatNullPolicyPredicate read .unguardedDeref ++
+        " " ++ intSelectorSetPredicate "valueRaw" read.nullDerefValueSelectors ++
+        " " ++ indexInBounds ++ " (not bossPresent))"
+  | .bossNullGuardedSkip =>
+      "(and " ++ outputWritable ++ " " ++ valueNeedsBoss ++
+        " " ++ bossFloatNullPolicyPredicate read .guardedSkip ++
+        " " ++ indexInBounds ++ " (not bossPresent))"
+  | .bossValueResolvedHost =>
+      "(and " ++ outputWritable ++ " " ++
+        rawFloatRValuePathPredicate floatResolver read.valueOperandIndex "valueRaw" .resolvedHost ++
+        " " ++ indexInBounds ++ " bossPresent)"
+  | .bossValueResolvedDefaultRaw =>
+      "(and " ++ outputWritable ++ " " ++
+        rawFloatRValuePathPredicate floatResolver read.valueOperandIndex "valueRaw" .resolvedDefaultRaw ++
+        " " ++ indexInBounds ++ " bossPresent)"
+
+private def rawBossFloatReadPathConstraints
+    (rawShape : TouhouFormal.ECL.RawInstrShape)
+    (path : RawBossFloatReadPath) : List String :=
+  let dispatchPrefix :=
+    [ "(assert (= currentTime instrTime))"
+    , "(assert difficultyPass)" ]
+  match rawShape.intRValueResolver, rawShape.floatRValueResolver with
+  | none, _ => dispatchPrefix ++ ["(assert false) ; profile has no integer resolver"]
+  | _, none => dispatchPrefix ++ ["(assert false) ; profile has no float resolver"]
+  | some intResolver, some floatResolver =>
+      dispatchPrefix ++
+        [ bossFloatReadSetAssertion rawShape.bossFloatReads fun read =>
+            bossFloatReadPathPredicate intResolver floatResolver read path ]
+
 private def rawStepValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask jumpTargetTime jumpDisplacement bufferSize difficultyPass)"
 
@@ -1136,6 +1358,9 @@ private def rawIntBinaryValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask outputRaw outputHostBefore lhsRaw rhsRaw lhsHost rhsHost bufferSize difficultyPass)"
 
 private def rawBossIntReadValueTerms : String :=
+  "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask outputRaw outputHostBefore valueRaw valueHost bossIndexRaw bossIndexHost bossPresent bufferSize difficultyPass)"
+
+private def rawBossFloatReadValueTerms : String :=
   "(currentTime instrTime opcode nextOffset instructionMask operandMask activeMask overrideMask requiredDifficultyMask outputRaw outputHostBefore valueRaw valueHost bossIndexRaw bossIndexHost bossPresent bufferSize difficultyPass)"
 
 private def rawStepQueryWith
@@ -1625,6 +1850,82 @@ def rawBossIntReadValuesQuery
 def listRawBossIntReadPathsText : String :=
   joinLines (allRawBossIntReadPaths.map RawBossIntReadPath.name)
 
+private def rawBossFloatReadQueryWith
+    (includeModel includeValues : Bool)
+    (title : Title)
+    (path : RawBossFloatReadPath)
+    (activeMask overrideMask : Nat) : String :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none =>
+      joinLines
+        [ "(set-logic ALL)"
+        , "; symbolic raw ECL boss float-read query"
+        , "; profile has no raw instruction shape"
+        , "(assert false)"
+        , "(check-sat)" ]
+  | some rawShape =>
+      let difficultyExpr :=
+        match rawShape.difficultyMaskPolicy with
+        | none => "true"
+        | some policy => difficultyPassExpr policy
+      let requiredBytes := requiredBossFloatReadInstructionBytes rawShape path
+      joinLines
+        ([ "(set-logic ALL)"
+         , "; Symbolic execution query generated from shared boss float-read semantics."
+         , "; Title: " ++ shape.title
+         , "; Boss float-read path: " ++ path.name
+         , "(declare-const currentTime Int)"
+         , "(declare-const instrTime Int)"
+         , "(declare-const opcode Int)"
+         , "(declare-const nextOffset Int)"
+         , "(declare-const outputRaw Int)"
+         , "(declare-const outputHostBefore Int)"
+         , "(declare-const valueRaw Int)"
+         , "(declare-const valueHost Int)"
+         , "(declare-const bossIndexRaw Int)"
+         , "(declare-const bossIndexHost Int)"
+         , "(declare-const bossPresent Bool)"
+         , "(declare-const bufferSize Int)"
+         , "(define-fun fileOffset () Int 0)"
+         , "(declare-const instructionMask (_ BitVec 8))"
+         , "(define-fun activeMask () (_ BitVec 8) " ++ bv8 activeMask ++ ")"
+         , "(define-fun overrideMask () (_ BitVec 8) " ++ bv8 overrideMask ++ ")"
+         , "(define-fun requiredDifficultyMask () (_ BitVec 8) (bvor activeMask overrideMask))"
+         , "(define-fun difficultyPass () Bool " ++ difficultyExpr ++ ")"
+         , scalarRange "instrTime" rawShape.timeWidth
+         , scalarRange "opcode" rawShape.opcodeWidth
+         , scalarRange "nextOffset" rawShape.nextOffsetWidth
+         , signedI32Range "outputRaw"
+         , signedI32Range "outputHostBefore"
+         , signedI32Range "valueRaw"
+         , signedI32Range "valueHost"
+         , signedI32Range "bossIndexRaw"
+         , signedI32Range "bossIndexHost"
+         , "(assert (and (<= 0 currentTime) (<= currentTime 1000000)))"
+         , "(assert (= nextOffset " ++ toString requiredBytes ++ "))"
+         , "(assert (= bufferSize " ++ toString requiredBytes ++ "))" ] ++
+         operandMaskSmtLines rawShape ++
+         rawBossFloatReadPathConstraints rawShape path ++
+         [ "(check-sat)" ] ++
+         (if includeModel then ["(get-model)"] else []) ++
+         (if includeValues then ["(get-value " ++ rawBossFloatReadValueTerms ++ ")"] else []))
+
+def rawBossFloatReadQuery
+    (title : Title)
+    (path : RawBossFloatReadPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawBossFloatReadQueryWith false false title path activeMask overrideMask
+
+def rawBossFloatReadValuesQuery
+    (title : Title)
+    (path : RawBossFloatReadPath)
+    (activeMask overrideMask : Nat) : String :=
+  rawBossFloatReadQueryWith false true title path activeMask overrideMask
+
+def listRawBossFloatReadPathsText : String :=
+  joinLines (allRawBossFloatReadPaths.map RawBossFloatReadPath.name)
+
 structure RawStepWitness where
   currentTime : Int
   instrTime : Int
@@ -1708,6 +2009,16 @@ structure RawBossIntReadWitness extends RawStepWitness where
   bossPresent : Bool
 deriving Repr, DecidableEq
 
+structure RawBossFloatReadWitness extends RawStepWitness where
+  outputRaw : Int
+  outputHostBefore : Int
+  valueRaw : Int
+  valueHost : Int
+  bossIndexRaw : Int
+  bossIndexHost : Int
+  bossPresent : Bool
+deriving Repr, DecidableEq
+
 structure RawIntResolverMaterialization where
   bytes : TouhouFormal.Bytes
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
@@ -1743,6 +2054,14 @@ structure RawBossIntReadMaterialization where
   rawPrefix : TouhouFormal.ECL.RawInstrPrefix
   prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadPrepared
   result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossIntReadOutcome
+  matchesPath : Bool
+deriving Repr
+
+structure RawBossFloatReadMaterialization where
+  bytes : TouhouFormal.Bytes
+  rawPrefix : TouhouFormal.ECL.RawInstrPrefix
+  prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared
+  result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome
   matchesPath : Bool
 deriving Repr
 
@@ -2166,6 +2485,20 @@ private def findBossIntRead
               " is not a source-backed boss integer-read opcode for " ++ shape.title)
       | some read => .ok read
 
+private def findBossFloatRead
+    (shape : TouhouFormal.ECL.HeaderShape)
+    (opcode : Int) :
+    Except String TouhouFormal.ECL.RawBossFloatReadShape :=
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape =>
+      match rawShape.findBossFloatRead? opcode with
+      | none =>
+          .error
+            ("opcode " ++ toString opcode ++
+              " is not a source-backed boss float-read opcode for " ++ shape.title)
+      | some read => .ok read
+
 private def rawIntBinaryWitnessBaseBytes
     (title : Title)
     (path : RawIntBinaryPath)
@@ -2389,6 +2722,121 @@ private def runRawBossIntReadResult
   let shape := title.headerShape
   .ok
     (TouhouFormal.ECL.rawBossIntReadStep
+      shape
+      witness.currentTime
+      witness.activeMask
+      witness.overrideMask
+      8
+      witness.bufferSize
+      rawPrefix
+      operands)
+
+private def rawBossFloatReadWitnessBaseBytes
+    (title : Title)
+    (path : RawBossFloatReadPath)
+    (witness : RawBossFloatReadWitness) : Except String TouhouFormal.Bytes :=
+  let shape := title.headerShape
+  match shape.rawInstrShape with
+  | none => .error ("profile has no raw ECL instruction shape for " ++ shape.title)
+  | some rawShape => do
+      let requiredBytes := requiredBossFloatReadInstructionBytes rawShape path
+      if witness.bufferSize < requiredBytes then
+        .error
+          ("bufferSize=" ++ toString witness.bufferSize ++
+            " is smaller than required boss-float-read bytes=" ++ toString requiredBytes)
+      else
+        rawStepWitnessBytes
+          title
+          (.advanced .inBounds)
+          { currentTime := witness.currentTime
+            instrTime := witness.instrTime
+            opcode := witness.opcode
+            nextOffset := witness.nextOffset
+            instructionMask := witness.instructionMask
+            operandMask := witness.operandMask
+            activeMask := witness.activeMask
+            overrideMask := witness.overrideMask
+            jumpTargetTime := witness.jumpTargetTime
+            jumpDisplacement := witness.jumpDisplacement
+            bufferSize := witness.bufferSize }
+
+private def rawBossFloatReadWitnessBytes
+    (title : Title)
+    (path : RawBossFloatReadPath)
+    (witness : RawBossFloatReadWitness) : Except String TouhouFormal.Bytes := do
+  let shape := title.headerShape
+  let read <- findBossFloatRead shape witness.opcode
+  let bytes <- rawBossFloatReadWitnessBaseBytes title path witness
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      read.outputOperandIndex
+      witness.outputRaw
+      "bossFloatReadOutputRaw"
+  let bytes <-
+    writeFixedI32OperandValue
+      bytes
+      shape
+      read.valueOperandIndex
+      witness.valueRaw
+      "bossFloatReadValueRaw"
+  writeFixedI32OperandValue
+    bytes
+    shape
+    read.bossIndexOperandIndex
+    witness.bossIndexRaw
+    "bossFloatReadBossIndexRaw"
+
+private def decodeRawBossFloatReadOperands
+    (title : Title)
+    (witness : RawBossFloatReadWitness)
+    (bytes : TouhouFormal.Bytes)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix) :
+    Except String
+      (TouhouFormal.ECL.RawBossFloatReadShape × TouhouFormal.ECL.RawBossFloatReadOperands) := do
+  let shape := title.headerShape
+  let read <- findBossFloatRead shape rawPrefix.opcode
+  let outputRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        read.outputOperandIndex)
+  let valueRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        read.valueOperandIndex)
+  let bossIndexRaw <-
+    liftFaultToString
+      (TouhouFormal.ECL.readFixedI32Operand
+        shape
+        bytes
+        rawPrefix
+        read.bossIndexOperandIndex)
+  .ok
+    ( read
+    , { outputRaw := outputRaw
+        outputHostBefore := witness.outputHostBefore
+        valueRaw := valueRaw
+        valueHost := witness.valueHost
+        bossIndexRaw := bossIndexRaw
+        bossIndexHost := witness.bossIndexHost
+        bossPresent := witness.bossPresent } )
+
+private def runRawBossFloatReadResult
+    (title : Title)
+    (witness : RawBossFloatReadWitness)
+    (rawPrefix : TouhouFormal.ECL.RawInstrPrefix)
+    (operands : TouhouFormal.ECL.RawBossFloatReadOperands) :
+    Except String (Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome) :=
+  let shape := title.headerShape
+  .ok
+    (TouhouFormal.ECL.rawBossFloatReadStep
       shape
       witness.currentTime
       witness.activeMask
@@ -2759,6 +3207,49 @@ private def RawBossIntReadPath.matchesMaterialization
         preparedBossValuePath? prepared == some .resolvedDefaultRaw
   | _, _ => false
 
+private def preparedBossFloatValuePath?
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) :
+    Option RawIntResolverPath :=
+  match prepared with
+  | .ok value =>
+      match value.valueResolution with
+      | none => none
+      | some resolution =>
+          match resolution.kind with
+          | .rawImmediate => some .rawImmediate
+          | .resolvedHost => some .resolvedHost
+          | .resolvedDefaultRaw => some .resolvedDefaultRaw
+  | .error _ => none
+
+private def RawBossFloatReadPath.matchesMaterialization
+    (path : RawBossFloatReadPath)
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared)
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome) : Bool :=
+  match path, result with
+  | .valueRawNoBossRead, .ok outcome =>
+      outcome.action == .valueRawNoBossRead &&
+        preparedBossFloatValuePath? prepared == some .rawImmediate
+  | .bossIndexBeforeArray, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.bossFloatRead.bosses" &&
+        faultIndexBeforeZero faultValue
+  | .bossIndexAtOrPastArray, .error faultValue =>
+      faultValue.kind == .outOfBoundsRead &&
+        faultValue.component == "EclRun.bossFloatRead.bosses" &&
+        faultIndexAtOrPastBound faultValue
+  | .bossNullDeref, .error faultValue =>
+      faultValue.kind == .nullDereference &&
+        faultValue.component == "EclRun.bossFloatRead.bosses"
+  | .bossNullGuardedSkip, .ok outcome =>
+      outcome.action == .nullGuardedSkip
+  | .bossValueResolvedHost, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedBossFloatValuePath? prepared == some .resolvedHost
+  | .bossValueResolvedDefaultRaw, .ok outcome =>
+      outcome.action == .advanced &&
+        preparedBossFloatValuePath? prepared == some .resolvedDefaultRaw
+  | _, _ => false
+
 def rawStepMaterialize
     (title : Title)
     (path : RawStepPath)
@@ -2988,6 +3479,27 @@ def rawBossIntReadMaterialize
       result := result
       matchesPath := path.matchesMaterialization prepared result }
 
+def rawBossFloatReadMaterialize
+    (title : Title)
+    (path : RawBossFloatReadPath)
+    (witness : RawBossFloatReadWitness) : Except String RawBossFloatReadMaterialization := do
+  let bytes <- rawBossFloatReadWitnessBytes title path witness
+  let rawPrefix <- liftFaultToString (TouhouFormal.ECL.decodeRawInstrPrefix title.headerShape bytes 0)
+  let (read, operands) <- decodeRawBossFloatReadOperands title witness bytes rawPrefix
+  let prepared :=
+    TouhouFormal.ECL.rawBossFloatReadPrepare
+      title.headerShape
+      rawPrefix
+      read
+      operands
+  let result <- runRawBossFloatReadResult title witness rawPrefix operands
+  .ok
+    { bytes := bytes
+      rawPrefix := rawPrefix
+      prepared := prepared
+      result := result
+      matchesPath := path.matchesMaterialization prepared result }
+
 private def rawStepActionName : TouhouFormal.ECL.RawStepAction -> String
   | .yielded => "yielded"
   | .skipped => "skipped"
@@ -3017,6 +3529,15 @@ private def rawBossIntReadActionName : TouhouFormal.ECL.RawBossIntReadAction -> 
   | .advanced => "advanced"
   | .valueRawNoBossRead => "value-raw-no-boss-read"
   | .nonIntOutput => "non-int-output"
+  | .vmError => "vm-error"
+
+private def rawBossFloatReadActionName : TouhouFormal.ECL.RawBossFloatReadAction -> String
+  | .yielded => "yielded"
+  | .skipped => "skipped"
+  | .advanced => "advanced"
+  | .valueRawNoBossRead => "value-raw-no-boss-read"
+  | .nullGuardedSkip => "null-guarded-skip"
+  | .nonFloatOutput => "non-float-output"
   | .vmError => "vm-error"
 
 private def optionIntText : Option Int -> String
@@ -3405,6 +3926,108 @@ def RawBossIntReadMaterialization.report
     , "result=" ++ optionIntText (bossIntReadResultValue materialization.result)
     , "faultKind=" ++ bossIntReadResultFaultKind materialization.result
     , "faultDetail=" ++ bossIntReadResultFaultDetail materialization.result
+    , "matchesPath=" ++ toString materialization.matchesPath ]
+
+private def bossFloatReadResultActionText
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome) : String :=
+  match result with
+  | .ok outcome => rawBossFloatReadActionName outcome.action
+  | .error faultValue => "fault:" ++ faultValue.kind.name
+
+private def bossFloatReadResultFaultKind
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.kind.name
+
+private def bossFloatReadResultFaultDetail
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome) : String :=
+  match result with
+  | .ok _ => "-"
+  | .error faultValue => faultValue.detail
+
+private def bossFloatReadResultValue
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadOutcome) : Option Int :=
+  match result with
+  | .ok outcome => outcome.result
+  | .error _ => none
+
+private def bossFloatReadPreparedOutputKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value => value.output.kind.name
+  | .error _ => "-"
+
+private def bossFloatReadPreparedOutputKnownText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value => toString value.output.selectorKnown
+  | .error _ => "-"
+
+private def bossFloatReadPreparedOutputFlagText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value => toString value.output.flagEnabled
+  | .error _ => "-"
+
+private def bossFloatReadPreparedBossIndexKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value =>
+      match value.bossIndexResolution with
+      | none => "-"
+      | some bossIndex => bossIndex.kind.name
+  | .error _ => "-"
+
+private def bossFloatReadPreparedBossIndexValueText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value => optionIntText value.bossIndexValue
+  | .error _ => "-"
+
+private def bossFloatReadPreparedValueKindText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value =>
+      match value.valueResolution with
+      | none => "-"
+      | some readValue => readValue.kind.name
+  | .error _ => "-"
+
+private def bossFloatReadPreparedValueText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value => optionIntText value.value
+  | .error _ => "-"
+
+private def bossFloatReadPreparedBossPresentText
+    (prepared : Except TouhouFormal.Fault TouhouFormal.ECL.RawBossFloatReadPrepared) : String :=
+  match prepared with
+  | .ok value => optionBoolText value.bossPresent
+  | .error _ => "-"
+
+def RawBossFloatReadMaterialization.report
+    (materialization : RawBossFloatReadMaterialization) : String :=
+  joinLines
+    [ "size=" ++ toString materialization.bytes.size
+    , "hex=" ++ bytesHex materialization.bytes
+    , "decodedTime=" ++ toString materialization.rawPrefix.time
+    , "decodedOpcode=" ++ toString materialization.rawPrefix.opcode
+    , "decodedNextOffset=" ++ toString materialization.rawPrefix.nextOffset
+    , "decodedDifficultyMask=" ++ optionIntText materialization.rawPrefix.difficultyMask
+    , "decodedOperandMask=" ++ optionIntText materialization.rawPrefix.operandMask
+    , "outputKind=" ++ bossFloatReadPreparedOutputKindText materialization.prepared
+    , "outputSelectorKnown=" ++ bossFloatReadPreparedOutputKnownText materialization.prepared
+    , "outputFlagEnabled=" ++ bossFloatReadPreparedOutputFlagText materialization.prepared
+    , "bossIndexKind=" ++ bossFloatReadPreparedBossIndexKindText materialization.prepared
+    , "bossIndexValue=" ++ bossFloatReadPreparedBossIndexValueText materialization.prepared
+    , "bossPresent=" ++ bossFloatReadPreparedBossPresentText materialization.prepared
+    , "valueKind=" ++ bossFloatReadPreparedValueKindText materialization.prepared
+    , "value=" ++ bossFloatReadPreparedValueText materialization.prepared
+    , "action=" ++ bossFloatReadResultActionText materialization.result
+    , "result=" ++ optionIntText (bossFloatReadResultValue materialization.result)
+    , "faultKind=" ++ bossFloatReadResultFaultKind materialization.result
+    , "faultDetail=" ++ bossFloatReadResultFaultDetail materialization.result
     , "matchesPath=" ++ toString materialization.matchesPath ]
 
 def RawIntResolverMaterialization.report

@@ -27,10 +27,11 @@ python3 scripts/evaluate_symex_effectiveness.py --run-check
 
 The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_body_candidate_queue.py` and
-`scripts/symex_int_resolver_queue.py` and
-`scripts/symex_int_binary_candidate_queue.py` and
-`scripts/symex_boss_int_candidate_queue.py` and
-`scripts/symex_callret_candidate_queue.py` and
+`scripts/symex_int_resolver_queue.py`,
+`scripts/symex_int_binary_candidate_queue.py`,
+`scripts/symex_boss_int_candidate_queue.py`,
+`scripts/symex_boss_float_candidate_queue.py`,
+`scripts/symex_callret_candidate_queue.py`, and
 `scripts/symex_condcall_candidate_queue.py`, summarizes path coverage, reads
 the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
@@ -43,8 +44,10 @@ The manual verification run on 2026-08-31 executed:
 python3 scripts/evaluate_symex_effectiveness.py > /tmp/touhou_symex_effectiveness_full.json
 ```
 
-Both completed successfully on the current raw-step, raw-body, resolver,
-integer-binary, boss-int, CALL/RET, and conditional-CALL model. When a
+Both completed successfully on the raw-step, raw-body, resolver,
+integer-binary, boss-int, CALL/RET, and conditional-CALL model available at
+that time. On 2026-09-01, `./scripts/check.sh` was extended and rerun
+successfully for the boss-float lane. When a
 previous queue result should be reused instead of recomputed, the equivalent
 assessment is:
 
@@ -58,6 +61,9 @@ python3 scripts/evaluate_symex_effectiveness.py \
   --callret-queue-json /tmp/callret_queue.json \
   --condcall-queue-json /tmp/condcall_queue.json
 ```
+
+Boss-float is currently covered by `./scripts/check.sh` and
+`scripts/symex_boss_float_candidate_queue.py`.
 
 The cost is mostly process startup: the current queues launch
 Lean/Z3/materialization once per candidate.
@@ -391,6 +397,72 @@ Retail calibration added on 2026-09-01:
   an OOB read is a formal fault even when adjacent mapped state lets retail
   continue.
 
+## Boss-indexed float-read coverage
+
+The boss float-read model is the paired lane for:
+
+- TH07 `ECL_GET_BOSS_FLOAT` (`opcode = 44`);
+- TH08 low opcode `87`.
+
+It reuses the same boss slot/index structure as boss-int:
+
+- output slot 0 lvalue resolution;
+- value operand slot 1's mask bit;
+- boss index operand slot 2 through the integer resolver;
+- the fixed `bosses[8]` host array bound.
+
+The float-specific profile adds:
+
+- `RawFloatOperandResolverShape`, whose selector sets are expressed as raw
+  IEEE-754 `f32` bit-pattern ranges because the source casts operands with
+  `(i32)float` before switching;
+- a `RawBossReadNullPolicy` delta: TH07 is `unguarded-deref`, while TH08 is
+  `guarded-skip`.
+
+The symbolic path families are:
+
+```text
+boss-float-value-raw-no-boss-read
+boss-float-index-before-array
+boss-float-index-at-or-past-array
+boss-float-null-deref
+boss-float-null-guarded-skip
+boss-float-value-resolved-host
+boss-float-value-resolved-default-raw
+```
+
+Observed result from `./scripts/check.sh` and
+`scripts/symex_boss_float_candidate_queue.py` on 2026-09-01:
+
+| Metric | Result |
+| --- | --- |
+| environments | 3 |
+| modeled title-specific candidates | 18 |
+| solver status | 18 `sat` queue candidates, plus expected title-specific `unsat` guard controls |
+| Lean byte materialization/replay | 18 `matchesPath=true` |
+| all modeled title-specific boss-float paths covered | yes |
+
+Risk split:
+
+| Boss-float branch | Count | Interpretation |
+| --- | ---: | --- |
+| `boss-index-oob-read` | 6 | resolved boss index is `< 0` or `>= 8`; TH08's null guard is reached only after this array read |
+| `boss-null-deref` | 1 | TH07 can dereference a null boss pointer through an enemy-dependent float selector |
+| `operand-flag-bypass` | 3 | slot 1 mask bit is clear, so no boss table read occurs |
+| `boss-read-default-raw` | 3 | boss table is read, but an unknown float selector falls through to raw bits |
+| `boss-read-host-value` | 3 | ordinary in-bounds host-value control |
+| `boss-null-guarded-skip` | 2 | TH08 positive controls showing the guarded null path skips the write |
+
+The important formal signal is the paired satisfiable/unsatisfiable result:
+
+- TH07 `boss-float-null-deref` is `sat`, while
+  `boss-float-null-guarded-skip` is `unsat`;
+- TH08 `boss-float-null-deref` is `unsat`, while
+  `boss-float-null-guarded-skip` is `sat`.
+
+That is not a hand-picked counterexample. It falls out of one shared
+boss-indexed read shape plus a title-profiled null policy.
+
 ## CALL/RET stack coverage
 
 The shared CALL/RET model covers the plain subroutine control-transfer stack
@@ -578,6 +650,9 @@ Concrete advantages already demonstrated:
   including 13 `arithmetic-overflow` and 13 `arithmetic-fault` records;
 - the boss integer-read queue adds 18 non-manual host-boundary candidates,
   including 9 high-priority OOB/null-deref counterexamples;
+- the boss float-read queue adds 18 non-manual host-boundary candidates,
+  including 7 high-priority OOB/null-deref counterexamples and TH08
+  guarded-skip positive controls;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a
@@ -598,8 +673,8 @@ Fuzz is still better outside the current formal model:
 ## Current verdict
 
 For the implemented VM-core skeleton, first shared body slice, integer resolver
-slice, integer binary-op slice, TH07/TH08 boss integer-read slice, plain
-CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT is already
+slice, integer binary-op slice, TH07/TH08 boss integer-read and boss float-read
+slices, plain CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT is already
 better than fuzzing: it gives exhaustive path-class coverage,
 satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
 TH06/TH07/TH08 semantics.

@@ -109,11 +109,22 @@ def IntSelectorRange.contains (range : IntSelectorRange) (value : Int) : Bool :=
 structure IntSelectorSet where
   ranges : List IntSelectorRange := []
   exclusions : List Int := []
+  excludedRanges : List IntSelectorRange := []
 deriving Repr, DecidableEq
 
 def IntSelectorSet.contains (set : IntSelectorSet) (value : Int) : Bool :=
   set.ranges.any (fun range => range.contains value) &&
-    !set.exclusions.contains value
+    !set.exclusions.contains value &&
+    !set.excludedRanges.any (fun range => range.contains value)
+
+inductive RawBossReadNullPolicy where
+  | unguardedDeref
+  | guardedSkip
+deriving Repr, DecidableEq
+
+def RawBossReadNullPolicy.name : RawBossReadNullPolicy -> String
+  | .unguardedDeref => "unguarded-deref"
+  | .guardedSkip => "guarded-skip"
 
 structure RawBossIntReadShape where
   opcode : Int
@@ -137,6 +148,22 @@ structure RawIntOperandResolverShape where
   maskPolicy : RawIntOperandMaskPolicy
   knownRValueSelectors : IntSelectorSet
   knownLValueSelectors : IntSelectorSet := {}
+deriving Repr, DecidableEq
+
+structure RawFloatOperandResolverShape where
+  maskPolicy : RawIntOperandMaskPolicy
+  knownRValueSelectors : IntSelectorSet
+  knownLValueSelectors : IntSelectorSet := {}
+deriving Repr, DecidableEq
+
+structure RawBossFloatReadShape where
+  opcode : Int
+  outputOperandIndex : Nat
+  valueOperandIndex : Nat
+  bossIndexOperandIndex : Nat
+  bossSlotCount : Nat
+  nullPolicy : RawBossReadNullPolicy
+  nullDerefValueSelectors : IntSelectorSet := {}
 deriving Repr, DecidableEq
 
 inductive RawIntCompareOp where
@@ -229,11 +256,13 @@ structure RawInstrShape where
   fixedJumpShape : Option RawFixedJumpShape := none
   fixedDecJumpShape : Option RawDecJumpShape := none
   intRValueResolver : Option RawIntOperandResolverShape := none
+  floatRValueResolver : Option RawFloatOperandResolverShape := none
   intConditionJumps : List RawIntConditionJumpShape := []
   callRetShape : Option RawCallRetShape := none
   conditionalCallShapes : List RawConditionalCallShape := []
   intBinaryOps : List RawIntBinaryOpShape := []
   bossIntReads : List RawBossIntReadShape := []
+  bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
 deriving Repr, DecidableEq
 
@@ -241,6 +270,11 @@ def RawInstrShape.findBossIntRead?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawBossIntReadShape :=
   rawShape.bossIntReads.find? (fun read => read.opcode == opcode)
+
+def RawInstrShape.findBossFloatRead?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBossFloatReadShape :=
+  rawShape.bossFloatReads.find? (fun read => read.opcode == opcode)
 
 def RawInstrShape.findIntBinaryOp?
     (rawShape : RawInstrShape)

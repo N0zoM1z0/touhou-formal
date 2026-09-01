@@ -103,6 +103,14 @@ lake exe symex list-boss-int-paths
 lake exe symex query-boss-int-values th08 boss-int-null-deref 1 0 | z3 -in
 ```
 
+List and solve boss-indexed float-read branches:
+
+```bash
+lake exe symex list-boss-float-paths
+lake exe symex query-boss-float-values th07 boss-float-null-deref 1 0 | z3 -in
+lake exe symex query-boss-float-values th08 boss-float-null-guarded-skip 1 0 | z3 -in
+```
+
 List and solve CALL/RET stack branches:
 
 ```bash
@@ -288,6 +296,12 @@ Representative Z3 witnesses already covered by `scripts/check.sh`:
 - TH08 `advanced-non-progress`: executing ordinary opcode with `nextOffset = 0`.
 - TH07 `boss-int-null-deref`: `ECL_GET_BOSS_INT`, value operand mask bit set,
   boss index `0`, dereferencing selector `10000`, and `bossPresent=false`.
+- TH07 `boss-float-null-deref`: `ECL_GET_BOSS_FLOAT`, value operand mask bit
+  set, boss index `0`, raw float selector bits for `10004.0f`, and
+  `bossPresent=false`.
+- TH08 `boss-float-null-guarded-skip`: low opcode `87`, value operand mask bit
+  set, in-bounds boss index, and `bossPresent=false`; the source-level guard
+  skips the write instead of dereferencing.
 
 These are not final retail findings by themselves. They are the baseline path
 coverage that later bounded opcode semantics, full subroutine state, and

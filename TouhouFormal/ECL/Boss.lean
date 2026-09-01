@@ -218,4 +218,249 @@ def rawBossIntReadStep
                         (some value)
                         (some prepared))
 
+structure RawBossFloatReadOperands where
+  outputRaw : Int
+  outputHostBefore : Int
+  valueRaw : Int
+  valueHost : Int
+  bossIndexRaw : Int
+  bossIndexHost : Int
+  bossPresent : Bool
+deriving Repr, DecidableEq
+
+structure RawBossFloatReadPrepared where
+  read : RawBossFloatReadShape
+  output : RawFloatLValueResolution
+  bossIndexResolution : Option RawIntOperandResolution := none
+  valueResolution : Option RawFloatOperandResolution := none
+  bossIndexValue : Option Int := none
+  value : Option Int := none
+  bossPresent : Option Bool := none
+deriving Repr, DecidableEq
+
+inductive RawBossFloatReadAction where
+  | yielded
+  | skipped
+  | advanced
+  | valueRawNoBossRead
+  | nullGuardedSkip
+  | nonFloatOutput
+  | vmError
+deriving Repr, DecidableEq
+
+structure RawBossFloatReadOutcome where
+  action : RawBossFloatReadAction
+  targetCursor : Option Int := none
+  cursorClass : Option TouhouFormal.CursorClass := none
+  result : Option Int := none
+  prepared : Option RawBossFloatReadPrepared := none
+deriving Repr, DecidableEq
+
+private def missingFloatResolverFault (shape : HeaderShape) : Fault :=
+  { kind := .invalidInstruction
+    title := shape.title
+    component := "EclRun.bossFloatRead"
+    detail := "profile does not define float operand resolver semantics" }
+
+private def bossFloatIndexOutOfBoundsFault
+    (shape : HeaderShape)
+    (read : RawBossFloatReadShape)
+    (bossIndex : Int) : Fault :=
+  Fault.outOfBoundsRead
+    shape.title
+    "EclRun.bossFloatRead.bosses"
+    ("source boss-indexed float read reaches g_EnemyManager.bosses[index] for opcode " ++
+      toString read.opcode)
+    bossIndex
+    read.bossSlotCount
+
+private def nullBossFloatFault
+    (shape : HeaderShape)
+    (read : RawBossFloatReadShape)
+    (bossIndex : Int) : Fault :=
+  { kind := .nullDereference
+    title := shape.title
+    component := "EclRun.bossFloatRead.bosses"
+    detail :=
+      "source boss-indexed float read dereferences a null boss pointer for opcode " ++
+        toString read.opcode
+    index := some bossIndex
+    bound := some read.bossSlotCount }
+
+private def rawBossFloatReadCursorOutcome
+    (action : RawBossFloatReadAction)
+    (rawPrefix : RawInstrPrefix)
+    (bufferSize : Nat)
+    (result : Option Int := none)
+    (prepared : Option RawBossFloatReadPrepared := none) : RawBossFloatReadOutcome :=
+  { action := action
+    targetCursor := some rawPrefix.nextCursor
+    cursorClass := some (TouhouFormal.classifyCursorTransfer rawPrefix.fileOffset rawPrefix.nextCursor bufferSize)
+    result := result
+    prepared := prepared }
+
+def rawBossFloatReadPrepare
+    (shape : HeaderShape)
+    (rawPrefix : RawInstrPrefix)
+    (read : RawBossFloatReadShape)
+    (operands : RawBossFloatReadOperands) :
+    Except Fault RawBossFloatReadPrepared := do
+  let output <-
+    resolveFloatLValue
+      shape
+      rawPrefix
+      read.outputOperandIndex
+      operands.outputRaw
+      operands.outputHostBefore
+  if output.kind == .nonFloatOutput then
+    .ok
+      { read := read
+        output := output }
+  else
+    match shape.rawInstrShape with
+    | none => .error (missingRawInstrShapeFault shape)
+    | some rawShape =>
+        match rawShape.intRValueResolver, rawShape.floatRValueResolver with
+        | none, _ => .error (missingIntResolverFault shape)
+        | _, none => .error (missingFloatResolverFault shape)
+        | some _, some floatResolver => do
+            let valueFlagEnabled <-
+              rawFloatOperandFlagEnabled
+                shape
+                rawPrefix
+                read.valueOperandIndex
+                floatResolver
+            if !valueFlagEnabled then
+              .ok
+                { read := read
+                  output := output
+                  valueResolution :=
+                    some
+                      { kind := .rawImmediate
+                        value := operands.valueRaw
+                        rawValue := operands.valueRaw
+                        hostValue := none
+                        selectorKnown := floatResolver.knownRValueSelectors.contains operands.valueRaw
+                        flagEnabled := false }
+                  value := some operands.valueRaw }
+            else
+              let bossIndex <-
+                resolveIntRValue
+                  shape
+                  rawPrefix
+                  read.bossIndexOperandIndex
+                  operands.bossIndexRaw
+                  operands.bossIndexHost
+              if bossIndex.value < 0 then
+                .error (bossFloatIndexOutOfBoundsFault shape read bossIndex.value)
+              else if read.bossSlotCount <= bossIndex.value.toNat then
+                .error (bossFloatIndexOutOfBoundsFault shape read bossIndex.value)
+              else if !operands.bossPresent then
+                match read.nullPolicy with
+                | .guardedSkip =>
+                    .ok
+                      { read := read
+                        output := output
+                        bossIndexResolution := some bossIndex
+                        bossIndexValue := some bossIndex.value
+                        bossPresent := some false }
+                | .unguardedDeref =>
+                    if read.nullDerefValueSelectors.contains operands.valueRaw then
+                      .error (nullBossFloatFault shape read bossIndex.value)
+                    else
+                      let value <-
+                        resolveFloatRValue
+                          shape
+                          rawPrefix
+                          read.valueOperandIndex
+                          operands.valueRaw
+                          operands.valueHost
+                      .ok
+                        { read := read
+                          output := output
+                          bossIndexResolution := some bossIndex
+                          valueResolution := some value
+                          bossIndexValue := some bossIndex.value
+                          value := some value.value
+                          bossPresent := some false }
+              else
+                let value <-
+                  resolveFloatRValue
+                    shape
+                    rawPrefix
+                    read.valueOperandIndex
+                    operands.valueRaw
+                    operands.valueHost
+                .ok
+                  { read := read
+                    output := output
+                    bossIndexResolution := some bossIndex
+                    valueResolution := some value
+                    bossIndexValue := some bossIndex.value
+                    value := some value.value
+                    bossPresent := some true }
+
+def rawBossFloatReadStep
+    (shape : HeaderShape)
+    (currentTime : Int)
+    (activeMask overrideMask maxBits bufferSize : Nat)
+    (rawPrefix : RawInstrPrefix)
+    (operands : RawBossFloatReadOperands) :
+    Except Fault RawBossFloatReadOutcome :=
+  match shape.rawInstrShape with
+  | none => .error (missingRawInstrShapeFault shape)
+  | some rawShape =>
+      if currentTime != rawPrefix.time then
+        .ok { action := .yielded }
+      else do
+        let difficultyPass <- rawDifficultyPass shape rawShape rawPrefix activeMask overrideMask maxBits
+        if !difficultyPass then
+          .ok (rawBossFloatReadCursorOutcome .skipped rawPrefix bufferSize)
+        else if rawShape.unimplementedOpcode == some rawPrefix.opcode then
+          .ok { action := .vmError }
+        else
+          match rawShape.findBossFloatRead? rawPrefix.opcode with
+          | none =>
+              .ok (rawBossFloatReadCursorOutcome .advanced rawPrefix bufferSize)
+          | some read => do
+              let prepared <- rawBossFloatReadPrepare shape rawPrefix read operands
+              if prepared.output.kind == .nonFloatOutput then
+                .ok
+                  (rawBossFloatReadCursorOutcome
+                    .nonFloatOutput
+                    rawPrefix
+                    bufferSize
+                    none
+                    (some prepared))
+              else if prepared.bossPresent == some false &&
+                  prepared.valueResolution.isNone &&
+                  read.nullPolicy == .guardedSkip then
+                .ok
+                  (rawBossFloatReadCursorOutcome
+                    .nullGuardedSkip
+                    rawPrefix
+                    bufferSize
+                    none
+                    (some prepared))
+              else
+                match prepared.value with
+                | none =>
+                    .error
+                      { kind := .invalidInstruction
+                        title := shape.title
+                        component := "EclRun.bossFloatRead"
+                        detail := "boss float read reached without a resolved value" }
+                | some value =>
+                    let action :=
+                      match prepared.bossIndexValue with
+                      | none => .valueRawNoBossRead
+                      | some _ => .advanced
+                    .ok
+                      (rawBossFloatReadCursorOutcome
+                        action
+                        rawPrefix
+                        bufferSize
+                        (some value)
+                        (some prepared))
+
 end TouhouFormal.ECL
