@@ -20,6 +20,7 @@ import TouhouFormal.Search.HostEffect
 import TouhouFormal.Search.Shooting
 import TouhouFormal.Search.TimeControl
 import TouhouFormal.Search.BulletControl
+import TouhouFormal.Search.BulletTransform
 import TouhouFormal.Search.LaserSpawn
 import TouhouFormal.Search.Laser
 import TouhouFormal.Search.Animation

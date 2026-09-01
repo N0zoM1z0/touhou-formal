@@ -872,6 +872,68 @@ structure RawBulletControlOpShape where
   rankIntValuesTruncateToI16 : Bool := true
 deriving Repr, DecidableEq
 
+inductive RawBulletTransformIntRole where
+  | index
+  | kind
+  | flag
+  | duration
+  | loopCount
+  | allowWhileActive
+  | payloadInt0
+  | payloadInt1
+deriving Repr, DecidableEq
+
+def RawBulletTransformIntRole.name : RawBulletTransformIntRole -> String
+  | .index => "index"
+  | .kind => "kind"
+  | .flag => "flag"
+  | .duration => "duration"
+  | .loopCount => "loop-count"
+  | .allowWhileActive => "allow-while-active"
+  | .payloadInt0 => "payload-int-0"
+  | .payloadInt1 => "payload-int-1"
+
+inductive RawBulletTransformFloatRole where
+  | speed
+  | angle
+  | payloadFloat0
+  | payloadFloat1
+deriving Repr, DecidableEq
+
+def RawBulletTransformFloatRole.name :
+    RawBulletTransformFloatRole -> String
+  | .speed => "speed"
+  | .angle => "angle"
+  | .payloadFloat0 => "payload-float-0"
+  | .payloadFloat1 => "payload-float-1"
+
+structure RawBulletTransformIntInputShape where
+  role : RawBulletTransformIntRole
+  operandIndex : Nat
+deriving Repr, DecidableEq
+
+structure RawBulletTransformFloatInputShape where
+  role : RawBulletTransformFloatRole
+  operandIndex : Nat
+deriving Repr, DecidableEq
+
+inductive RawBulletTransformOpKind where
+  | legacyCommand
+  | transformRecord
+deriving Repr, DecidableEq
+
+def RawBulletTransformOpKind.name : RawBulletTransformOpKind -> String
+  | .legacyCommand => "legacy-command"
+  | .transformRecord => "transform-record"
+
+structure RawBulletTransformOpShape where
+  opcode : Int
+  kind : RawBulletTransformOpKind
+  intInputs : List RawBulletTransformIntInputShape
+  floatInputs : List RawBulletTransformFloatInputShape
+  tableCount : Nat
+deriving Repr, DecidableEq
+
 inductive RawLaserSpawnDescriptorTarget where
   | enemyLaserShooter
   | bulletSpawnDescriptor
@@ -2228,6 +2290,7 @@ structure RawInstrShape where
   shootingOps : List RawShootingOpShape := []
   timeControlOps : List RawTimeControlOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
+  bulletTransformOps : List RawBulletTransformOpShape := []
   laserSpawnOps : List RawLaserSpawnOpShape := []
   laserOps : List RawLaserOpShape := []
   animationOps : List RawAnimationOpShape := []
@@ -2352,6 +2415,11 @@ def RawInstrShape.findBulletControlOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawBulletControlOpShape :=
   rawShape.bulletControlOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findBulletTransformOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBulletTransformOpShape :=
+  rawShape.bulletTransformOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findLaserSpawnOp?
     (rawShape : RawInstrShape)

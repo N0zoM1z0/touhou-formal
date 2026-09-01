@@ -609,6 +609,21 @@ The model evaluates slot-key equality with IEEE binary32 ordered equality, so
 arithmetic result bits remain explicit host values, but input resolution and
 source write order are executable Lean semantics.
 
+## Bullet Command and Transform Table Evidence
+
+- `reference/th07/src/th07/EclManager.cpp:1330-1339` resolves the command index
+  first, indexes `enemy->bulletProps.commands[index]`, and then writes type,
+  flag, duration, loop count, speed, and angle. `BulletManager.hpp:65-73` and
+  `:110` define the record and its six-entry table.
+- `reference/th08/src/EclRunHigh.inl:187-201` likewise indexes
+  `bulletProps.transforms[READ_I(0)]` before writing kind, activation policy,
+  two integer parameters, and two float parameters. `BulletManager.hpp:115-127`
+  and `:180` define the transform record and its 18-entry table.
+
+The shared model makes the fixed table sizes and first-access ordering
+executable. An out-of-range index faults before later operands are resolved,
+while an in-range entry retains each title's distinct field layout.
+
 ## Effect, Particle, and Sound Host-Boundary Evidence
 
 - `reference/th06/src/EclManager.cpp:412-421` resolves four integer and four

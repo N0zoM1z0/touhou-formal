@@ -130,6 +130,13 @@ is evaluated from binary32 bits, including signed-zero equality and unordered
 NaNs. An out-of-range callback index preserves the field writes that precede
 the table lookup and suppresses the later parameter reads.
 
+Bullet command/transform installation preserves the opposite ordering visible
+in the source: the resolved table index selects an unchecked fixed-size entry
+before any record fields are populated. The model therefore reports an
+out-of-range write after the index read alone and suppresses all later operand
+resolution. TH07 uses six legacy command records; TH08 uses 18 transform
+records and stores the signed kind through its 32-bit representation.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

@@ -30,6 +30,7 @@ import TouhouFormal.ECL.HostEffect
 import TouhouFormal.ECL.Shooting
 import TouhouFormal.ECL.TimeControl
 import TouhouFormal.ECL.BulletControl
+import TouhouFormal.ECL.BulletTransform
 import TouhouFormal.ECL.LaserSpawn
 import TouhouFormal.ECL.Laser
 import TouhouFormal.ECL.Animation

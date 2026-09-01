@@ -102,6 +102,7 @@ def eclOpcodeDisableShooting : Int := 107
 def eclOpcodeEnableShooting : Int := 108
 def eclOpcodeSpawnPreviousPattern : Int := 109
 def eclOpcodeSetShootOffset : Int := 110
+def eclOpcodeInitBulletTransform : Int := 111
 def eclOpcodeClearBulletsForTransition : Int := 112
 def eclOpcodeSetBulletSound : Int := 113
 def eclOpcodeSpawnLaserFixed : Int := 114
@@ -1154,6 +1155,19 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                     { operandIndex := 3, policy := .intRValue },
                     { operandIndex := 4, policy := .intRValue },
                     { operandIndex := 5, policy := .intRValue } ] } ]
+          bulletTransformOps :=
+            [ { opcode := eclOpcodeInitBulletTransform
+                kind := .transformRecord
+                intInputs :=
+                  [ { role := .index, operandIndex := 0 },
+                    { role := .kind, operandIndex := 1 },
+                    { role := .allowWhileActive, operandIndex := 2 },
+                    { role := .payloadInt0, operandIndex := 3 },
+                    { role := .payloadInt1, operandIndex := 4 } ]
+                floatInputs :=
+                  [ { role := .payloadFloat0, operandIndex := 5 },
+                    { role := .payloadFloat1, operandIndex := 6 } ]
+                tableCount := 18 } ]
           laserSpawnOps :=
             [ laserSpawnOp eclOpcodeSpawnLaserFixed .fixed,
               laserSpawnOp eclOpcodeSpawnLaserAimed .aimedAtPlayer ]

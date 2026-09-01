@@ -527,6 +527,22 @@ private def describeBulletControlOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeBulletTransformOutcome
+    (result :
+      Except TouhouFormal.Fault TouhouFormal.ECL.RawBulletTransformOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let faultSummary :=
+        match outcome.fault with
+        | none => "none"
+        | some fault => fault.describe
+      "action=" ++ reprStr outcome.action ++
+        " effect=" ++ reprStr outcome.effect ++
+        " fault=" ++ faultSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeLaserSpawnOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawLaserSpawnOutcome) :
     String :=
@@ -933,6 +949,13 @@ def main : IO Unit := do
   IO.println s!"TH07 radius: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th07RadiusOutcome}"
   IO.println s!"TH08 transition clear: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th08ClearTransitionOutcome}"
   IO.println s!"TH08 sound: {describeBulletControlOutcome TouhouFormal.Search.BulletControl.th08SoundPositiveOutcome}"
+  IO.println ""
+  IO.println "Bullet command and transform controls"
+  IO.println s!"TH07 bullet-command opcode count: {TouhouFormal.Search.BulletTransform.bulletTransformOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 bullet-transform opcode count: {TouhouFormal.Search.BulletTransform.bulletTransformOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH07 command index fault: {describeBulletTransformOutcome TouhouFormal.Search.BulletTransform.th07Index6Outcome}"
+  IO.println s!"TH08 transform index 17: {describeBulletTransformOutcome TouhouFormal.Search.BulletTransform.th08Index17Outcome}"
+  IO.println s!"TH08 transform index 18 fault: {describeBulletTransformOutcome TouhouFormal.Search.BulletTransform.th08Index18Outcome}"
   IO.println ""
   IO.println "Laser spawn controls"
   IO.println s!"TH06 laser-spawn opcode count: {TouhouFormal.Search.LaserSpawn.laserSpawnOpcodeCount TouhouFormal.TH06.headerShape}"

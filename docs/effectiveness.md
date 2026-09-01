@@ -586,8 +586,8 @@ Source opcode surface from the local reference clones:
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
 | TH06 | 136 `ECL_OPCODE_*` symbols | 131: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic and special numeric operations, float functions, compare-register producers, CALL/RET, conditional CALL, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 5 |
-| TH07 | 159 `EclOpcode` symbols | 148: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic/branches/special numeric operations, interpolation slots, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 11 |
-| TH08 | 184 numeric `case` labels across the integrated low/high switch | 154: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic/branches/special numeric operations, interpolation slots, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 30 |
+| TH07 | 159 `EclOpcode` symbols | 149: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic/branches/special numeric operations, interpolation and bullet-command tables, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 10 |
+| TH08 | 184 numeric `case` labels across the integrated low/high switch | 155: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic/branches/special numeric operations, interpolation and bullet-transform tables, CALL/RET, boss reads, movement, enemy-state/lifecycle, item/drop, boss/spellcard lifecycle, effect/sound/particle requests, shooting/time/bullet control, laser, animation, bullet-pattern, callback, and interrupt families | 29 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode
 constants and consecutive family ranges referenced by each Lean `Wire.lean`
@@ -746,6 +746,9 @@ Concrete advantages already demonstrated:
 - shared Lean controls now cover nine special numeric opcodes plus the TH07/08
   interpolation installers, including repeated reads, signed-zero equality,
   no-free-slot suppression, and callback index 8 faults;
+- shared Lean controls cover TH07's six-entry bullet-command table and TH08's
+  18-entry transform table, including first-access OOB faults that suppress all
+  later operand reads;
 - TH08's difficulty override rule is captured as a semantic delta, not as a
   random trace divergence;
 - the TH06 `jumped-before-buffer` symbolic witness has been lowered into a

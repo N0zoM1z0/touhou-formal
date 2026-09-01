@@ -294,6 +294,11 @@ SOURCE_COVERAGE = [
         "reason": "shared semantics cover nine self-position/LERP/vector/distance opcodes plus TH07/TH08 8-slot interpolation installation, repeated resolver reads, IEEE slot-key equality, no-slot suppression, and unchecked callback-table indices",
     },
     {
+        "area": "bullet command and transform tables",
+        "status": "covered-by-model",
+        "reason": "shared installation semantics cover TH07's 6-entry legacy command table and TH08's 18-entry transform table, including first-access OOB faults, later-operand suppression, and title-specific record fields",
+    },
+    {
         "area": "random scalar generation",
         "status": "covered-by-model",
         "reason": "shared profiles model TH06 range generators, TH07 range/add/sign generators, and TH08 sign generators with explicit RNG words and the TH06 SetVar re-resolution quirk",

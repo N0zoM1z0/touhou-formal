@@ -71,6 +71,11 @@ The executable model currently covers these source-backed boundaries:
   and two-output write order. A separate shared 8-slot interpolation model
   covers TH07/TH08 installation, including IEEE signed-zero/NaN matching,
   no-free-slot suppression, and unchecked 8-entry callback-table indexing.
+- Shared bullet command/transform semantics covers TH07's six-entry legacy
+  command table and TH08's 18-entry transform table. The table index is
+  resolved and checked first, so an unchecked out-of-range source write faults
+  before later operands are read; valid writes retain raw 32-bit kind values
+  and title-specific record fields.
 - Shared random-value semantics cover integer range/modulo, range-plus-addend,
   repeated-bound float ranges, and parity-selected sign opcodes. Integer results use explicit 32-bit word
   arithmetic; float RNG results stay at the host/SMT boundary. TH06 preserves
