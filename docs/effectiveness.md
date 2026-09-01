@@ -571,7 +571,7 @@ Source opcode surface from the local reference clones:
 | Title | Source surface | Currently opcode-specific | Not-yet-modeled lower bound |
 | --- | ---: | --- | ---: |
 | TH06 | 136 `ECL_OPCODE_*` symbols | 94: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions, compare-register producers, CALL/RET, conditional CALL, immediate/timed movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 42 |
-| TH07 | 159 `EclOpcode` symbols | 96: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 63 |
+| TH07 | 159 `EclOpcode` symbols | 97: dispatch/control, scalar assignment, random values/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 62 |
 | TH08 | 184 numeric `case` labels across the integrated low/high switch | 95: dispatch/control, scalar assignment, random sign/directions, integer/float arithmetic, float functions and branches, CALL/RET, boss reads, immediate/timed/orbit movement, enemy-state, shooting-control, bullet-pattern, callback configuration, and interrupts | 89 |
 
 The report no longer carries a hand-maintained opcode list. It extracts opcode

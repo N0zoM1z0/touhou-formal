@@ -454,6 +454,7 @@ def main : IO Unit := do
   IO.println s!"TH08 random opcode count: {TouhouFormal.Search.Random.randomOpcodeCount TouhouFormal.TH08.headerShape}"
   IO.println s!"TH06 int range: {describeRandomOutcome TouhouFormal.Search.Random.th06IntRandOutcome}"
   IO.println s!"TH07 float range add: {describeRandomOutcome TouhouFormal.Search.Random.th07FloatRandAddOutcome}"
+  IO.println s!"TH07 float between: {describeRandomOutcome TouhouFormal.Search.Random.th07FloatBetweenOutcome}"
   IO.println s!"TH08 int sign: {describeRandomOutcome TouhouFormal.Search.Random.th08IntSignOutcome}"
   IO.println ""
   IO.println "Comparison controls"

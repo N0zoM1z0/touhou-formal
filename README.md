@@ -67,10 +67,11 @@ The executable model currently covers these source-backed boundaries:
   preserves TH06's unusual `GetVar`-pointer read followed by `SetVar`, while
   transcendental result bits remain an explicit host/SMT float-theory boundary.
 - Shared random-value semantics cover integer range/modulo, range-plus-addend,
-  and parity-selected sign opcodes. Integer results use explicit 32-bit word
+  repeated-bound float ranges, and parity-selected sign opcodes. Integer results use explicit 32-bit word
   arithmetic; float RNG results stay at the host/SMT boundary. TH06 preserves
   the extra `SetVar` RHS lookup that can reinterpret generated result bits as
-  an ECL selector.
+  an ECL selector, while TH07 opcode 51 preserves both occurrences of its
+  lower-bound resolver read.
 - The first gameplay host-effect family covers 24 immediate movement opcodes:
   position, axis/polar velocity, angular velocity, speed, acceleration,
   player-relative motion, and movement bounds. Shared effects retain title

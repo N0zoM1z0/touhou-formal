@@ -211,6 +211,7 @@ inductive RawRandomOpKind where
   | intRangeAdd
   | floatRange
   | floatRangeAdd
+  | floatBetween
   | intSign
   | floatSign
 deriving Repr, DecidableEq
@@ -220,12 +221,13 @@ def RawRandomOpKind.name : RawRandomOpKind -> String
   | .intRangeAdd => "int-range-add"
   | .floatRange => "float-range"
   | .floatRangeAdd => "float-range-add"
+  | .floatBetween => "float-between"
   | .intSign => "int-sign"
   | .floatSign => "float-sign"
 
 def RawRandomOpKind.scalarKind : RawRandomOpKind -> RawScalarKind
   | .intRange | .intRangeAdd | .intSign => .int
-  | .floatRange | .floatRangeAdd | .floatSign => .float
+  | .floatRange | .floatRangeAdd | .floatBetween | .floatSign => .float
 
 inductive RawRandomEntropyKind where
   | u32Range
@@ -240,11 +242,15 @@ def RawRandomEntropyKind.name : RawRandomEntropyKind -> String
 
 def RawRandomOpKind.entropyKind : RawRandomOpKind -> RawRandomEntropyKind
   | .intRange | .intRangeAdd => .u32Range
-  | .floatRange | .floatRangeAdd => .floatZeroToOne
+  | .floatRange | .floatRangeAdd | .floatBetween => .floatZeroToOne
   | .intSign | .floatSign => .u16Parity
 
 def RawRandomOpKind.requiresAddend : RawRandomOpKind -> Bool
-  | .intRangeAdd | .floatRangeAdd => true
+  | .intRangeAdd | .floatRangeAdd | .floatBetween => true
+  | _ => false
+
+def RawRandomOpKind.repeatsAddend : RawRandomOpKind -> Bool
+  | .floatBetween => true
   | _ => false
 
 inductive RawRandomWritePolicy where

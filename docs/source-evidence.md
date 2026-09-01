@@ -177,9 +177,11 @@ relative to `/home/yann/yann/touhou/formal`.
   player-relative operands; axis velocity additionally writes `atan2f(y, x)`.
 - `reference/th07/src/th07/EclManager.cpp:1573`: movement bounds resolve four
   float operands and toggle `hasMovementBounds`.
-- `reference/th07/src/th07/EclManager.cpp:1587`: opcode 52 selects a
-  player-side exit cone, reflects it at the rectangular margins, and in the
-  right-positive branch subtracts `enemy->angle` rather than `exitAngle`.
+- `reference/th07/src/th07/EclManager.cpp:1587`: opcode 51 resolves upper
+  operand 2 and lower operand 1 for the RNG range, then resolves lower operand
+  1 again for the addition. Opcode 52 selects a player-side exit cone,
+  reflects it at the rectangular margins, and in the right-positive branch
+  subtracts `enemy->angle` rather than `exitAngle`.
 - `reference/th07/src/th07/EclManager.cpp:1965`: opcode 155 selects its exit
   cone using player/enemy X plus fixed 96/288 inner-arena thresholds.
 - `reference/th07/src/th07/EclManager.cpp:576`: timed direction and position

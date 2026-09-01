@@ -10,6 +10,7 @@ open TouhouFormal.ECL
 def f32OneBits : Int := 1065353216
 def f32TwoBits : Int := 1073741824
 def f32TwoPointFiveBits : Int := 1075838976
+def f32ThreeBits : Int := 1077936128
 
 def randomOpcodeCount (shape : HeaderShape) : Nat :=
   match shape.rawInstrShape with
@@ -47,6 +48,12 @@ def outcomePositiveSign? (result : Except TouhouFormal.Fault RawRandomOutcome) :
   match result with
   | .error _ => none
   | .ok outcome => outcome.result.bind (fun value => value.positiveSign)
+
+def outcomePrepared? (result : Except TouhouFormal.Fault RawRandomOutcome) :
+    Option RawRandomPrepared :=
+  match result with
+  | .error _ => none
+  | .ok outcome => outcome.prepared
 
 def th06IntRandPrefix : RawInstrPrefix :=
   { fileOffset := 0
@@ -132,12 +139,34 @@ def th08IntSignOutcome : Except TouhouFormal.Fault RawRandomOutcome :=
     th08IntSignPrefix
     th08IntSignOperands
 
+def th07FloatBetweenPrefix : RawInstrPrefix :=
+  { fileOffset := 0
+    time := 0
+    opcode := TouhouFormal.TH07.eclOpcodeRandomFloatBetween
+    nextOffset := 24
+    difficultyMask := some 1
+    operandMask := some 7 }
+
+def th07FloatBetweenOutcome : Except TouhouFormal.Fault RawRandomOutcome :=
+  rawRandomStep
+    TouhouFormal.TH07.headerShape 0 1 0 8 64 th07FloatBetweenPrefix
+    { outputRaw := 1176260608
+      outputIntHostBefore := 0
+      outputFloatHostBefore := 9
+      valueRaw := 1176256512
+      valueHost := f32ThreeBits
+      addendRaw := 1176256512
+      addendHost := f32OneBits
+      addendHostValues := [f32OneBits, f32TwoBits]
+      rngWord := 1234
+      floatResultBits := f32TwoPointFiveBits }
+
 theorem th06_random_profile_count :
     randomOpcodeCount TouhouFormal.TH06.headerShape = 4 := by
   rfl
 
 theorem th07_random_profile_count :
-    randomOpcodeCount TouhouFormal.TH07.headerShape = 6 := by
+    randomOpcodeCount TouhouFormal.TH07.headerShape = 7 := by
   rfl
 
 theorem th08_random_profile_count :
@@ -173,6 +202,18 @@ theorem th06_int_rand_uses_unsigned_modulo :
 
 theorem th07_float_rand_add_records_external_result :
     outcomeGeneratedWord? th07FloatRandAddOutcome = some f32TwoPointFiveBits := by
+  rfl
+
+theorem th07_float_between_preserves_the_repeated_lower_bound_read :
+    (outcomePrepared? th07FloatBetweenOutcome).map
+      (fun prepared =>
+        (prepared.valueResolution.value,
+          prepared.addendResolution.map RawRandomOperandResolution.value,
+          prepared.repeatedAddendResolution.map
+            RawRandomOperandResolution.value,
+          prepared.output.kind?)) =
+      some
+        (f32ThreeBits, some f32OneBits, some f32TwoBits, some .float) := by
   rfl
 
 theorem th08_even_rng_word_selects_negative_sign :

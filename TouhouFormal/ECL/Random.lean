@@ -14,6 +14,8 @@ structure RawRandomOperands where
   valueHost : Int
   addendRaw : Int := 0
   addendHost : Int := 0
+  /-- Optional per-occurrence values for source expressions that resolve twice. -/
+  addendHostValues : List Int := []
   rngWord : Int
   floatResultBits : Int := 0
   sourceResultHost : Int := 0
@@ -33,6 +35,7 @@ structure RawRandomPrepared where
   output : RawScalarAssignOutput
   valueResolution : RawRandomOperandResolution
   addendResolution : Option RawRandomOperandResolution
+  repeatedAddendResolution : Option RawRandomOperandResolution
   sourceWriteResolution : Option RawIntOperandResolution
   generatedWord : Int
   writtenWord : Int
@@ -142,7 +145,7 @@ private def computeRandomWord
         TouhouFormal.toWord32Bits value
       else
         TouhouFormal.word32Neg value
-  | .floatRange | .floatRangeAdd | .floatSign =>
+  | .floatRange | .floatRangeAdd | .floatBetween | .floatSign =>
       TouhouFormal.toWord32Bits operands.floatResultBits
 
 private def randomPositiveSign?
@@ -152,6 +155,11 @@ private def randomPositiveSign?
   | .intSign | .floatSign =>
       some (TouhouFormal.toWord32Bits rngWord % 2 == 1)
   | _ => none
+
+private def randomAddendHostValue
+    (operands : RawRandomOperands)
+    (occurrence : Nat) : Int :=
+  operands.addendHostValues[occurrence]?.getD operands.addendHost
 
 def rawRandomPrepare
     (shape : HeaderShape)
@@ -181,8 +189,24 @@ def rawRandomPrepare
               scalarKind
               slot
               operands.addendRaw
-              operands.addendHost
+              (randomAddendHostValue operands 0)
           .ok (some value)
+    let repeatedAddendResolution <-
+      if op.kind.repeatsAddend then
+        match op.addendOperandIndex with
+        | none => .ok none
+        | some slot => do
+            let value <-
+              resolveRandomOperand
+                shape
+                rawPrefix
+                scalarKind
+                slot
+                operands.addendRaw
+                (randomAddendHostValue operands 1)
+            .ok (some value)
+      else
+        .ok none
     let addend := addendResolution.map RawRandomOperandResolution.value
     let generatedWord :=
       computeRandomWord op valueResolution.value addend operands
@@ -216,6 +240,7 @@ def rawRandomPrepare
         output := output
         valueResolution := valueResolution
         addendResolution := addendResolution
+        repeatedAddendResolution := repeatedAddendResolution
         sourceWriteResolution := sourceWriteResolution
         generatedWord := generatedWord
         writtenWord := writtenWord
