@@ -175,6 +175,31 @@ private def describeTimedMovementOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeOrbitMovementOutcome
+    (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawOrbitMovementOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            "mode=" ++ reprStr effect.modeWrite ++
+              " origin=" ++ reprStr
+                (effect.interpolationOriginWrite,
+                  effect.interpolationOriginXYWrite) ++
+              " orbit=" ++ reprStr
+                (effect.orbitAngleWrite,
+                  effect.orbitAngularVelocityWrite,
+                  effect.orbitRadiusWrite,
+                  effect.radialVelocityWrite) ++
+              " timers=" ++ reprStr
+                (effect.movementDurationWrite, effect.movementTimerWrite)
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeEnemyStateOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawEnemyStateOutcome) :
     String :=
@@ -435,6 +460,11 @@ def main : IO Unit := do
   IO.println s!"TH06 timed position: {describeTimedMovementOutcome TouhouFormal.Search.TimedMovement.th06PositionOutcome}"
   IO.println s!"TH07 immediate timed direction: {describeTimedMovementOutcome TouhouFormal.Search.TimedMovement.th07ImmediateDirectionOutcome}"
   IO.println s!"TH08 timed player direction: {describeTimedMovementOutcome TouhouFormal.Search.TimedMovement.th08InterpolatedPlayerDirectionOutcome}"
+  IO.println s!"TH06 orbit movement opcode count: {TouhouFormal.Search.OrbitMovement.orbitMovementOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 orbit movement opcode count: {TouhouFormal.Search.OrbitMovement.orbitMovementOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 orbit movement opcode count: {TouhouFormal.Search.OrbitMovement.orbitMovementOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH07 orbit: {describeOrbitMovementOutcome TouhouFormal.Search.OrbitMovement.th07OrbitOutcome}"
+  IO.println s!"TH08 orbit from position: {describeOrbitMovementOutcome TouhouFormal.Search.OrbitMovement.th08OrbitFromPositionOutcome}"
   IO.println ""
   IO.println "Enemy state controls"
   IO.println s!"TH06 enemy-state opcode count: {TouhouFormal.Search.EnemyState.enemyStateOpcodeCount TouhouFormal.TH06.headerShape}"

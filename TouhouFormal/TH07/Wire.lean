@@ -58,6 +58,12 @@ def eclOpcodeSetMoveAcceleration : Int := 50
 def eclOpcodeMoveAtPlayer : Int := 53
 def eclOpcodeMoveDirectionTimed : Int := 54
 def eclOpcodeMovePositionTimed : Int := 55
+def eclOpcodeMoveOrbit : Int := 56
+def eclOpcodeSetOrbitRadius : Int := 57
+def eclOpcodeSetOrbitAngle : Int := 58
+def eclOpcodeSetMoveTimerPolar : Int := 59
+def eclOpcodeSetMoveTimerOrbit : Int := 60
+def eclOpcodeSetMoveTimerInterpolation : Int := 61
 def eclOpcodeSetMovementBounds : Int := 62
 def eclOpcodeDisableMovementBounds : Int := 63
 def eclOpcodeSpawnBulletPatternFirst : Int := 64
@@ -203,6 +209,10 @@ def eclEvidence : List TouhouFormal.SourceRef :=
         startLine := 1218
         endLine := 1249
         claim := "Immediate movement opcodes resolve position, axis velocity, angular velocity, speed, acceleration, and player-relative operands and update the corresponding movement mode." },
+      { path := "reference/th07/src/th07/EclManager.cpp"
+        startLine := 1538
+        endLine := 1571
+        claim := "Timed direction/position and orbit opcodes resolve their source operands in handler order, assign movement timers, and select polar, orbit, or interpolation modes." },
       { path := "reference/th07/src/th07/EclManager.cpp"
         startLine := 1573
         endLine := 1584
@@ -552,6 +562,37 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 easingPolicy := .intRValue 1
                 mirrorDeltaX := true
                 zeroVelocity := true } ]
+          orbitMovementOps :=
+            [ { opcode := eclOpcodeMoveOrbit
+                kind := .startFull
+                floatInputs :=
+                  [ { role := .originX, operandIndex := 1 },
+                    { role := .originY, operandIndex := 2 },
+                    { role := .originZ, operandIndex := 3 },
+                    { role := .angle, operandIndex := 4 },
+                    { role := .angularVelocity, operandIndex := 5 },
+                    { role := .radius, operandIndex := 6 },
+                    { role := .radialVelocity, operandIndex := 7 } ]
+                durationOperandIndex := some 0 },
+              { opcode := eclOpcodeSetOrbitRadius
+                kind := .setRadius
+                floatInputs :=
+                  [ { role := .radius, operandIndex := 0 },
+                    { role := .radialVelocity, operandIndex := 1 } ] },
+              { opcode := eclOpcodeSetOrbitAngle
+                kind := .setAngle
+                floatInputs :=
+                  [ { role := .angle, operandIndex := 0 },
+                    { role := .angularVelocity, operandIndex := 1 } ] },
+              { opcode := eclOpcodeSetMoveTimerPolar
+                kind := .setModeTimer .polar
+                durationOperandIndex := some 0 },
+              { opcode := eclOpcodeSetMoveTimerOrbit
+                kind := .setModeTimer .orbit
+                durationOperandIndex := some 0 },
+              { opcode := eclOpcodeSetMoveTimerInterpolation
+                kind := .setModeTimer .interpolation
+                durationOperandIndex := some 0 } ]
           enemyStateOps :=
             [ { opcode := eclOpcodeSetHitboxSize
                 kind := .setPrimaryHitbox 3

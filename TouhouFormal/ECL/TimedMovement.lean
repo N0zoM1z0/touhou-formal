@@ -146,6 +146,7 @@ private def expectedTimedMovementRoles
     (family : RawTimedMovementFamilyShape) : List RawTimedMovementFloatRole :=
   match family.kind with
   | .direction | .playerDirection => [.angle, .speed]
+  | .hostDirection => [.speed]
   | .position =>
       if family.zeroTargetZ then
         [.targetX, .targetY]
@@ -345,12 +346,16 @@ private def prepareTimedMovementInterpolatedDirection
     (durationOccurrence : Nat) :
     Except Fault RawTimedMovementPrepared := do
   let family := familyMatch.family
-  let angleRead <-
+  let angleReads <-
     match family.kind with
     | .currentDirection =>
-        resolveTimedMovementCurrentAngle shape rawPrefix operands
+        let read <- resolveTimedMovementCurrentAngle shape rawPrefix operands
+        .ok [read]
     | .direction | .playerDirection =>
-        resolveTimedMovementFloat shape rawPrefix family operands .angle 0
+        let read <-
+          resolveTimedMovementFloat shape rawPrefix family operands .angle 0
+        .ok [read]
+    | .hostDirection => .ok []
     | .position =>
         .error
           (malformedTimedMovementShapeFault shape family
@@ -358,7 +363,7 @@ private def prepareTimedMovementInterpolatedDirection
   let speedRead0 <-
     match family.kind with
     | .currentDirection => .ok (timedMovementCurrentSpeedRead operands 0)
-    | .direction | .playerDirection =>
+    | .direction | .hostDirection | .playerDirection =>
         resolveTimedMovementFloat shape rawPrefix family operands .speed 0
     | .position =>
         .error
@@ -369,7 +374,7 @@ private def prepareTimedMovementInterpolatedDirection
   let speedRead1 <-
     match family.kind with
     | .currentDirection => .ok (timedMovementCurrentSpeedRead operands 1)
-    | .direction | .playerDirection =>
+    | .direction | .hostDirection | .playerDirection =>
         resolveTimedMovementFloat shape rawPrefix family operands .speed 1
     | .position =>
         .error
@@ -394,8 +399,8 @@ private def prepareTimedMovementInterpolatedDirection
   .ok
     { familyMatch := familyMatch
       branch := .interpolated
-      reads :=
-        [angleRead, speedRead0, durationRead0, speedRead1,
+      reads := angleReads ++
+        [speedRead0, durationRead0, speedRead1,
           durationRead1, durationWriteRead] ++ easingReads
       effectiveAngleBits := some effectiveAngle
       effect := effect }
@@ -408,8 +413,17 @@ private def prepareTimedMovementImmediate
     (testRead : RawTimedMovementRead) :
     Except Fault RawTimedMovementPrepared := do
   let family := familyMatch.family
-  let angleRead <-
-    resolveTimedMovementFloat shape rawPrefix family operands .angle 0
+  let angleReads <-
+    match family.kind with
+    | .hostDirection => .ok []
+    | .direction | .playerDirection =>
+        let read <-
+          resolveTimedMovementFloat shape rawPrefix family operands .angle 0
+        .ok [read]
+    | .currentDirection | .position =>
+        .error
+          (malformedTimedMovementShapeFault shape family
+            "handler without an angle operand entered immediate preparation")
   let speedRead <-
     resolveTimedMovementFloat shape rawPrefix family operands .speed 0
   let (timerValue, timerReads) <-
@@ -437,7 +451,7 @@ private def prepareTimedMovementImmediate
   .ok
     { familyMatch := familyMatch
       branch := .immediatePolar
-      reads := [testRead, angleRead, speedRead] ++ timerReads
+      reads := [testRead] ++ angleReads ++ [speedRead] ++ timerReads
       effectiveAngleBits := some angleBits
       effect := effect }
 
@@ -452,7 +466,7 @@ def rawTimedMovementPrepare
   match family.kind with
   | .position =>
       prepareTimedMovementPosition shape rawPrefix familyMatch operands
-  | .direction | .currentDirection | .playerDirection =>
+  | .direction | .hostDirection | .currentDirection | .playerDirection =>
       match family.nonpositivePolicy with
       | .alwaysInterpolate =>
           prepareTimedMovementInterpolatedDirection

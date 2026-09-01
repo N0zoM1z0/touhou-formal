@@ -181,6 +181,9 @@ relative to `/home/yann/yann/touhou/formal`.
 - `reference/th07/src/th07/EclManager.cpp:1538`: timed direction takes a
   nonpositive-duration polar fast path and resolves duration again for its
   timer write; opcodes 54 and 55 otherwise call the shared helpers.
+- `reference/th07/src/th07/EclManager.cpp:1557`: opcodes 56 through 61 write
+  orbit origin/angle/radius state or select polar, orbit, and interpolation
+  movement modes while assigning the shared movement timer.
 - `reference/th07/src/th07/EclManager.cpp:23`: `GET_INT_VALUE` uses `paramMask`
   bit `1 << index` to choose raw operand versus `GetVarValue` resolution.
 - `reference/th07/src/th07/EclManager.cpp:116`: `GetVarValue` resolves known
@@ -299,6 +302,12 @@ relative to `/home/yann/yann/touhou/formal`.
   four-slot coordinate deltas used by the older `atan2f` opcodes.
 - `reference/th08/src/EclRunLow.inl:353`: low opcode 37 normalizes float slot 0
   in place through `AddNormalizeAngle`.
+- `reference/th08/src/EclDependencies.cpp:99`: low opcode 67 and high opcode
+  178 derive an angle in host code and then share immediate/timed polar
+  displacement writes; neither handler reads a bytecode angle operand.
+- `reference/th08/src/EclRunLow.inl:571`: opcodes 72 through 74 initialize or
+  partially update orbit motion. Opcode 72 writes only origin X/Y, while
+  opcode 73 snapshots the full current position and sets radius to zero.
 - `reference/th08/src/EclRunLow.inl:694`: TH08 low opcode 86 writes slot 0
   from raw slot 1 when `operandFlags & 2U` is clear, otherwise it resolves slot
   1 against `g_EnemyManager.bosses[ReadInt(..., 2)]`.

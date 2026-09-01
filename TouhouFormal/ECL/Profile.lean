@@ -346,6 +346,7 @@ deriving Repr, DecidableEq
 
 inductive RawTimedMovementKind where
   | direction
+  | hostDirection
   | position
   | currentDirection
   | playerDirection
@@ -353,6 +354,7 @@ deriving Repr, DecidableEq
 
 def RawTimedMovementKind.name : RawTimedMovementKind -> String
   | .direction => "direction"
+  | .hostDirection => "host-direction"
   | .position => "position"
   | .currentDirection => "current-direction"
   | .playerDirection => "player-direction"
@@ -465,6 +467,57 @@ def RawTimedMovementFamilyShape.easingFromOpcode?
     match family.easingPolicy with
     | .opcodeOffset firstValue => some (firstValue + opcode - family.firstOpcode)
     | .intRValue _ => none
+
+inductive RawOrbitMovementKind where
+  | startFull
+  | startFromCurrentPosition
+  | setRadius
+  | setAngle
+  | setModeTimer (mode : RawMovementMode)
+  | setVelocities
+deriving Repr, DecidableEq
+
+def RawOrbitMovementKind.name : RawOrbitMovementKind -> String
+  | .startFull => "start-full"
+  | .startFromCurrentPosition => "start-from-current-position"
+  | .setRadius => "set-radius"
+  | .setAngle => "set-angle"
+  | .setModeTimer mode => "set-" ++ mode.name ++ "-timer"
+  | .setVelocities => "set-velocities"
+
+inductive RawOrbitMovementFloatRole where
+  | originX
+  | originY
+  | originZ
+  | angle
+  | angularVelocity
+  | radius
+  | radialVelocity
+deriving Repr, DecidableEq
+
+def RawOrbitMovementFloatRole.name : RawOrbitMovementFloatRole -> String
+  | .originX => "origin-x"
+  | .originY => "origin-y"
+  | .originZ => "origin-z"
+  | .angle => "angle"
+  | .angularVelocity => "angular-velocity"
+  | .radius => "radius"
+  | .radialVelocity => "radial-velocity"
+
+structure RawOrbitMovementFloatInputShape where
+  role : RawOrbitMovementFloatRole
+  operandIndex : Nat
+  policy : RawTimedMovementValuePolicy := .rValue
+deriving Repr, DecidableEq
+
+structure RawOrbitMovementOpShape where
+  opcode : Int
+  kind : RawOrbitMovementKind
+  floatInputs : List RawOrbitMovementFloatInputShape := []
+  durationOperandIndex : Option Nat := none
+  durationPolicy : RawTimedMovementDurationPolicy := .intRValue
+  originZFromOperand : Bool := true
+deriving Repr, DecidableEq
 
 inductive RawEnemyStateFloatInputPolicy where
   | floatRValue
@@ -992,6 +1045,7 @@ structure RawInstrShape where
   randomOps : List RawRandomOpShape := []
   movementOps : List RawMovementOpShape := []
   timedMovementFamilies : List RawTimedMovementFamilyShape := []
+  orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
   shootingOps : List RawShootingOpShape := []
   bulletPatternFamilies : List RawBulletPatternFamilyShape := []
@@ -1055,6 +1109,11 @@ def RawInstrShape.findTimedMovementFamily?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawTimedMovementFamilyMatch :=
   findTimedMovementFamilyInList? rawShape.timedMovementFamilies opcode
+
+def RawInstrShape.findOrbitMovementOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawOrbitMovementOpShape :=
+  rawShape.orbitMovementOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findEnemyStateOp?
     (rawShape : RawInstrShape)

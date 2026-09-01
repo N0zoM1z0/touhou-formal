@@ -10,6 +10,11 @@ structure RawVec3Bits where
   z : Int
 deriving Repr, DecidableEq
 
+structure RawVec2Bits where
+  x : Int
+  y : Int
+deriving Repr, DecidableEq
+
 structure RawMovementBoundsBits where
   lowerX : Int
   lowerY : Int
@@ -47,10 +52,15 @@ structure RawMovementEffect where
   velocityWrite : Option RawVec3Bits := none
   interpolationDeltaWrite : Option RawVec3Bits := none
   interpolationOriginWrite : Option RawVec3Bits := none
+  interpolationOriginXYWrite : Option RawVec2Bits := none
   angleWrite : Option Int := none
   angularVelocityWrite : Option Int := none
   speedWrite : Option Int := none
   accelerationWrite : Option Int := none
+  orbitAngleWrite : Option Int := none
+  orbitAngularVelocityWrite : Option Int := none
+  orbitRadiusWrite : Option Int := none
+  radialVelocityWrite : Option Int := none
   easingWrite : Option Int := none
   boundsWrite : Option RawMovementBoundsBits := none
   boundsEnabledWrite : Option Bool := none

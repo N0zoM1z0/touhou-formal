@@ -59,10 +59,14 @@ def eclOpcodeSetPosition : Int := 63
 def eclOpcodeMovePositionTimed : Int := 64
 def eclOpcodeSetPolarVelocity : Int := 65
 def eclOpcodeMoveDirectionTimed : Int := 66
+def eclOpcodeMoveBoundaryAwareTimed : Int := 67
 def eclOpcodeMoveAtPlayer : Int := 68
 def eclOpcodeMoveAtPlayerTimed : Int := 69
 def eclOpcodeSetAngularVelocity : Int := 70
 def eclOpcodeSetAcceleration : Int := 71
+def eclOpcodeMoveOrbit : Int := 72
+def eclOpcodeMoveOrbitFromPosition : Int := 73
+def eclOpcodeSetOrbitVelocities : Int := 74
 def eclOpcodeSetMovementBounds : Int := 75
 def eclOpcodeDisableMovementBounds : Int := 76
 def eclOpcodeSetPrimaryHitbox : Int := 77
@@ -90,6 +94,7 @@ def eclOpcodeRunInterrupt : Int := 125
 def eclOpcodeSetInterrupt : Int := 126
 def eclOpcodeSetCallStackDisabled : Int := 151
 def eclOpcodeBindTimerCallbackToDeath : Int := 153
+def eclOpcodeMoveRandomBiasedTimed : Int := 178
 
 def eclEvidence : List TouhouFormal.SourceRef :=
   [ { path := "reference/th08/src/EclManager.hpp"
@@ -204,6 +209,14 @@ def eclEvidence : List TouhouFormal.SourceRef :=
       startLine := 496
       endLine := 571
       claim := "Immediate movement opcodes set a clamped XY position, normalized polar velocity, normalized player-relative motion, angular velocity, or acceleration with opcode-specific mode/timer updates." },
+    { path := "reference/th08/src/EclDependencies.cpp"
+      startLine := 99
+      endLine := 267
+      claim := "Boundary-aware opcode 67 and random-biased opcode 178 derive their direction host-side, then share the immediate or timed polar-displacement writes without reading an angle operand." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 571
+      endLine := 615
+      claim := "Low opcodes 72 through 74 initialize or update orbit fields; opcode 72 writes only the X/Y origin components, while opcode 73 snapshots the full current position and zeros radius." },
     { path := "reference/th08/src/EclRunLow.inl"
       startLine := 617
       endLine := 631
@@ -577,7 +590,52 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 originSource := .worldPosition
                 deltaBaseSource := .worldPosition
                 normalizeDirectionAngle := true
-                mirrorDeltaX := true } ]
+                mirrorDeltaX := true },
+              { firstOpcode := eclOpcodeMoveBoundaryAwareTimed
+                lastOpcode := eclOpcodeMoveBoundaryAwareTimed
+                kind := .hostDirection
+                floatInputs :=
+                  [ { role := .speed, operandIndex := 2, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                nonpositivePolicy := .immediatePolarZeroTimers
+                originSource := .worldPosition
+                deltaBaseSource := .worldPosition },
+              { firstOpcode := eclOpcodeMoveRandomBiasedTimed
+                lastOpcode := eclOpcodeMoveRandomBiasedTimed
+                kind := .hostDirection
+                floatInputs :=
+                  [ { role := .speed, operandIndex := 2, policy := .rValue } ]
+                durationPolicy := .intRValue
+                easingPolicy := .intRValue 1
+                nonpositivePolicy := .immediatePolarZeroTimers
+                originSource := .worldPosition
+                deltaBaseSource := .worldPosition } ]
+          orbitMovementOps :=
+            [ { opcode := eclOpcodeMoveOrbit
+                kind := .startFull
+                floatInputs :=
+                  [ { role := .originX, operandIndex := 1 },
+                    { role := .originY, operandIndex := 2 },
+                    { role := .angle, operandIndex := 3 },
+                    { role := .angularVelocity, operandIndex := 4 },
+                    { role := .radius, operandIndex := 5 },
+                    { role := .radialVelocity, operandIndex := 6 } ]
+                durationOperandIndex := some 0
+                originZFromOperand := false },
+              { opcode := eclOpcodeMoveOrbitFromPosition
+                kind := .startFromCurrentPosition
+                floatInputs :=
+                  [ { role := .angle, operandIndex := 1 },
+                    { role := .angularVelocity, operandIndex := 2 },
+                    { role := .radialVelocity, operandIndex := 3 } ]
+                durationOperandIndex := some 0 },
+              { opcode := eclOpcodeSetOrbitVelocities
+                kind := .setVelocities
+                floatInputs :=
+                  [ { role := .angularVelocity, operandIndex := 1 },
+                    { role := .radialVelocity, operandIndex := 2 } ]
+                durationOperandIndex := some 0 } ]
           enemyStateOps :=
             [ { opcode := eclOpcodeSetPrimaryHitbox
                 kind := .setPrimaryHitbox 2

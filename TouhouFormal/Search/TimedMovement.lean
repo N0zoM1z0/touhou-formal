@@ -210,6 +210,27 @@ def th08PositionOutcome : Except TouhouFormal.Fault RawTimedMovementOutcome :=
         { positionBefore := { x := 11, y := 12, z := 13 }
           worldPositionBefore := { x := 21, y := 22, z := 23 } } }
 
+def th08RandomBiasedPrefix : RawInstrPrefix :=
+  { fileOffset := 0
+    time := 0
+    opcode := TouhouFormal.TH08.eclOpcodeMoveRandomBiasedTimed
+    nextOffset := 24
+    difficultyMask := some 1
+    operandMask := some 7 }
+
+def th08RandomBiasedImmediateOutcome :
+    Except TouhouFormal.Fault RawTimedMovementOutcome :=
+  rawTimedMovementStep
+    TouhouFormal.TH08.headerShape 0 1 0 8 64 th08RandomBiasedPrefix
+    { slots :=
+        [ { rawValue := 10000, hostValues := [0] },
+          { rawValue := 10001, hostValues := [5] },
+          { rawValue := th08FloatSelectorBits, hostValues := [f32TwoBits] } ]
+      floatResults :=
+        { effectiveDirectionAngleBits := 333
+          playerRelativeAngleBits := 0
+          interpolationDelta := { x := 0, y := 0, z := 0 } } }
+
 theorem th06_timed_movement_profile_count :
     timedMovementOpcodeCount TouhouFormal.TH06.headerShape = 13 := by
   rfl
@@ -219,7 +240,7 @@ theorem th07_timed_movement_profile_count :
   rfl
 
 theorem th08_timed_movement_profile_count :
-    timedMovementOpcodeCount TouhouFormal.TH08.headerShape = 3 := by
+    timedMovementOpcodeCount TouhouFormal.TH08.headerShape = 5 := by
   rfl
 
 theorem th06_linear_position_sets_easing_origin_and_zero_velocity :
@@ -309,6 +330,15 @@ theorem th08_relative_move_uses_position_origin_but_profiles_world_delta_base :
       some
         (.worldPosition, some { x := 11, y := 12, z := 13 },
           some { x := 31, y := 32, z := 33 }, some 1) := by
+  rfl
+
+theorem th08_host_angle_move_has_no_synthetic_angle_operand_read :
+    (outcomePrepared? th08RandomBiasedImmediateOutcome).map
+      (fun prepared =>
+        (prepared.reads.map (fun read => read.resolution.value),
+          prepared.effect.angleWrite,
+          prepared.effect.speedWrite)) =
+      some ([0, f32TwoBits], some 333, some f32TwoBits) := by
   rfl
 
 end TouhouFormal.Search.TimedMovement

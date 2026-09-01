@@ -8,6 +8,7 @@ import TouhouFormal.Search.FloatFunction
 import TouhouFormal.Search.IntUnaryUpdate
 import TouhouFormal.Search.Movement
 import TouhouFormal.Search.TimedMovement
+import TouhouFormal.Search.OrbitMovement
 import TouhouFormal.Search.EnemyState
 import TouhouFormal.Search.Shooting
 import TouhouFormal.Search.BulletPattern

@@ -76,14 +76,19 @@ The executable model currently covers these source-backed boundaries:
   player-relative motion, and movement bounds. Shared effects retain title
   differences such as TH06's raw player-angle offset/bounds, TH07's derived
   axis angle, and TH08's forced-zero Z plus timer-reset behavior.
-- Timed movement adds 18 more opcode bodies through one consecutive-family
+- Timed movement adds 20 more opcode bodies through one consecutive-family
   semantics: TH06's opcode-selected easing ranges and TH07/TH08's
   operand-selected direction/position interpolation. The model retains every
   repeated resolver call, three-bit easing writes, mirror-X sign toggling,
   position-versus-world-position origins, and the nonpositive-duration fast
   paths—including exact timer subframe/history resets, TH08's distinct timer
-  policies, and opcode 69's
-  player-relative/absolute-angle branch split.
+  policies, opcode 69's player-relative/absolute-angle branch split, and the
+  host-derived angles used by TH08 opcodes 67 and 178 without inventing
+  synthetic bytecode reads.
+- Shared orbit semantics adds nine opcode bodies: TH07's full orbit,
+  radius/angle updates, and three movement-timer mode setters; plus TH08's
+  full orbit, orbit-from-current-position, and velocity update. Profiles retain
+  TH08's X/Y-only origin write for opcode 72 and the exact timer reset state.
 - Shared enemy-state effects cover 24 hitbox, collision/damage flag,
   death-mode, life, and boss-timer opcodes. The model retains TH06/TH07
   bitfield truncation, TH08's inverted replace-mask rules, alignment-effect
