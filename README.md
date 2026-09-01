@@ -101,6 +101,12 @@ The executable model currently covers these source-backed boundaries:
   bitfield truncation, TH08's inverted replace-mask rules, alignment-effect
   collision mirroring, the high-opcode presentation-write guard, title-specific
   life operand resolution/gauge effects, and exact timer-history reset writes.
+- Shared enemy-lifecycle effects cover eight spawn/remove opcodes. The model
+  keeps the source spawn packet order, TH06 raw-i16 life/item fields, TH07/TH08
+  operand-flag resolution, parent-life spawn suppression before operand reads,
+  relative-position host f32 addition as an explicit boundary, context-argument
+  copying policy, i16 sub-id truncation at `CallEclSub`, i8 item-drop
+  truncation in TH07/TH08, and the three distinct remove-all loop policies.
 - Shared shooting-control effects cover 18 interval, gate, previous-pattern,
   and offset opcodes. One rank-scaling function is reused across all titles,
   while profiles retain TH06's unconditional zero-interval timer reset,

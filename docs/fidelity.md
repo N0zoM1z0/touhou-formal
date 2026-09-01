@@ -90,6 +90,16 @@ as separate pre-body transitions: if the timer is positive, the source
 decrements the timer and context time, skips opcode dispatch, and then the
 common tail increment restores net script time for that frame.
 
+Enemy-lifecycle semantics stop at the VM-to-EnemyManager boundary. The model
+records a spawn request with source packet order, operand resolution, parent
+life gating, host truncation, pool size, and immediate spawned-context run
+intent. It does not clone the whole enemy template or execute the newly spawned
+context. TH07/TH08 relative spawn uses an explicit `relativePositionResultBits`
+input for the host f32 addition instead of assuming Lean's arithmetic matches
+the retail binary. Remove-all opcodes are likewise summarized as title-specific
+loop policies: TH06's inline loop has no item/pop-up path, TH07 may spawn point
+items, and TH08 additionally skips noDeath enemies and detaches parent chains.
+
 Bullet-pattern semantics preserve write and early-exit ordering, not merely the
 eventual spawn request. TH06/TH07 build and retain the enemy descriptor even
 when their shooting-disabled flag suppresses `SpawnBulletPattern`; TH08 copies

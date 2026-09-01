@@ -87,6 +87,9 @@ def eclOpcodeDisableEnemyFlags : Int := 80
 def eclOpcodeEnableEnemyFlags : Int := 81
 def eclOpcodeGetBossInt : Int := 86
 def eclOpcodeGetBossFloat : Int := 87
+def eclOpcodeSpawnEnemyAbs : Int := 93
+def eclOpcodeSpawnEnemyRel : Int := 94
+def eclOpcodeKillAllNonBossEnemies : Int := 95
 def eclOpcodeSpawnBulletPatternFirst : Int := 96
 def eclOpcodeSpawnBulletPatternLast : Int := 104
 def eclOpcodeSetShootInterval : Int := 105
@@ -128,8 +131,32 @@ def eclOpcodeSetLaserHideCapDuringStartup : Int := 170
 def eclOpcodeSetLaserStartLength : Int := 171
 def eclOpcodeSetLaserOffsets : Int := 172
 def eclOpcodeMoveRandomBiasedTimed : Int := 178
+def enemyPoolSlots : Nat := 480
 def secondaryAnmVmCount : Nat := 2
 def laserSlotCount : Nat := 32
+
+def enemySpawnIntInputs :
+    List TouhouFormal.ECL.RawEnemyLifecycleIntInputShape :=
+  TouhouFormal.ECL.rawEnemySpawnPacketIntInputs
+    .rawI32 .intRValue .intRValue .intRValue
+
+def enemySpawnFloatInputs :
+    List TouhouFormal.ECL.RawEnemyLifecycleFloatInputShape :=
+  TouhouFormal.ECL.rawEnemySpawnPacketFloatInputs .floatRValue
+
+def enemySpawnLifecycleOp
+    (opcode : Int)
+    (positionMode : TouhouFormal.ECL.RawEnemySpawnPositionMode) :
+    TouhouFormal.ECL.RawEnemyLifecycleOpShape :=
+  TouhouFormal.ECL.rawEnemyLifecycleSpawnOp
+    opcode
+    positionMode
+    enemySpawnIntInputs
+    enemySpawnFloatInputs
+    enemyPoolSlots
+    true
+    .activeIntVariables
+    true
 
 def laserSpawnIntInputs :
     List TouhouFormal.ECL.RawLaserSpawnIntInputShape :=
@@ -454,7 +481,23 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th08/src/EnemyTimeline.cpp"
       startLine := 120
       endLine := 230
-      claim := "Timeline spawn opcodes pass args.ints[0] into SpawnEnemy1, which then calls CallEclSub." } ]
+      claim := "Timeline spawn opcodes pass args.ints[0] into SpawnEnemy1, which then calls CallEclSub." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 83
+      endLine := 92
+      claim := "SpawnPacketTyped stores eclSubroutineId, a three-float position, life, itemDropType, and score." },
+    { path := "reference/th08/src/EclRunHigh.inl"
+      startLine := 717
+      endLine := 779
+      claim := "High opcodes 93 and 94 require the parent enemy to be alive, resolve position/life/item/score through operandFlags, add enemy position for relative spawn, and opcode 95 calls KillAllNonBossEnemies." },
+    { path := "reference/th08/src/EnemyTimeline.cpp"
+      startLine := 64
+      endLine := 115
+      claim := "SpawnEnemy2 scans 480 enemy slots, copies the spawn template, calls CallEclSub, copies the active context integer array, immediately runs the spawned ECL context, and truncates itemDropType to i8." },
+    { path := "reference/th08/src/EnemyManager.cpp"
+      startLine := 1424
+      endLine := 1498
+      claim := "KillAllNonBossEnemies skips inactive, boss, and noDeath enemies, clears life, may spawn point items/popups, detaches parent chains, and may enter death callbacks." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -822,6 +865,13 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
               { opcode := eclOpcodeSetBossTimer
                 kind := .setTimer
                 intInputPolicy := some .intRValue } ]
+          enemyLifecycleOps :=
+            [ enemySpawnLifecycleOp eclOpcodeSpawnEnemyAbs .absolute,
+              enemySpawnLifecycleOp eclOpcodeSpawnEnemyRel .relativeToEnemy,
+              TouhouFormal.ECL.rawEnemyLifecycleRemoveAllOp
+                eclOpcodeKillAllNonBossEnemies
+                .killAllNonBossEnemies
+                enemyPoolSlots ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

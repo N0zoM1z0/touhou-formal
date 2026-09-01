@@ -82,6 +82,8 @@ def eclOpcodeLaserRotateFromPlayer : Int := 89
 def eclOpcodeLaserOffset : Int := 90
 def eclOpcodeLaserTest : Int := 91
 def eclOpcodeLaserCancel : Int := 92
+def eclOpcodeEnemyCreate : Int := 95
+def eclOpcodeEnemyKillAll : Int := 96
 def eclOpcodeAnmSetMain : Int := 97
 def eclOpcodeAnmSetPoses : Int := 98
 def eclOpcodeAnmSetSlot : Int := 99
@@ -109,8 +111,18 @@ def eclOpcodeBulletRankInfluence : Int := 131
 def eclOpcodeBindTimerCallbackToDeath : Int := 133
 def eclOpcodeLaserClearAll : Int := 134
 def enemyAnmScriptBase : Int := 0x100
+def enemyPoolSlots : Nat := 256
 def secondaryAnmVmCount : Nat := 8
 def laserSlotCount : Nat := 32
+
+def enemySpawnIntInputs :
+    List TouhouFormal.ECL.RawEnemyLifecycleIntInputShape :=
+  TouhouFormal.ECL.rawEnemySpawnPacketIntInputs
+    .rawI32 .rawI16 .rawI16 .rawI32
+
+def enemySpawnFloatInputs :
+    List TouhouFormal.ECL.RawEnemyLifecycleFloatInputShape :=
+  TouhouFormal.ECL.rawEnemySpawnPacketFloatInputs .floatRValue
 
 def laserSpawnIntInputs :
     List TouhouFormal.ECL.RawLaserSpawnIntInputShape :=
@@ -381,7 +393,23 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th06/src/EnemyManager.cpp"
       startLine := 92
       endLine := 125
-      claim := "SpawnEnemy passes eclSubId directly to g_EclManager.CallEclSub." } ]
+      claim := "SpawnEnemy passes eclSubId directly to g_EclManager.CallEclSub." },
+    { path := "reference/th06/src/EclManager.hpp"
+      startLine := 252
+      endLine := 260
+      claim := "EclRawInstrEnemyCreateArgs stores subId, a three-float position, i16 life, i16 itemDrop, and i32 score." },
+    { path := "reference/th06/src/EclManager.cpp"
+      startLine := 856
+      endLine := 884
+      claim := "ECL_OPCODE_ENEMYCREATE resolves position fields and calls SpawnEnemy; ECL_OPCODE_ENEMYKILLALL loops non-boss enemies, clears life, and may enter death callbacks." },
+    { path := "reference/th06/src/EnemyManager.hpp"
+      startLine := 34
+      endLine := 39
+      claim := "SpawnEnemy receives i32 subId, i16 life/itemDrop, i32 score, and the manager stores 257 enemy slots while source loops use the first 256 pool entries." },
+    { path := "reference/th06/src/EnemyManager.cpp"
+      startLine := 92
+      endLine := 124
+      claim := "SpawnEnemy scans the 256-slot pool, copies the template, writes requested fields, calls CallEclSub, immediately runs the spawned ECL context, and then records item/score/maxLife." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -701,6 +729,17 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
               { opcode := eclOpcodeSetBossTimer
                 kind := .setTimer
                 intInputPolicy := some .rawI32 } ]
+          enemyLifecycleOps :=
+            [ TouhouFormal.ECL.rawEnemyLifecycleSpawnOp
+                eclOpcodeEnemyCreate
+                .absolute
+                enemySpawnIntInputs
+                enemySpawnFloatInputs
+                enemyPoolSlots,
+              TouhouFormal.ECL.rawEnemyLifecycleRemoveAllOp
+                eclOpcodeEnemyKillAll
+                .inlineTH06Loop
+                enemyPoolSlots ]
           shootingOps :=
             [ { opcode := eclOpcodeSetShootInterval
                 kind := .setInterval

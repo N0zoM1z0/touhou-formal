@@ -354,6 +354,11 @@ SOURCE_COVERAGE = [
         "reason": "shared time-control effects cover ordinary no-op advance, TH06 GetVar-backed TIMESET, TH07 waitTimer/scriptWaitTime/add-time controls, TH08 secondaryTime/add-time controls, and the wait-gate pre-tail time decrement that produces a net frame stall",
     },
     {
+        "area": "enemy lifecycle host effects",
+        "status": "covered-by-model",
+        "reason": "shared enemy-lifecycle effects cover TH06/TH07/TH08 absolute/relative spawn and non-boss remove-all opcodes, preserving parent-life gates, operand resolution, host truncation, context-copy policy, pool size, and remove-all loop deltas",
+    },
+    {
         "area": "bullet control host effects",
         "status": "covered-by-model",
         "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition clear variants, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
@@ -386,7 +391,7 @@ SOURCE_COVERAGE = [
     {
         "area": "bullet/laser/enemy/ANM/sound host side effects",
         "status": "partially-covered",
-        "reason": "immediate/timed enemy movement, hitbox/flag/death-mode/life/timer writes, shooting controls, and primary bullet-pattern construction now have typed host-effect boundaries; laser, enemy lifecycle, ANM execution, and sound effects still require additional game-state models and invariants",
+        "reason": "immediate/timed enemy movement, hitbox/flag/death-mode/life/timer writes, enemy lifecycle spawn/remove requests, shooting controls, and primary bullet-pattern construction now have typed host-effect boundaries; full laser runtime, full EnemyManager state, ANM execution, and sound effects still require additional game-state models and invariants",
     },
     {
         "area": "integrated multi-context scheduler",
@@ -1674,7 +1679,7 @@ def fuzz_comparison() -> dict[str, Any]:
             "explaining exact invariants such as cursor must progress and remain in-bounds",
         ],
         "fuzzCurrentlyBeatsFormalFor": [
-            "full gameplay side effects through bullets, lasers, enemies, ANM, rendering, input, and callbacks",
+            "full gameplay side effects through bullets, lasers, EnemyManager runtime state, ANM, rendering, input, and callbacks",
             "unknown opcode-body behavior that has not yet been source-modeled",
             "large multi-resource interactions where a retail oracle is easier to observe than to prove",
             "empirical prioritization of which formally reachable witnesses are retail-visible bugs",
@@ -1684,7 +1689,8 @@ def fuzz_comparison() -> dict[str, Any]:
             "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
             "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
             "are solved and materialized for the default environments. "
-            "It is not yet stronger than fuzzing for the full ECL/ANM VM, because most opcode bodies and host-state branches "
+            "Several additional gameplay-effect opcode families are source-modeled and Lean-checked, including enemy lifecycle, but they are not yet dedicated solver/materializer lanes. "
+            "It is not yet stronger than fuzzing for the full ECL/ANM VM, because remaining opcode bodies and host-state branches "
             "remain outside the semantics."
         ),
         "nextHighValueFormalWork": [

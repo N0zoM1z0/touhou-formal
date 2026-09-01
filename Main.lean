@@ -246,6 +246,49 @@ private def describeEnemyStateOutcome
         " " ++ effectSummary ++
         " cursor=" ++ toString outcome.targetCursor
 
+private def describeEnemyLifecycleOutcome
+    (result :
+      Except TouhouFormal.Fault TouhouFormal.ECL.RawEnemyLifecycleOutcome) :
+    String :=
+  match result with
+  | .error faultValue => faultValue.describe
+  | .ok outcome =>
+      let effectSummary :=
+        match outcome.effect with
+        | none => "effect=none"
+        | some effect =>
+            let spawnSummary :=
+              match effect.spawnRequest with
+              | none => "spawn=none"
+              | some request =>
+                  "spawn=sub " ++ toString request.subId ++
+                    " hostSub=" ++ toString request.hostCallSubId ++
+                    " life=" ++ toString request.life ++
+                    " item=" ++ toString request.hostItemDrop ++
+                    " score=" ++ toString request.score ++
+                    " context=" ++ request.contextCopy.name ++
+                    " position=" ++ reprStr
+                      (request.position.mode,
+                        request.position.resolvedPacketBits,
+                        request.position.enemyPositionBits,
+                        request.position.finalPositionBits)
+            let removeSummary :=
+              match effect.removeAll with
+              | none => "removeAll=none"
+              | some remove =>
+                  "removeAll=" ++ remove.implementation.name ++
+                    " slots=" ++ toString remove.poolSearchSlots ++
+                    " scoreMax=" ++ toString remove.scoreMax ++
+                    " noDeathSkip=" ++ toString remove.skipsNoDeathFlag ++
+                    " items=" ++ toString remove.maySpawnPointItems ++
+                    " detachParents=" ++ toString remove.detachesParentChains
+            spawnSummary ++
+              " suppressed=" ++ toString effect.spawnSuppressedByParentLife ++
+              " " ++ removeSummary
+      "action=" ++ reprStr outcome.action ++
+        " " ++ effectSummary ++
+        " cursor=" ++ toString outcome.targetCursor
+
 private def describeShootingOutcome
     (result : Except TouhouFormal.Fault TouhouFormal.ECL.RawShootingOutcome) :
     String :=
@@ -618,6 +661,18 @@ def main : IO Unit := do
   IO.println s!"TH07 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th07LifeOutcome}"
   IO.println s!"TH08 life: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08LifeOutcome}"
   IO.println s!"TH08 timer: {describeEnemyStateOutcome TouhouFormal.Search.EnemyState.th08TimerOutcome}"
+  IO.println ""
+  IO.println "Enemy lifecycle controls"
+  IO.println s!"TH06 enemy-lifecycle opcode count: {TouhouFormal.Search.EnemyLifecycle.enemyLifecycleOpcodeCount TouhouFormal.TH06.headerShape}"
+  IO.println s!"TH07 enemy-lifecycle opcode count: {TouhouFormal.Search.EnemyLifecycle.enemyLifecycleOpcodeCount TouhouFormal.TH07.headerShape}"
+  IO.println s!"TH08 enemy-lifecycle opcode count: {TouhouFormal.Search.EnemyLifecycle.enemyLifecycleOpcodeCount TouhouFormal.TH08.headerShape}"
+  IO.println s!"TH06 spawn: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th06SpawnOutcome}"
+  IO.println s!"TH07 spawn abs: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th07SpawnAbsOutcome}"
+  IO.println s!"TH07 dead-parent spawn: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th07SpawnRelDeadParentOutcome}"
+  IO.println s!"TH08 spawn rel: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th08SpawnRelOutcome}"
+  IO.println s!"TH06 remove all: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th06RemoveAllOutcome}"
+  IO.println s!"TH07 remove all: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th07RemoveAllOutcome}"
+  IO.println s!"TH08 remove all: {describeEnemyLifecycleOutcome TouhouFormal.Search.EnemyLifecycle.th08RemoveAllOutcome}"
   IO.println ""
   IO.println "Shooting controls"
   IO.println s!"TH06 shooting opcode count: {TouhouFormal.Search.Shooting.shootingOpcodeCount TouhouFormal.TH06.headerShape}"

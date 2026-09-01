@@ -9,11 +9,12 @@ dispatch skeleton, the first shared opcode-body slice, the integer resolver,
 the integer binary-op slice, the TH07/TH08 boss integer/float-read slices, and
 the CALL/RET/conditional-CALL slices. It also now source-models several
 gameplay-effect opcode families in Lean, including bullet-control host effects,
-time/wait controls, laser-spawn descriptors, laser slot controls, animation
-controls, and primary bullet patterns, but those families are not yet dedicated
-SMT/materializer lanes. It is not yet better than fuzzing for the full ECL/ANM
-VM, because full BulletManager and laser runtime behavior, item/enemy
-lifecycle, full ANM execution, and multi-context scheduling are not modeled yet.
+time/wait controls, enemy lifecycle spawn/remove requests, laser-spawn
+descriptors, laser slot controls, animation controls, and primary bullet
+patterns, but those families are not yet dedicated SMT/materializer lanes. It
+is not yet better than fuzzing for the full ECL/ANM VM, because full
+BulletManager/EnemyManager runtime behavior, full ANM execution, and
+multi-context scheduling are not modeled yet.
 
 ## Reproducible evaluation
 
@@ -45,10 +46,10 @@ The current manual verification run on 2026-09-01 executed:
 
 ```bash
 lake build
-lake exe check > /tmp/touhou_check_laser_spawn.txt
-./scripts/check.sh > /tmp/touhou_full_check_laser_spawn.txt
+lake exe check > /tmp/touhou_check_enemy_lifecycle.txt
+./scripts/check.sh > /tmp/touhou_full_check_enemy_lifecycle.txt
 python3 scripts/evaluate_symex_effectiveness.py \
-  > /tmp/touhou_effectiveness_laser_spawn.json
+  > /tmp/touhou_effectiveness_enemy_lifecycle.json
 ```
 
 All completed successfully on the raw-step, raw-body, resolver,
@@ -600,8 +601,9 @@ Not covered:
   computation, float division/fmod edge cases, and other C/C++ arithmetic
   hazards;
 - BulletManager allocation/runtime simulation, TH08 transform-table execution,
-  runtime laser simulation, enemy lifecycle, item, full ANM execution, sound
-  playback, and callback trigger side effects;
+  runtime laser simulation, full EnemyManager spawn/removal runtime after the
+  VM request boundary, item creation, full ANM execution, sound playback, and
+  callback trigger side effects;
 - timeline-to-enemy spawning and multi-context scheduling;
 - full ANM script execution;
 - TH07/TH08 retail DAT lowering and Wine validation.
@@ -640,6 +642,9 @@ complete for the implemented time-control abstraction, including no-op body
   pre-body wait gates with net frame stalls;
 complete for the implemented bullet-control host-effect abstraction, including
   source-ordered sound reads and signed-i16 rank-count truncation;
+complete for the implemented enemy-lifecycle host-effect abstraction,
+  including spawn packet order, parent-life gates, relative-position host
+  boundary, context-copy policy, pool size, and remove-all loop deltas;
 complete for the implemented laser-spawn descriptor abstraction, including
   source-ordered descriptor construction and unchecked selected-slot writes
   after spawn requests;

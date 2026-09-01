@@ -1505,6 +1505,186 @@ structure RawTimeControlOpShape where
   intInput : Option RawTimeControlIntInputShape := none
 deriving Repr, DecidableEq
 
+inductive RawEnemyLifecycleIntInputPolicy where
+  | rawI32
+  | rawI16
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawEnemyLifecycleIntInputPolicy.name :
+    RawEnemyLifecycleIntInputPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .rawI16 => "raw-i16"
+  | .intRValue => "int-rvalue"
+
+inductive RawEnemyLifecycleFloatInputPolicy where
+  | rawBits
+  | floatRValue
+deriving Repr, DecidableEq
+
+def RawEnemyLifecycleFloatInputPolicy.name :
+    RawEnemyLifecycleFloatInputPolicy -> String
+  | .rawBits => "raw-bits"
+  | .floatRValue => "float-rvalue"
+
+inductive RawEnemyLifecycleIntRole where
+  | subId
+  | life
+  | itemDrop
+  | score
+deriving Repr, DecidableEq
+
+def RawEnemyLifecycleIntRole.name : RawEnemyLifecycleIntRole -> String
+  | .subId => "sub-id"
+  | .life => "life"
+  | .itemDrop => "item-drop"
+  | .score => "score"
+
+inductive RawEnemyLifecycleFloatRole where
+  | positionX
+  | positionY
+  | positionZ
+deriving Repr, DecidableEq
+
+def RawEnemyLifecycleFloatRole.name : RawEnemyLifecycleFloatRole -> String
+  | .positionX => "position-x"
+  | .positionY => "position-y"
+  | .positionZ => "position-z"
+
+structure RawEnemyLifecycleIntInputShape where
+  role : RawEnemyLifecycleIntRole
+  operandIndex : Nat
+  policy : RawEnemyLifecycleIntInputPolicy
+deriving Repr, DecidableEq
+
+structure RawEnemyLifecycleFloatInputShape where
+  role : RawEnemyLifecycleFloatRole
+  operandIndex : Nat
+  policy : RawEnemyLifecycleFloatInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawEnemySpawnPositionMode where
+  | absolute
+  | relativeToEnemy
+deriving Repr, DecidableEq
+
+def RawEnemySpawnPositionMode.name : RawEnemySpawnPositionMode -> String
+  | .absolute => "absolute"
+  | .relativeToEnemy => "relative-to-enemy"
+
+inductive RawEnemySpawnContextCopy where
+  | none
+  | eclContextArgs
+  | activeIntVariables
+deriving Repr, DecidableEq
+
+def RawEnemySpawnContextCopy.name : RawEnemySpawnContextCopy -> String
+  | .none => "none"
+  | .eclContextArgs => "ecl-context-args"
+  | .activeIntVariables => "active-int-variables"
+
+inductive RawEnemyRemoveAllImplementation where
+  | inlineTH06Loop
+  | removeAllEnemies
+  | killAllNonBossEnemies
+deriving Repr, DecidableEq
+
+def RawEnemyRemoveAllImplementation.name :
+    RawEnemyRemoveAllImplementation -> String
+  | .inlineTH06Loop => "inline-th06-loop"
+  | .removeAllEnemies => "remove-all-enemies"
+  | .killAllNonBossEnemies => "kill-all-non-boss-enemies"
+
+inductive RawEnemyLifecycleOpKind where
+  | spawn (positionMode : RawEnemySpawnPositionMode)
+  | removeAllNonBoss
+deriving Repr, DecidableEq
+
+def RawEnemyLifecycleOpKind.name : RawEnemyLifecycleOpKind -> String
+  | .spawn positionMode => "spawn-" ++ positionMode.name
+  | .removeAllNonBoss => "remove-all-non-boss"
+
+structure RawEnemyLifecycleOpShape where
+  opcode : Int
+  kind : RawEnemyLifecycleOpKind
+  intInputs : List RawEnemyLifecycleIntInputShape := []
+  floatInputs : List RawEnemyLifecycleFloatInputShape := []
+  spawnRequiresPositiveParentLife : Bool := false
+  contextCopy : RawEnemySpawnContextCopy := .none
+  hostSubIdTruncatesToI16 : Bool := true
+  hostItemDropTruncatesToI8 : Bool := false
+  poolSearchSlots : Nat := 0
+  removeImplementation : RawEnemyRemoveAllImplementation :=
+    .killAllNonBossEnemies
+  removeScoreMax : Int := 8000
+  removeInitialScore : Int := 0
+deriving Repr, DecidableEq
+
+def rawEnemySpawnPacketIntInputs
+    (subIdPolicy lifePolicy itemDropPolicy scorePolicy :
+      RawEnemyLifecycleIntInputPolicy) :
+    List RawEnemyLifecycleIntInputShape :=
+  [ { role := .subId
+      operandIndex := 0
+      policy := subIdPolicy },
+    { role := .life
+      operandIndex := 4
+      policy := lifePolicy },
+    { role := .itemDrop
+      operandIndex := 5
+      policy := itemDropPolicy },
+    { role := .score
+      operandIndex := 6
+      policy := scorePolicy } ]
+
+def rawEnemySpawnPacketFloatInputs
+    (policy : RawEnemyLifecycleFloatInputPolicy) :
+    List RawEnemyLifecycleFloatInputShape :=
+  [ { role := .positionX
+      operandIndex := 1
+      policy := policy },
+    { role := .positionY
+      operandIndex := 2
+      policy := policy },
+    { role := .positionZ
+      operandIndex := 3
+      policy := policy } ]
+
+def rawEnemyLifecycleSpawnOp
+    (opcode : Int)
+    (positionMode : RawEnemySpawnPositionMode)
+    (intInputs : List RawEnemyLifecycleIntInputShape)
+    (floatInputs : List RawEnemyLifecycleFloatInputShape)
+    (poolSearchSlots : Nat)
+    (spawnRequiresPositiveParentLife : Bool := false)
+    (contextCopy : RawEnemySpawnContextCopy := .none)
+    (hostItemDropTruncatesToI8 : Bool := false)
+    (hostSubIdTruncatesToI16 : Bool := true) :
+    RawEnemyLifecycleOpShape :=
+  { opcode := opcode
+    kind := .spawn positionMode
+    intInputs := intInputs
+    floatInputs := floatInputs
+    spawnRequiresPositiveParentLife := spawnRequiresPositiveParentLife
+    contextCopy := contextCopy
+    hostSubIdTruncatesToI16 := hostSubIdTruncatesToI16
+    hostItemDropTruncatesToI8 := hostItemDropTruncatesToI8
+    poolSearchSlots := poolSearchSlots }
+
+def rawEnemyLifecycleRemoveAllOp
+    (opcode : Int)
+    (implementation : RawEnemyRemoveAllImplementation)
+    (poolSearchSlots : Nat)
+    (scoreMax : Int := 8000)
+    (initialScore : Int := 0) :
+    RawEnemyLifecycleOpShape :=
+  { opcode := opcode
+    kind := .removeAllNonBoss
+    poolSearchSlots := poolSearchSlots
+    removeImplementation := implementation
+    removeScoreMax := scoreMax
+    removeInitialScore := initialScore }
+
 structure RawInstrShape where
   fixedPrefixBytes : Nat
   timeOffset : Nat
@@ -1541,6 +1721,7 @@ structure RawInstrShape where
   timedMovementFamilies : List RawTimedMovementFamilyShape := []
   orbitMovementOps : List RawOrbitMovementOpShape := []
   enemyStateOps : List RawEnemyStateOpShape := []
+  enemyLifecycleOps : List RawEnemyLifecycleOpShape := []
   shootingOps : List RawShootingOpShape := []
   timeControlOps : List RawTimeControlOpShape := []
   bulletControlOps : List RawBulletControlOpShape := []
@@ -1623,6 +1804,11 @@ def RawInstrShape.findEnemyStateOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawEnemyStateOpShape :=
   rawShape.enemyStateOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findEnemyLifecycleOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawEnemyLifecycleOpShape :=
+  rawShape.enemyLifecycleOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findShootingOp?
     (rawShape : RawInstrShape)

@@ -469,6 +469,44 @@ that the three games expose one uniform cleaned-up enemy API. One-bit and
 three-bit target fields explicitly truncate their source values; life and
 timer effects retain title-specific operand resolution and secondary writes.
 
+## Enemy Lifecycle Evidence
+
+- `reference/th06/src/EclManager.hpp:252-260` defines the raw enemy-create
+  packet as subroutine id, three-float position, i16 life, i16 item drop, and
+  i32 score. `reference/th06/src/EclManager.cpp:856-884` resolves only the
+  position fields, calls `SpawnEnemy`, and implements kill-all as an inline
+  non-boss loop that can enter death callbacks.
+- `reference/th06/src/EnemyManager.cpp:92-124` scans the first 256 enemy slots,
+  copies the spawn template, applies nonnegative life/item/score overrides,
+  calls `CallEclSub`, immediately runs the spawned ECL context, and then
+  snapshots item/score/max-life state.
+- `reference/th07/src/th07/EclManager.cpp:1828-1858` implements absolute and
+  relative enemy spawn only while the parent enemy is alive. Position, life,
+  item, and score use `GET_*_VALUE` with `paramMask`; the relative form adds
+  the parent enemy position before calling `SpawnEnemyEx`. Opcode 94 calls
+  `RemoveAllEnemies(8000, 0)`.
+- `reference/th07/src/th07/EnemyManager.cpp:95-135` scans 480 enemy slots,
+  calls `CallEclSub`, copies caller `EclContextArgs`, immediately runs the
+  spawned ECL context, and stores item drop through an i8 cast.
+  `reference/th07/src/th07/EnemyManager.cpp:1459-1520` shows remove-all skips
+  inactive/boss enemies, may spawn point items/popups, and may enter death
+  callbacks for enemies that cannot die normally.
+- `reference/th08/src/EclRunHigh.inl:83-92` defines the high-opcode spawn
+  packet. `reference/th08/src/EclRunHigh.inl:717-779` implements absolute and
+  relative spawn with the same parent-life gate and operand-flag resolution as
+  TH07, then calls `KillAllNonBossEnemies(8000, 0)` for opcode 95.
+- `reference/th08/src/EnemyTimeline.cpp:64-115` shows `SpawnEnemy2` scanning
+  480 slots, calling `CallEclSub`, copying the active integer-variable array,
+  immediately running the spawned ECL context, and storing item drop through an
+  i8 cast. `reference/th08/src/EnemyManager.cpp:1424-1498` adds the TH08
+  kill-all differences: noDeath enemies are skipped and parent chains are
+  detached.
+
+The shared model treats enemy creation/removal as VM-to-host effects. It
+records source-visible arguments, resolver order, truncation, pool size, and
+remove-all policy, but it does not yet simulate the entire enemy array,
+template copy, spawned-context execution, item creation, or callback scheduler.
+
 ## Shooting Control Evidence
 
 - `reference/th06/src/EclManager.cpp:428-454` uses raw interval operands,
