@@ -40,4 +40,5 @@ import TouhouFormal.ECL.Interrupt
 import TouhouFormal.ECL.Extension
 import TouhouFormal.ECL.ChildContext
 import TouhouFormal.ECL.Misc
+import TouhouFormal.ECL.BossDispatch
 import TouhouFormal.ECL.Boss

@@ -1570,6 +1570,46 @@ structure RawMiscOpShape where
   trailRenderMask : Nat := 8
 deriving Repr, DecidableEq
 
+/-!
+TH08's cross-enemy boss dispatch uses the same operand resolver and call-stack
+machinery as ordinary ECL, but it operates on another enemy's active context
+through an unchecked fixed boss table.  Keeping it separate from boss field
+reads makes the inter-enemy mutation and its partial-fault order explicit.
+-/
+
+inductive RawBossDispatchIntPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+def RawBossDispatchIntPolicy.name : RawBossDispatchIntPolicy -> String
+  | .rawI32 => "raw-i32"
+  | .intRValue => "int-rvalue"
+
+inductive RawBossDispatchOpKind where
+  | callSubOnBoss
+  | setPendingSubOnBoss
+deriving Repr, DecidableEq
+
+def RawBossDispatchOpKind.name : RawBossDispatchOpKind -> String
+  | .callSubOnBoss => "call-sub-on-boss"
+  | .setPendingSubOnBoss => "set-pending-sub-on-boss"
+
+structure RawBossDispatchOpShape where
+  opcode : Int
+  kind : RawBossDispatchOpKind
+  bossIndexOperandIndex : Nat := 0
+  subIdOperandIndex : Nat := 1
+  bossIndexPolicy : RawBossDispatchIntPolicy := .intRValue
+  subIdPolicy : RawBossDispatchIntPolicy
+  bossSlotCount : Nat
+  repeatBossIndexRead : Bool := false
+  truncateSubIdToI16 : Bool := true
+  callStackEntryCount : Nat := 16
+  callStackIncrementGuardExclusive : Nat := 15
+  callParameterCopyBytes : Nat := 0x20
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -2491,6 +2531,7 @@ structure RawInstrShape where
   extensionOps : List RawExtensionOpShape := []
   childContextOps : List RawChildContextOpShape := []
   miscOps : List RawMiscOpShape := []
+  bossDispatchOps : List RawBossDispatchOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -2669,6 +2710,11 @@ def RawInstrShape.findMiscOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawMiscOpShape :=
   rawShape.miscOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findBossDispatchOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawBossDispatchOpShape :=
+  rawShape.bossDispatchOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)
