@@ -1,0 +1,240 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z",
+  "source_result": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/game/th07.dat",
+      "archive_kind": "th07-pbg4",
+      "sha256": "d43b543240c6560939733f4095183d92730355f0d72339735ce726efb412404e",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 44920
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/game/th07.cfg",
+    "source": "generated-source-backed-default",
+    "size": 56,
+    "sha256": "abbe42c3a586fe8bcd733b6d10f9104ef73cea4782935a65d83b89a3f4d58b65",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 52,
+    "opts": 17475,
+    "safe_video_flags": true,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 52
+    }
+  },
+  "prepare_only": false,
+  "wine_probe": {
+    "mode": "generic-new-game-key-probe",
+    "title": "th07",
+    "command": [
+      "wine",
+      "th07.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/game",
+    "display": ":210",
+    "wine_prefix": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/prefix",
+    "wineboot_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/wineboot.log",
+    "wine_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/wine.log",
+    "keys": [
+      "z",
+      "z",
+      "Down",
+      "Down",
+      "Down",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "control_error": null,
+    "screenshots": [
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/probe-00-launch-window.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/probe-01-after-input.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/probe-02-final.png"
+    ],
+    "screenshot_summary": {
+      "count": 3,
+      "decoded_count": 3,
+      "all_decoded_black": false,
+      "captures": [
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/probe-00-launch-window.png",
+          "sha256": "9d32b181dc24cffe24616976c6f92d3e380707ed75d63d7f3869e6fbd0cd85d6",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 285780,
+          "black_ratio": 0.6366119384765625,
+          "max_byte": 255,
+          "mean_byte": 37.36472278171115
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/probe-01-after-input.png",
+          "sha256": "ec060afe799a46a89dee8ebade351607fce965e5a5ebaf2d9b98ff9c32a5074c",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307030,
+          "black_ratio": 0.6095911661783855,
+          "max_byte": 255,
+          "mean_byte": 33.52969233194987
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/probe-02-final.png",
+          "sha256": "636c1908a5aca3aadf0232c295181cbe4894ce51deb67d7e46a87e15684752ba",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 172914,
+          "black_ratio": 0.7801284790039062,
+          "max_byte": 255,
+          "mean_byte": 50.74342473347982
+        }
+      ]
+    },
+    "elapsed_seconds": 34.49878215789795,
+    "window_census": {
+      "display": ":210",
+      "windows": [
+        {
+          "window_id": "1293",
+          "name": ""
+        },
+        {
+          "window_id": "8388609",
+          "name": ""
+        },
+        {
+          "window_id": "4194344",
+          "name": ""
+        },
+        {
+          "window_id": "8388611",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "8388610",
+          "name": ""
+        },
+        {
+          "window_id": "8388612",
+          "name": ""
+        },
+        {
+          "window_id": "8388613",
+          "name": ""
+        },
+        {
+          "window_id": "10485761",
+          "name": ""
+        },
+        {
+          "window_id": "8388614",
+          "name": ""
+        },
+        {
+          "window_id": "8388615",
+          "name": ""
+        },
+        {
+          "window_id": "6291488",
+          "name": ""
+        },
+        {
+          "window_id": "6291498",
+          "name": ""
+        },
+        {
+          "window_id": "2097156",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "2097155",
+          "name": "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b"
+        },
+        {
+          "window_id": "12582938",
+          "name": ""
+        },
+        {
+          "window_id": "14680066",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "14680065",
+          "name": "Wine Debugger"
+        },
+        {
+          "window_id": "16777235",
+          "name": ""
+        },
+        {
+          "window_id": "18874370",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "18874369",
+          "name": "プログラム エラー"
+        },
+        {
+          "window_id": "6291539",
+          "name": ""
+        }
+      ],
+      "window_names_path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/window-names.txt"
+    },
+    "wine_summary": {
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z/wine.log",
+      "classification": "wine-crash-log",
+      "primary_signature": "wine: Unhandled division by zero at address 00411202 (thread 0140), starting debugger...",
+      "crash_lines": [
+        "wine: Unhandled division by zero at address 00411202 (thread 0140), starting debugger..."
+      ],
+      "error_lines": []
+    },
+    "oracle": {
+      "classification": "crash-dialog",
+      "interesting": true,
+      "window_names": [
+        "",
+        "",
+        "",
+        "Default IME",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Default IME",
+        "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b",
+        "",
+        "Default IME",
+        "Wine Debugger",
+        "",
+        "Default IME",
+        "プログラム エラー",
+        ""
+      ],
+      "crash_titles": [
+        "Wine Debugger",
+        "プログラム エラー"
+      ],
+      "wine_log_classification": "wine-crash-log",
+      "wine_log_primary_signature": "wine: Unhandled division by zero at address 00411202 (thread 0140), starting debugger...",
+      "returncode": null,
+      "timed_out": true
+    }
+  }
+}

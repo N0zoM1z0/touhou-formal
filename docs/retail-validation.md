@@ -177,7 +177,9 @@ an isolated TH07 or TH08 retail mutation:
 The default site selector is `reachable-timeline-spawn`. It does not use a
 pre-found crash site. It reads the stage timeline, finds an early source-backed
 enemy spawn opcode, and patches a same-sized raw instruction in the spawned
-subroutine.
+subroutine. For TH07 the selector now prefers lower timeline indices before
+global time order, because the previous purely-time-sorted choice selected
+`timeline1/sub1`; Wine new-game probes exercised `timeline0/sub3` instead.
 
 Normal-difficulty materialization is important for the default retail menu path:
 TH07/TH08 `defaultDifficulty = 1` corresponds to active mask `2`, not the
@@ -222,23 +224,55 @@ crash is not a hand-written ECL case: the 24-byte instruction comes from the
 solver witness, then the retail lowering chooses an early timeline-spawned
 subroutine.
 
-### TH07 and boss-index OOB status
+### TH07 null boss read and boss-index OOB status
 
-The same lowering path also produces runnable TH07 artifacts, but the current
-generic Wine oracle did not classify them as crashes:
+The first TH07 run used the old purely-time-sorted placement
+`timeline1/instr0 -> sub1/instr1` and stayed live. Re-running the same
+solver-generated witness at the stage-entry placement `sub3/instr1` with active
+mask `255` produces a retail crash:
+
+```bash
+python3 scripts/retail_confirm_boss_int_read.py th07 \
+  --symex-path boss-int-null-deref \
+  --active-mask 255 \
+  --override-mask 0 \
+  --sub-index 3 \
+  --instruction-index 1 \
+  --cfg-safe-video-flags \
+  --post-input-wait-seconds 16
+```
+
+Observed report:
+
+- artifact:
+  `retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T164116Z`
+- witness bytes:
+  `000000002b00180000010200000000801027000000000000`
+- selected placement:
+  `sub3/instr1`, the 24-byte instruction reached from `timeline0/sub3`;
+- patched `th07.dat` SHA-256:
+  `c4c59e183fc57d652a222141e043243fc2f2e341e2fefbc0348826cd6eee269f`
+- oracle classification: `crash-dialog`, `interesting = true`;
+- Wine signature:
+  `wine: Unhandled page fault on read access to 000006FC at address 0040E5E5 (thread 013c), starting debugger...`
+
+The boss-index OOB witnesses are still useful calibration cases. They remain
+formal memory-safety counterexamples at the `g_EnemyManager.bosses[index]`
+boundary, but the specific out-of-bounds read can land on mapped adjacent state
+instead of immediately faulting:
 
 | Case | Artifact | Oracle |
 | --- | --- | --- |
-| TH07 `boss-int-null-deref`, active mask `2` | `retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024506Z` | `game-window-live` |
+| TH07 `boss-int-null-deref`, old `timeline1/sub1` placement, active mask `2` | `retail_validation/formal-th07-boss-int-boss-int-null-deref-20260901T024506Z` | `game-window-live` |
+| TH07 `boss-int-index-before-array`, old `timeline1/sub1` placement, active mask `2` | `retail_validation/formal-th07-boss-int-boss-int-index-before-array-20260901T162337Z` | `game-window-live` |
+| TH07 `boss-int-index-before-array`, fixed `timeline0/sub3` placement, active mask `255` | `retail_validation/formal-th07-boss-int-boss-int-index-before-array-20260901T164203Z` | `game-window-live` |
 | TH07 `boss-int-index-at-or-past-array`, active mask `2` | `retail_validation/formal-th07-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
+| TH08 `boss-int-index-before-array`, active mask `2` | `retail_validation/formal-th08-boss-int-boss-int-index-before-array-20260901T162429Z` | `game-window-live` |
 | TH08 `boss-int-index-at-or-past-array`, active mask `2` | `retail_validation/formal-th08-boss-int-boss-int-index-at-or-past-array-20260901T024614Z` | `game-window-live` |
 
-These are still useful calibration cases. The formal OOB property is a memory
-safety statement about `g_EnemyManager.bosses[index]`, not a guarantee that the
-retail process will immediately fault: an out-of-bounds read can land on mapped
-adjacent state. The TH07 null-deref result is also host-state dependent; the
-chosen early spawned context did not reproduce a null boss slot at the moment of
-execution.
+The key distinction is now explicit: TH07 boss null is retail-confirmed when the
+placement is actually reached; boss-index OOB remains a Wine-live memory-safety
+calibration, not a disproven formal counterexample.
 
 ## TH07/TH08 boss float-read witness lowering
 
@@ -288,3 +322,59 @@ These four runs are calibration evidence. The formal model is finding source
 memory-safety path classes at the opcode boundary. The current retail oracle
 then answers a different question: whether the selected stage-entry placement
 turns that path into an immediately visible process crash.
+
+## TH07/TH08 generic ECL symbolic witness lowering
+
+`scripts/retail_confirm_ecl_symex.py` is the shared retail bridge for non-boss
+ECL symbolic lanes. It currently supports:
+
+- `--family int-binary`, using `scripts/symex_materialize_int_binary.py`;
+- `--family raw-body`, using `scripts/symex_materialize_body_step.py`;
+- `--family callret`, using `scripts/symex_materialize_callret_step.py`.
+
+The bridge keeps the same discipline as the boss-read lowerer: ask Lean/Z3 for a
+concrete witness, patch one equal-sized raw ECL instruction into `ecldata1.ecl`,
+rebuild `th07.dat`/`th08.dat`, write a safe windowed cfg, and run an isolated
+Wine probe. CALL/RET has optional `--force-*` switches for retail-environment
+constraints such as actual `subCount`, selected instruction size, or stack
+depth. These constraints are added to the SMT query before Z3 solves; the
+resulting bytes still come from the materializer and replay with
+`matchesPath=true`.
+
+### Integer div/mod faults: retail-confirmed crashes
+
+Representative arithmetic witnesses now crash both TH07 and TH08 retail builds:
+
+| Case | Witness bytes | Placement | Patched archive SHA-256 | Artifact | Wine signature |
+| --- | --- | --- | --- | --- | --- |
+| TH07 `int-binary-divisor-zero-raw-immediate` | `000000000f00180000010000000000000000000000000000` | `sub3/instr1` | `05733b1a79a0c297c88137f8dcd905be78a7673e4fbe27d99e67a59bf8a7f34b` | `retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T163133Z` | `wine: Unhandled division by zero at address 00411202 (thread 013c), starting debugger...` |
+| TH07 `int-binary-divide-overflow-raw-immediate` | `000000000f001800000100000000000000000080ffffffff` | `sub3/instr1` | `d43b543240c6560939733f4095183d92730355f0d72339735ce726efb412404e` | `retail_validation/formal-th07-int-binary-int-binary-divide-overflow-raw-immediate-20260901T163217Z` | `wine: Unhandled division by zero at address 00411202 (thread 0140), starting debugger...` |
+| TH08 `int-binary-divisor-zero-raw-immediate` | `000000000d00180000020000000000000000000000000000` | `timeline0/instr0 -> sub14/instr1` | `444465eff2976b000c6455a4145b79fda883d4d5303d906939b96dfd12d6b177` | `retail_validation/formal-th08-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162825Z` | `wine: Unhandled division by zero at address 00418B92 (thread 013c), starting debugger...` |
+| TH08 `int-binary-divide-overflow-raw-immediate` | `0000000018001800000200000000000000000080ffffffff` | `timeline0/instr0 -> sub14/instr1` | `4352c5e3f53f6bf146dd3c95f41dac58aae5ee3951d44d750000e0d067ebd3e4` | `retail_validation/formal-th08-int-binary-int-binary-divide-overflow-raw-immediate-20260901T162906Z` | `wine: Unhandled division by zero at address 00419214 (thread 0144), starting debugger...` |
+
+Wine/x86 reports the signed `INT_MIN / -1` overflow through the same processor
+division-error class as divisor zero, so the signature text says "division by
+zero" even for the overflow witness.
+
+Two older TH07 runs are retained as placement calibration: active-mask `2` and
+`8` defaulted to `timeline1/sub1` and stayed `game-window-live`
+(`retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z`
+and
+`retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T163022Z`).
+
+### CALL/RET stack and subTable faults: retail-confirmed crashes
+
+Three CALL/RET witnesses are now retail-confirmed:
+
+| Case | Witness bytes | Retail constraint | Placement | Patched archive SHA-256 | Artifact | Wine signature |
+| --- | --- | --- | --- | --- | --- | --- |
+| TH07 `ret-stack-read-before-stack` | `000000002a00100000010000` padded to 16 bytes | `nextOffset = 16` | `sub3/instr0` | `e42475665f9b5c8a142bff479f4cd9a7ed0333f4ed30ae1774cda3f1165fd574` | `retail_validation/formal-th07-callret-ret-stack-read-before-stack-20260901T163645Z` | `wine: Unhandled page fault on read access to 00000000 at address 004106E3 (thread 013c), starting debugger...` |
+| TH07 `call-lookup-fault` | `0000000029001000000100003a000000` | `subId = subCount = 58`, `nextOffset = 16` | `sub3/instr0` | `a7024b8336d3a9357c008e3d931bb00b59ea63c74ad9cd5c03c0bb750ca4fae2` | `retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z` | `wine: Unhandled page fault on read access to 00000000 at address 004106E3 (thread 014c), starting debugger...` |
+| TH08 `call-lookup-fault` | `000000003400100000ff000035000000` | `subId = subCount = 53`, `nextOffset = 16` | `sub14/instr0` | `d4efd65cb10e9423a3a263cb4d07043c5aaa434d37db6e998b8f8df99ee31813` | `retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z` | `wine: Unhandled page fault on read access to 00000000 at address 004185A0 (thread 014c), starting debugger...` |
+
+Two non-crashing runs are retained because they sharpen the host-state boundary:
+
+| Case | Artifact | Oracle | Interpretation |
+| --- | --- | --- | --- |
+| TH07 unconstrained negative `call-lookup-fault` | `retail_validation/formal-th07-callret-call-lookup-fault-20260901T163312Z` | `game-window-live` | negative sub ids do not produce the same reliable one-instruction retail crash as the constrained one-past table read |
+| TH08 top-level `ret-child-index-before-array` | `retail_validation/formal-th08-callret-ret-child-index-before-array-20260901T163750Z` | `game-window-live` | TH08 child-context RET faults require composed child-context/stack setup, not just replacing a top-level instruction |

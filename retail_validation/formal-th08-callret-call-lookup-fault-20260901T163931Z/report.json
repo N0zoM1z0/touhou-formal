@@ -1,0 +1,240 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z",
+  "source_result": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/game/th08.dat",
+      "archive_kind": "th08-pbgz",
+      "sha256": "d4efd65cb10e9423a3a263cb4d07043c5aaa434d37db6e998b8f8df99ee31813",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 45848
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/game/th08.cfg",
+    "source": "generated-source-backed-default",
+    "size": 60,
+    "sha256": "595b7c04f94acb6f81e01f947a132083cc3d5991164ab008e43744f96a67796a",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 56,
+    "opts": 17475,
+    "safe_video_flags": true,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 56
+    }
+  },
+  "prepare_only": false,
+  "wine_probe": {
+    "mode": "generic-new-game-key-probe",
+    "title": "th08",
+    "command": [
+      "wine",
+      "th08.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/game",
+    "display": ":210",
+    "wine_prefix": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/prefix",
+    "wineboot_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/wineboot.log",
+    "wine_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/wine.log",
+    "keys": [
+      "z",
+      "z",
+      "Down",
+      "Down",
+      "Down",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "control_error": null,
+    "screenshots": [
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/probe-00-launch-window.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/probe-01-after-input.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/probe-02-final.png"
+    ],
+    "screenshot_summary": {
+      "count": 3,
+      "decoded_count": 3,
+      "all_decoded_black": false,
+      "captures": [
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/probe-00-launch-window.png",
+          "sha256": "7673d21aff9cd4cfd64ddffbdfd1efe82de31bc1bde1f62ee8779154cd325e95",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 282283,
+          "black_ratio": 0.6410586039225261,
+          "max_byte": 255,
+          "mean_byte": 35.49192216661241
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/probe-01-after-input.png",
+          "sha256": "12f5c5335a1f617095976bdacdda5c85abcd3760557c6750eb61b276ba8a86d3",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 172979,
+          "black_ratio": 0.7800458272298177,
+          "max_byte": 255,
+          "mean_byte": 49.658562130398224
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/probe-02-final.png",
+          "sha256": "12f5c5335a1f617095976bdacdda5c85abcd3760557c6750eb61b276ba8a86d3",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 172979,
+          "black_ratio": 0.7800458272298177,
+          "max_byte": 255,
+          "mean_byte": 49.658562130398224
+        }
+      ]
+    },
+    "elapsed_seconds": 33.018081188201904,
+    "window_census": {
+      "display": ":210",
+      "windows": [
+        {
+          "window_id": "1293",
+          "name": ""
+        },
+        {
+          "window_id": "8388609",
+          "name": ""
+        },
+        {
+          "window_id": "4194343",
+          "name": ""
+        },
+        {
+          "window_id": "8388611",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "8388610",
+          "name": ""
+        },
+        {
+          "window_id": "10485761",
+          "name": ""
+        },
+        {
+          "window_id": "8388612",
+          "name": ""
+        },
+        {
+          "window_id": "8388613",
+          "name": ""
+        },
+        {
+          "window_id": "8388614",
+          "name": ""
+        },
+        {
+          "window_id": "8388615",
+          "name": ""
+        },
+        {
+          "window_id": "2097184",
+          "name": ""
+        },
+        {
+          "window_id": "2097194",
+          "name": ""
+        },
+        {
+          "window_id": "12582916",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "12582915",
+          "name": "東方永夜抄　～ Imperishable Night. ver 1.00d"
+        },
+        {
+          "window_id": "6291482",
+          "name": ""
+        },
+        {
+          "window_id": "14680066",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "14680065",
+          "name": "Wine Debugger"
+        },
+        {
+          "window_id": "16777235",
+          "name": ""
+        },
+        {
+          "window_id": "18874370",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "18874369",
+          "name": "プログラム エラー"
+        },
+        {
+          "window_id": "2097235",
+          "name": ""
+        }
+      ],
+      "window_names_path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/window-names.txt"
+    },
+    "wine_summary": {
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/wine.log",
+      "classification": "wine-crash-log",
+      "primary_signature": "wine: Unhandled page fault on read access to 00000000 at address 004185A0 (thread 014c), starting debugger...",
+      "crash_lines": [
+        "wine: Unhandled page fault on read access to 00000000 at address 004185A0 (thread 014c), starting debugger..."
+      ],
+      "error_lines": []
+    },
+    "oracle": {
+      "classification": "crash-dialog",
+      "interesting": true,
+      "window_names": [
+        "",
+        "",
+        "",
+        "Default IME",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Default IME",
+        "東方永夜抄　～ Imperishable Night. ver 1.00d",
+        "",
+        "Default IME",
+        "Wine Debugger",
+        "",
+        "Default IME",
+        "プログラム エラー",
+        ""
+      ],
+      "crash_titles": [
+        "Wine Debugger",
+        "プログラム エラー"
+      ],
+      "wine_log_classification": "wine-crash-log",
+      "wine_log_primary_signature": "wine: Unhandled page fault on read access to 00000000 at address 004185A0 (thread 014c), starting debugger...",
+      "returncode": null,
+      "timed_out": true
+    }
+  }
+}

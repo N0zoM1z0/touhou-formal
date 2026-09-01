@@ -298,6 +298,8 @@ python3 scripts/evaluate_symex_effectiveness.py
 python3 scripts/retail_confirm_th06_arg0_256.py --prepare-only
 python3 scripts/retail_confirm_th06_raw_symex.py --symex-path jumped-before-buffer --prepare-only
 python3 scripts/retail_confirm_boss_float_read.py th08 --symex-path boss-float-null-guarded-skip --prepare-only
+python3 scripts/retail_confirm_ecl_symex.py th08 --family int-binary --symex-path int-binary-divide-overflow-raw-immediate --prepare-only
+python3 scripts/retail_confirm_ecl_symex.py th07 --family callret --symex-path ret-stack-read-before-stack --force-next-offset 16 --prepare-only
 ```
 
 `scripts/check.sh` runs the Lean build, executable counterexample check, Z3

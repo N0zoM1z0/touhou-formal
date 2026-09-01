@@ -233,10 +233,11 @@ class EclWireFile:
         raw_sites_by_sub: dict[int, list[RawInstructionSite]] = {}
         for site in self.raw_instruction_sites():
             raw_sites_by_sub.setdefault(site.sub_index, []).append(site)
-        for timeline_site in sorted(
-            self.timeline_sites(),
-            key=lambda site: (site.time, site.timeline_index, site.instruction_index),
-        ):
+        if self.title == "th07":
+            timeline_sort_key = lambda site: (site.timeline_index, site.time, site.instruction_index)
+        else:
+            timeline_sort_key = lambda site: (site.time, site.timeline_index, site.instruction_index)
+        for timeline_site in sorted(self.timeline_sites(), key=timeline_sort_key):
             if timeline_site.time < 0:
                 continue
             if timeline_site.opcode not in spawn_opcodes:

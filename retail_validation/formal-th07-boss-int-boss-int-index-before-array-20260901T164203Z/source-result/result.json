@@ -1,0 +1,110 @@
+{
+  "schema": "touhou-formal-retail-boss-int-read-candidate-v1",
+  "formal_result_id": "TH07-ECL-BOSS-INT-BOSS-INT-INDEX-BEFORE-ARRAY",
+  "lean_model": "TouhouFormal.ECL.rawBossIntReadStep",
+  "symex_command": [
+    "scripts/symex_materialize_boss_int_read.py",
+    "th07",
+    "boss-int-index-before-array",
+    "255",
+    "0"
+  ],
+  "case_name": "formal-th07-boss-int-boss-int-index-before-array",
+  "mutant_name": "boss-int-boss-int-index-before-array-s03-i0001",
+  "source_game_dir": "/home/yann/yann/touhou/formal/retail_extract/th07-20260901-unar/[th07] 东方妖妖梦 (日文版)",
+  "source_archive": "/home/yann/yann/touhou/formal/retail_extract/th07-20260901-unar/[th07] 东方妖妖梦 (日文版)/th07.dat",
+  "source_archive_sha256": "5fe8d772191505bf208f966da8070ee0a9e0d0ee8567a8827ef3a362bcb0c287",
+  "source_payload_sha256": "c443e28b86cb20eeb7613d786c7ff667c2bd39726bf7ffbb38a3c0e354db1b40",
+  "source_plain_payload_sha256": "c443e28b86cb20eeb7613d786c7ff667c2bd39726bf7ffbb38a3c0e354db1b40",
+  "seed_name": "ecldata1.ecl",
+  "override_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-boss-int-boss-int-index-before-array-20260901T164203Z/source-result/override",
+  "payload_sha256": "372563182b41448e5c0e5b24cf273fc97d280f9b10c17194058b08babd4952a4",
+  "symex": {
+    "activeMask": 255,
+    "fixture": {
+      "action": "fault:out-of-bounds-read",
+      "bossIndexKind": "-",
+      "bossIndexValue": "-",
+      "bossPresent": "-",
+      "decodedDifficultyMask": "1",
+      "decodedNextOffset": "24",
+      "decodedOpcode": "43",
+      "decodedOperandMask": "2",
+      "decodedTime": "0",
+      "faultDetail": "source boss-indexed integer read reaches g_EnemyManager.bosses[index] for opcode 43",
+      "faultKind": "out-of-bounds-read",
+      "hex": "000000002b001800000102000000008000000080ffffffff",
+      "matchesPath": "true",
+      "outputFlagEnabled": "-",
+      "outputKind": "-",
+      "outputSelectorKnown": "-",
+      "result": "-",
+      "size": "24",
+      "value": "-",
+      "valueKind": "-"
+    },
+    "overrideMask": 0,
+    "path": "boss-int-index-before-array",
+    "status": "sat",
+    "title": "th07",
+    "witness": {
+      "activeMask": 255,
+      "bossIndexHost": -2147483648,
+      "bossIndexRaw": -1,
+      "bossPresent": false,
+      "bufferSize": 24,
+      "currentTime": 0,
+      "difficultyPass": true,
+      "instrTime": 0,
+      "instructionMask": 1,
+      "nextOffset": 24,
+      "opcode": 43,
+      "operandMask": 2,
+      "outputHostBefore": 2147483647,
+      "outputRaw": -2147483648,
+      "overrideMask": 0,
+      "requiredDifficultyMask": 255,
+      "valueHost": -2147483648,
+      "valueRaw": -2147483648
+    }
+  },
+  "mutation_metadata": {
+    "family": "boss-int-read-symbolic-step",
+    "boss_read_family": "boss-int",
+    "symex_path": "boss-int-index-before-array",
+    "active_mask": 255,
+    "override_mask": 0,
+    "site_selection": "reachable-timeline-spawn",
+    "fixture_hex": "000000002b001800000102000000008000000080ffffffff",
+    "fixture_size": 24,
+    "th08_crypt_key_index": null,
+    "timeline_spawn_source": null,
+    "site_key": "sub:0003:instr:0001",
+    "old_instruction": {
+      "file_offset": 1644,
+      "time": 0,
+      "opcode": 101,
+      "size": 24,
+      "difficulty_mask": 255,
+      "operand_mask": 0,
+      "hex": "000000006500180000ff00000000c0410000c04100000042"
+    },
+    "new_instruction": {
+      "file_offset": 1644,
+      "hex": "000000002b001800000102000000008000000080ffffffff"
+    }
+  },
+  "sites": [
+    {
+      "site_kind": "raw-sub-instruction",
+      "sub_index": 3,
+      "instruction_index": 1,
+      "file_offset": 1644
+    }
+  ],
+  "limitations": [
+    "This preserves the original ECL layout and patches one equal-sized raw instruction.",
+    "Default site selection uses source-backed timeline spawn opcodes, not dynamic trace coverage.",
+    "Retail execution is a black-box Wine probe for TH07/TH08, not yet the TH06 address-level oracle."
+  ]
+}

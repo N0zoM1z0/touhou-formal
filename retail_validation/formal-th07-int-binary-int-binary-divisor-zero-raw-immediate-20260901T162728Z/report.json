@@ -1,0 +1,205 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z",
+  "source_result": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/game/th07.dat",
+      "archive_kind": "th07-pbg4",
+      "sha256": "5d0cf298274d43633781d54187c2c6cbefca084820ff45b61576318d8a7d75bd",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 44920
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/game/th07.cfg",
+    "source": "generated-source-backed-default",
+    "size": 56,
+    "sha256": "abbe42c3a586fe8bcd733b6d10f9104ef73cea4782935a65d83b89a3f4d58b65",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 52,
+    "opts": 17475,
+    "safe_video_flags": true,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 52
+    }
+  },
+  "prepare_only": false,
+  "wine_probe": {
+    "mode": "generic-new-game-key-probe",
+    "title": "th07",
+    "command": [
+      "wine",
+      "th07.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/game",
+    "display": ":210",
+    "wine_prefix": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/prefix",
+    "wineboot_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/wineboot.log",
+    "wine_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/wine.log",
+    "keys": [
+      "z",
+      "z",
+      "Down",
+      "Down",
+      "Down",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "control_error": null,
+    "screenshots": [
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/probe-00-launch-window.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/probe-01-after-input.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/probe-02-final.png"
+    ],
+    "screenshot_summary": {
+      "count": 3,
+      "decoded_count": 3,
+      "all_decoded_black": false,
+      "captures": [
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/probe-00-launch-window.png",
+          "sha256": "b748831f7f60c70f164dfe3417f26d329b36a0d28565f8c9ad7a1b0bb8ecb1ea",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 285775,
+          "black_ratio": 0.6366182963053386,
+          "max_byte": 255,
+          "mean_byte": 37.363204108344185
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/probe-01-after-input.png",
+          "sha256": "2300f151c254c329f84aa68f01a766d51d35336ad4ac0d147bb40da4f9c8c53b",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307034,
+          "black_ratio": 0.6095860799153645,
+          "max_byte": 255,
+          "mean_byte": 33.23831431070963
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/probe-02-final.png",
+          "sha256": "6471fc6d1dc077a636599c95468eecacd49294d95eb7876181d4682bd5fb38e0",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307024,
+          "black_ratio": 0.6095987955729167,
+          "max_byte": 255,
+          "mean_byte": 40.724271562364365
+        }
+      ]
+    },
+    "elapsed_seconds": 42.82602572441101,
+    "window_census": {
+      "display": ":210",
+      "windows": [
+        {
+          "window_id": "1293",
+          "name": ""
+        },
+        {
+          "window_id": "6291457",
+          "name": ""
+        },
+        {
+          "window_id": "2097192",
+          "name": ""
+        },
+        {
+          "window_id": "6291459",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "6291458",
+          "name": ""
+        },
+        {
+          "window_id": "6291460",
+          "name": ""
+        },
+        {
+          "window_id": "6291461",
+          "name": ""
+        },
+        {
+          "window_id": "10485761",
+          "name": ""
+        },
+        {
+          "window_id": "6291462",
+          "name": ""
+        },
+        {
+          "window_id": "6291463",
+          "name": ""
+        },
+        {
+          "window_id": "8388640",
+          "name": ""
+        },
+        {
+          "window_id": "8388650",
+          "name": ""
+        },
+        {
+          "window_id": "4194308",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "4194307",
+          "name": "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b"
+        },
+        {
+          "window_id": "8388691",
+          "name": ""
+        }
+      ],
+      "window_names_path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/window-names.txt"
+    },
+    "wine_summary": {
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T162728Z/wine.log",
+      "classification": "no-crash-signature",
+      "primary_signature": null,
+      "crash_lines": [],
+      "error_lines": []
+    },
+    "oracle": {
+      "classification": "game-window-live",
+      "interesting": false,
+      "window_names": [
+        "",
+        "",
+        "",
+        "Default IME",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Default IME",
+        "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b",
+        ""
+      ],
+      "crash_titles": [],
+      "wine_log_classification": "no-crash-signature",
+      "wine_log_primary_signature": null,
+      "returncode": null,
+      "timed_out": true
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "schema": "touhou-formal-retail-callret-candidate-v1",
+  "formal_result_id": "TH08-ECL-CALLRET-CALL-LOOKUP-FAULT",
+  "lean_model": "TouhouFormal.ECL.rawCallRetStep",
+  "symex_command": [
+    "scripts/symex_materialize_callret_step.py",
+    "th08",
+    "call-lookup-fault",
+    "255",
+    "0"
+  ],
+  "case_name": "formal-th08-callret-call-lookup-fault",
+  "mutant_name": "callret-call-lookup-fault-s14-i0000",
+  "source_game_dir": "/home/yann/yann/touhou/formal/retail_extract/th08-20260901-unar/[th08] 东方永夜抄 (日文版)",
+  "source_archive": "/home/yann/yann/touhou/formal/retail_extract/th08-20260901-unar/[th08] 东方永夜抄 (日文版)/th08.dat",
+  "source_archive_sha256": "9d7edf43b8ddd347cbb641836f6b5050745dd936f688daebbf9382ca557043bb",
+  "source_payload_sha256": "af557ad6158bb67fb7a2b4b09befda2f4addcc98ff227b45fdc2a5cfff08c7ff",
+  "source_plain_payload_sha256": "6b44a0ea36648edcdeae522a2ac16d1f09bf2097d3ddaa1a61c8c1703bad68ea",
+  "seed_name": "ecldata1.ecl",
+  "override_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-callret-call-lookup-fault-20260901T163931Z/source-result/override",
+  "payload_sha256": "0d7ef4304f7648e67214b02a2e89b01b8a0cf8573f7398a2845616931dc1108e",
+  "symex": {
+    "title": "th08",
+    "path": "call-lookup-fault",
+    "activeMask": 255,
+    "overrideMask": 0,
+    "status": "sat",
+    "extraConstraints": {
+      "nextOffset": 16,
+      "subId": 53,
+      "subCount": 53,
+      "stackDepth": 0,
+      "stackDisabled": false
+    },
+    "witness": {
+      "currentTime": 0,
+      "instrTime": 0,
+      "opcode": 52,
+      "nextOffset": 16,
+      "instructionMask": 255,
+      "operandMask": 0,
+      "activeMask": 255,
+      "overrideMask": 0,
+      "requiredDifficultyMask": 255,
+      "subId": 53,
+      "stackDepth": 0,
+      "stackDisabled": false,
+      "subCount": 53,
+      "childContextSlot": 0,
+      "bufferSize": 16,
+      "difficultyPass": true
+    },
+    "fixture": {
+      "size": "16",
+      "hex": "000000003400100000ff000035000000",
+      "decodedTime": "0",
+      "decodedOpcode": "52",
+      "decodedNextOffset": "16",
+      "decodedDifficultyMask": "255",
+      "decodedOperandMask": "0",
+      "action": "fault:out-of-bounds-read",
+      "stackDepthAfter": "-",
+      "returnCursor": "-",
+      "returnCursorClass": "-",
+      "targetSubOffset": "-",
+      "childContextIndex": "-",
+      "faultKind": "out-of-bounds-read",
+      "faultDetail": "source reads this->subTable[subId] with only the title-specific negative-id policy",
+      "matchesPath": "true"
+    }
+  },
+  "mutation_metadata": {
+    "family": "callret-symbolic-step",
+    "symex_family": "callret",
+    "symex_path": "call-lookup-fault",
+    "active_mask": 255,
+    "override_mask": 0,
+    "state_assumption": "Only top-level RET underflow and negative/positive subTable lookup paths are plausible one-instruction retail probes. Stack-full and TH08 child-context paths need a composed state setup.",
+    "site_selection": "reachable-timeline-spawn",
+    "fixture_hex": "000000003400100000ff000035000000",
+    "fixture_size": 16,
+    "patched_instruction_hex": "000000003400100000ff000035000000",
+    "patched_instruction_size": 16,
+    "forced_next_offset": 16,
+    "th08_crypt_key_index": 4,
+    "timeline_spawn_source": null,
+    "site_key": "sub:0014:instr:0000",
+    "old_instruction": {
+      "file_offset": 5268,
+      "time": 0,
+      "opcode": 80,
+      "size": 16,
+      "difficulty_mask": 255,
+      "operand_mask": 0,
+      "hex": "000000005000100000ff000038000000"
+    },
+    "new_instruction": {
+      "file_offset": 5268,
+      "hex": "000000003400100000ff000035000000"
+    }
+  },
+  "sites": [
+    {
+      "site_kind": "raw-sub-instruction",
+      "sub_index": 14,
+      "instruction_index": 0,
+      "file_offset": 5268
+    }
+  ],
+  "limitations": [
+    "This preserves the original ECL layout and patches one equal-sized raw instruction.",
+    "Default site selection uses source-backed timeline spawn opcodes, not dynamic trace coverage.",
+    "Retail execution is a black-box Wine probe for TH07/TH08.",
+    "Only top-level RET underflow and negative/positive subTable lookup paths are plausible one-instruction retail probes. Stack-full and TH08 child-context paths need a composed state setup."
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "schema": "touhou-formal-retail-int-binary-candidate-v1",
+  "formal_result_id": "TH07-ECL-INT-BINARY-INT-BINARY-DIVISOR-ZERO-RAW-IMMEDIATE",
+  "lean_model": "TouhouFormal.ECL.rawIntBinaryStep",
+  "symex_command": [
+    "scripts/symex_materialize_int_binary.py",
+    "th07",
+    "int-binary-divisor-zero-raw-immediate",
+    "8",
+    "0"
+  ],
+  "case_name": "formal-th07-int-binary-int-binary-divisor-zero-raw-immediate",
+  "mutant_name": "int-binary-int-binary-divisor-zero-raw-immediate-s01-i0001",
+  "source_game_dir": "/home/yann/yann/touhou/formal/retail_extract/th07-20260901-unar/[th07] 东方妖妖梦 (日文版)",
+  "source_archive": "/home/yann/yann/touhou/formal/retail_extract/th07-20260901-unar/[th07] 东方妖妖梦 (日文版)/th07.dat",
+  "source_archive_sha256": "5fe8d772191505bf208f966da8070ee0a9e0d0ee8567a8827ef3a362bcb0c287",
+  "source_payload_sha256": "c443e28b86cb20eeb7613d786c7ff667c2bd39726bf7ffbb38a3c0e354db1b40",
+  "source_plain_payload_sha256": "c443e28b86cb20eeb7613d786c7ff667c2bd39726bf7ffbb38a3c0e354db1b40",
+  "seed_name": "ecldata1.ecl",
+  "override_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-int-binary-int-binary-divisor-zero-raw-immediate-20260901T163022Z/source-result/override",
+  "payload_sha256": "c2d5d6fbcb0906d05dd177a6cdd0834c44387fe2ae9e6fc81f86d2ae140559ae",
+  "symex": {
+    "activeMask": 8,
+    "fixture": {
+      "action": "fault:divide-by-zero",
+      "decodedDifficultyMask": "8",
+      "decodedNextOffset": "24",
+      "decodedOpcode": "15",
+      "decodedOperandMask": "0",
+      "decodedTime": "0",
+      "faultDetail": "source integer div opcode reads a zero RHS/divisor from operand index 2",
+      "faultKind": "divide-by-zero",
+      "hex": "000000000f00180000080000000000000000000000000000",
+      "lhsKind": "raw-immediate",
+      "lhsValue": "0",
+      "matchesPath": "true",
+      "op": "div/assign",
+      "outputFlagEnabled": "false",
+      "outputKind": "raw-operand-cell",
+      "outputSelectorKnown": "false",
+      "result": "-",
+      "rhsKind": "raw-immediate",
+      "rhsValue": "0",
+      "size": "24"
+    },
+    "overrideMask": 0,
+    "path": "int-binary-divisor-zero-raw-immediate",
+    "status": "sat",
+    "title": "th07",
+    "witness": {
+      "activeMask": 8,
+      "bufferSize": 24,
+      "currentTime": 0,
+      "difficultyPass": true,
+      "instrTime": 0,
+      "instructionMask": 8,
+      "lhsHost": 0,
+      "lhsRaw": 0,
+      "nextOffset": 24,
+      "opcode": 15,
+      "operandMask": 0,
+      "outputHostBefore": 0,
+      "outputRaw": 0,
+      "overrideMask": 0,
+      "requiredDifficultyMask": 8,
+      "rhsHost": 0,
+      "rhsRaw": 0
+    }
+  },
+  "mutation_metadata": {
+    "family": "int-binary-symbolic-step",
+    "symex_family": "int-binary",
+    "symex_path": "int-binary-divisor-zero-raw-immediate",
+    "active_mask": 8,
+    "override_mask": 0,
+    "state_assumption": "Raw-immediate div/mod witnesses are primarily instruction-local; host state is only used for the selected retail placement and menu path.",
+    "site_selection": "reachable-timeline-spawn",
+    "fixture_hex": "000000000f00180000080000000000000000000000000000",
+    "fixture_size": 24,
+    "th08_crypt_key_index": null,
+    "timeline_spawn_source": {
+      "timeline_index": 1,
+      "instruction_index": 0,
+      "file_offset": 43404,
+      "time": 1,
+      "opcode": 0,
+      "size": 32,
+      "first_arg_sub_index": 1,
+      "difficulty_mask": null
+    },
+    "site_key": "sub:0001:instr:0001",
+    "old_instruction": {
+      "file_offset": 396,
+      "time": 0,
+      "opcode": 101,
+      "size": 24,
+      "difficulty_mask": 255,
+      "operand_mask": 0,
+      "hex": "000000006500180000ff0000000000000000000000000042"
+    },
+    "new_instruction": {
+      "file_offset": 396,
+      "hex": "000000000f00180000080000000000000000000000000000"
+    }
+  },
+  "sites": [
+    {
+      "site_kind": "raw-sub-instruction",
+      "sub_index": 1,
+      "instruction_index": 1,
+      "file_offset": 396
+    }
+  ],
+  "limitations": [
+    "This preserves the original ECL layout and patches one equal-sized raw instruction.",
+    "Default site selection uses source-backed timeline spawn opcodes, not dynamic trace coverage.",
+    "Retail execution is a black-box Wine probe for TH07/TH08.",
+    "Raw-immediate div/mod witnesses are primarily instruction-local; host state is only used for the selected retail placement and menu path."
+  ]
+}

@@ -13,6 +13,7 @@ python3 -m py_compile \
   scripts/run_ce_campaign.py \
   scripts/retail_confirm_boss_float_read.py \
   scripts/retail_confirm_boss_int_read.py \
+  scripts/retail_confirm_ecl_symex.py \
   scripts/retail_pbg.py \
   scripts/symex_boss_float_candidate_queue.py \
   scripts/symex_materialize_boss_float_read.py

@@ -1,0 +1,240 @@
+{
+  "artifact_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z",
+  "source_result": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/source-result/result.json",
+  "patched": {
+    "game_dir": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/game",
+    "patched_archive": {
+      "archive": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/game/th07.dat",
+      "archive_kind": "th07-pbg4",
+      "sha256": "a7024b8336d3a9357c008e3d931bb00b59ea63c74ad9cd5c03c0bb750ca4fae2",
+      "entry_name": "ecldata1.ecl",
+      "entry_size": 44920
+    }
+  },
+  "cfg": {
+    "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/game/th07.cfg",
+    "source": "generated-source-backed-default",
+    "size": 56,
+    "sha256": "abbe42c3a586fe8bcd733b6d10f9104ef73cea4782935a65d83b89a3f4d58b65",
+    "before_sha256": null,
+    "windowed": 1,
+    "colorMode16bit": 0,
+    "frameskipConfig": 0,
+    "opts_offset": 52,
+    "opts": 17475,
+    "safe_video_flags": true,
+    "source_offsets": {
+      "colorMode16bit": 30,
+      "windowed": 34,
+      "frameskipConfig": 35,
+      "opts": 52
+    }
+  },
+  "prepare_only": false,
+  "wine_probe": {
+    "mode": "generic-new-game-key-probe",
+    "title": "th07",
+    "command": [
+      "wine",
+      "th07.exe"
+    ],
+    "cwd": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/game",
+    "display": ":210",
+    "wine_prefix": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/prefix",
+    "wineboot_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/wineboot.log",
+    "wine_log": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/wine.log",
+    "keys": [
+      "z",
+      "z",
+      "Down",
+      "Down",
+      "Down",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z",
+      "z"
+    ],
+    "returncode": null,
+    "timed_out": true,
+    "control_error": null,
+    "screenshots": [
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/probe-00-launch-window.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/probe-01-after-input.png",
+      "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/probe-02-final.png"
+    ],
+    "screenshot_summary": {
+      "count": 3,
+      "decoded_count": 3,
+      "all_decoded_black": false,
+      "captures": [
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/probe-00-launch-window.png",
+          "sha256": "b7cfdf86d395031cc8229c8489d528cedad6dcae17e459a4a3fde07db11a9464",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 285773,
+          "black_ratio": 0.6366208394368489,
+          "max_byte": 255,
+          "mean_byte": 37.36346944173177
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/probe-01-after-input.png",
+          "sha256": "86cf9e5d764a2861e5b7a4cb248906ab0b9b2ecf0cc5d738a5765f70c45764d6",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 307032,
+          "black_ratio": 0.609588623046875,
+          "max_byte": 255,
+          "mean_byte": 33.54772186279297
+        },
+        {
+          "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/probe-02-final.png",
+          "sha256": "3b2d6d552e9b4f96eed5bed2d2e151143024501fa63662ab3bb9bff238a8a82c",
+          "decoded": true,
+          "pixel_count": 786432,
+          "nonblack_pixels": 172916,
+          "black_ratio": 0.7801259358723959,
+          "max_byte": 255,
+          "mean_byte": 50.75215869479709
+        }
+      ]
+    },
+    "elapsed_seconds": 41.0918927192688,
+    "window_census": {
+      "display": ":210",
+      "windows": [
+        {
+          "window_id": "1293",
+          "name": ""
+        },
+        {
+          "window_id": "6291457",
+          "name": ""
+        },
+        {
+          "window_id": "2097191",
+          "name": ""
+        },
+        {
+          "window_id": "6291459",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "6291458",
+          "name": ""
+        },
+        {
+          "window_id": "10485761",
+          "name": ""
+        },
+        {
+          "window_id": "6291460",
+          "name": ""
+        },
+        {
+          "window_id": "6291461",
+          "name": ""
+        },
+        {
+          "window_id": "6291462",
+          "name": ""
+        },
+        {
+          "window_id": "6291463",
+          "name": ""
+        },
+        {
+          "window_id": "4194336",
+          "name": ""
+        },
+        {
+          "window_id": "4194346",
+          "name": ""
+        },
+        {
+          "window_id": "8388612",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "8388611",
+          "name": "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b"
+        },
+        {
+          "window_id": "12582938",
+          "name": ""
+        },
+        {
+          "window_id": "14680066",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "14680065",
+          "name": "Wine Debugger"
+        },
+        {
+          "window_id": "16777235",
+          "name": ""
+        },
+        {
+          "window_id": "18874370",
+          "name": "Default IME"
+        },
+        {
+          "window_id": "18874369",
+          "name": "プログラム エラー"
+        },
+        {
+          "window_id": "4194387",
+          "name": ""
+        }
+      ],
+      "window_names_path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/window-names.txt"
+    },
+    "wine_summary": {
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-callret-call-lookup-fault-20260901T164018Z/wine.log",
+      "classification": "wine-crash-log",
+      "primary_signature": "wine: Unhandled page fault on read access to 00000000 at address 004106E3 (thread 014c), starting debugger...",
+      "crash_lines": [
+        "wine: Unhandled page fault on read access to 00000000 at address 004106E3 (thread 014c), starting debugger..."
+      ],
+      "error_lines": []
+    },
+    "oracle": {
+      "classification": "crash-dialog",
+      "interesting": true,
+      "window_names": [
+        "",
+        "",
+        "",
+        "Default IME",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Default IME",
+        "東方妖々夢　～ Perfect Cherry Blossom. ver 1.00b",
+        "",
+        "Default IME",
+        "Wine Debugger",
+        "",
+        "Default IME",
+        "プログラム エラー",
+        ""
+      ],
+      "crash_titles": [
+        "Wine Debugger",
+        "プログラム エラー"
+      ],
+      "wine_log_classification": "wine-crash-log",
+      "wine_log_primary_signature": "wine: Unhandled page fault on read access to 00000000 at address 004106E3 (thread 014c), starting debugger...",
+      "returncode": null,
+      "timed_out": true
+    }
+  }
+}
