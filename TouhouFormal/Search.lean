@@ -31,6 +31,7 @@ import TouhouFormal.Search.Extension
 import TouhouFormal.Search.ChildContext
 import TouhouFormal.Search.Misc
 import TouhouFormal.Search.BossDispatch
+import TouhouFormal.Search.LinkedChild
 import TouhouFormal.Search.Random
 import TouhouFormal.Search.ScalarAssignment
 import TouhouFormal.Search.SMT

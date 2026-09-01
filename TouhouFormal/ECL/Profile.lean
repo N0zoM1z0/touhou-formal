@@ -1610,6 +1610,86 @@ structure RawBossDispatchOpShape where
   callParameterCopyBytes : Nat := 0x20
 deriving Repr, DecidableEq
 
+/-!
+TH08 opcodes 90--92 share one linked-child constructor pipeline.  The profile
+keeps only the three source deltas (spawn position, inherited parent offset,
+and effect position) while the pool scan, repeated alignment reads, chain
+linking, and unconditional sound stay in one executable semantics.
+-/
+
+inductive RawLinkedChildIntInputPolicy where
+  | rawI32
+  | intRValue
+deriving Repr, DecidableEq
+
+inductive RawLinkedChildIntRole where
+  | subId
+  | life
+  | itemDrop
+  | score
+deriving Repr, DecidableEq
+
+def RawLinkedChildIntRole.name : RawLinkedChildIntRole -> String
+  | .subId => "sub-id"
+  | .life => "life"
+  | .itemDrop => "item-drop"
+  | .score => "score"
+
+structure RawLinkedChildIntInputShape where
+  role : RawLinkedChildIntRole
+  operandIndex : Nat
+  policy : RawLinkedChildIntInputPolicy
+deriving Repr, DecidableEq
+
+inductive RawLinkedChildFloatRole where
+  | positionX
+  | positionY
+deriving Repr, DecidableEq
+
+def RawLinkedChildFloatRole.name : RawLinkedChildFloatRole -> String
+  | .positionX => "position-x"
+  | .positionY => "position-y"
+
+structure RawLinkedChildFloatInputShape where
+  role : RawLinkedChildFloatRole
+  operandIndex : Nat
+deriving Repr, DecidableEq
+
+inductive RawLinkedChildPositionMode where
+  | scriptPosition
+  | parentWorldOffset
+deriving Repr, DecidableEq
+
+def RawLinkedChildPositionMode.name : RawLinkedChildPositionMode -> String
+  | .scriptPosition => "script-position"
+  | .parentWorldOffset => "parent-world-offset"
+
+inductive RawLinkedChildEffectPositionSource where
+  | childPosition
+  | childWorldPosition
+deriving Repr, DecidableEq
+
+def RawLinkedChildEffectPositionSource.name :
+    RawLinkedChildEffectPositionSource -> String
+  | .childPosition => "child-position"
+  | .childWorldPosition => "child-world-position"
+
+structure RawLinkedChildOpShape where
+  opcode : Int
+  positionMode : RawLinkedChildPositionMode
+  intInputs : List RawLinkedChildIntInputShape
+  floatInputs : List RawLinkedChildFloatInputShape
+  poolSearchSlots : Nat
+  contextCopyBytes : Nat
+  hostSubIdTruncatesToI16 : Bool := true
+  hostItemDropTruncatesToI8 : Bool := true
+  setParentPositionOffset : Bool := false
+  inheritParentPosition : Bool := false
+  effectPositionSource : RawLinkedChildEffectPositionSource := .childPosition
+  alignmentEffectId : Int := 0x20
+  spawnSoundId : Int := 0x24
+deriving Repr, DecidableEq
+
 structure IntSelectorRange where
   first : Int
   last : Int
@@ -2532,6 +2612,7 @@ structure RawInstrShape where
   childContextOps : List RawChildContextOpShape := []
   miscOps : List RawMiscOpShape := []
   bossDispatchOps : List RawBossDispatchOpShape := []
+  linkedChildOps : List RawLinkedChildOpShape := []
   bossIntReads : List RawBossIntReadShape := []
   bossFloatReads : List RawBossFloatReadShape := []
   intDivisorHazards : List RawIntDivisorHazard := []
@@ -2715,6 +2796,11 @@ def RawInstrShape.findBossDispatchOp?
     (rawShape : RawInstrShape)
     (opcode : Int) : Option RawBossDispatchOpShape :=
   rawShape.bossDispatchOps.find? (fun op => op.opcode == opcode)
+
+def RawInstrShape.findLinkedChildOp?
+    (rawShape : RawInstrShape)
+    (opcode : Int) : Option RawLinkedChildOpShape :=
+  rawShape.linkedChildOps.find? (fun op => op.opcode == opcode)
 
 def RawInstrShape.findIntDivisorHazard?
     (rawShape : RawInstrShape)

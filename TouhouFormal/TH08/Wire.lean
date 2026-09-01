@@ -97,6 +97,9 @@ def eclOpcodeGetBossInt : Int := 86
 def eclOpcodeGetBossFloat : Int := 87
 def eclOpcodeCallBossSub : Int := 88
 def eclOpcodeSetBossPendingSub : Int := 89
+def eclOpcodeSpawnLinkedChild : Int := 90
+def eclOpcodeSpawnLinkedChildAtParentOffset : Int := 91
+def eclOpcodeSpawnLinkedChildInheritingPosition : Int := 92
 def eclOpcodeSpawnEnemyAbs : Int := 93
 def eclOpcodeSpawnEnemyRel : Int := 94
 def eclOpcodeKillAllNonBossEnemies : Int := 95
@@ -194,6 +197,18 @@ def enemySpawnIntInputs :
 def enemySpawnFloatInputs :
     List TouhouFormal.ECL.RawEnemyLifecycleFloatInputShape :=
   TouhouFormal.ECL.rawEnemySpawnPacketFloatInputs .floatRValue
+
+def linkedChildIntInputs :
+    List TouhouFormal.ECL.RawLinkedChildIntInputShape :=
+  [ { role := .subId, operandIndex := 0, policy := .rawI32 },
+    { role := .life, operandIndex := 3, policy := .intRValue },
+    { role := .itemDrop, operandIndex := 4, policy := .intRValue },
+    { role := .score, operandIndex := 5, policy := .intRValue } ]
+
+def linkedChildFloatInputs :
+    List TouhouFormal.ECL.RawLinkedChildFloatInputShape :=
+  [ { role := .positionX, operandIndex := 1 },
+    { role := .positionY, operandIndex := 2 } ]
 
 def enemySpawnLifecycleOp
     (opcode : Int)
@@ -624,7 +639,19 @@ def eclEvidence : List TouhouFormal.SourceRef :=
     { path := "reference/th08/src/EclDependencies.cpp"
       startLine := 466
       endLine := 494
-      claim := "CallSubOnEnemy advances the target instruction, optionally saves its active context before the depth guard, calls CallEclSub with an i16 sub id, copies 0x20 call-parameter bytes, and conditionally increments depth." } ]
+      claim := "CallSubOnEnemy advances the target instruction, optionally saves its active context before the depth guard, calls CallEclSub with an i16 sub id, copies 0x20 call-parameter bytes, and conditionally increments depth." },
+    { path := "reference/th08/src/EclRunLow.inl"
+      startLine := 729
+      endLine := 918
+      claim := "Low opcodes 90 through 92 share attachment-tail lookup, child spawn, repeated player-alignment reads, collision/effect initialization, parent-chain linking, count increment, and unconditional familiar-spawn sound; opcode 91 offsets by parent world position and opcode 92 installs inherited-position state." },
+    { path := "reference/th08/src/EclDependencies.cpp"
+      startLine := 570
+      endLine := 644
+      claim := "The attachment helper follows next pointers until null, while both child constructors gate on positive parent life and suppress-death-effects, resolve XY plus life/item/score, and call SpawnEnemy2 with active integer variables." },
+    { path := "reference/th08/src/EnemyTimeline.cpp"
+      startLine := 64
+      endLine := 115
+      claim := "SpawnEnemy2 scans 480 slots, i16-truncates the sub id, copies 0x78 active integer-variable bytes, runs the child ECL immediately, i8-truncates itemDropType, and reports failure through lastSpawnFailed." } ]
 
 def headerShape : TouhouFormal.ECL.HeaderShape :=
   { title := title
@@ -1530,6 +1557,28 @@ def headerShape : TouhouFormal.ECL.HeaderShape :=
                 subIdPolicy := .intRValue
                 bossSlotCount := 8
                 repeatBossIndexRead := true } ]
+          linkedChildOps :=
+            [ { opcode := eclOpcodeSpawnLinkedChild
+                positionMode := .scriptPosition
+                intInputs := linkedChildIntInputs
+                floatInputs := linkedChildFloatInputs
+                poolSearchSlots := enemyPoolSlots
+                contextCopyBytes := 0x78 },
+              { opcode := eclOpcodeSpawnLinkedChildAtParentOffset
+                positionMode := .parentWorldOffset
+                intInputs := linkedChildIntInputs
+                floatInputs := linkedChildFloatInputs
+                poolSearchSlots := enemyPoolSlots
+                contextCopyBytes := 0x78 },
+              { opcode := eclOpcodeSpawnLinkedChildInheritingPosition
+                positionMode := .scriptPosition
+                intInputs := linkedChildIntInputs
+                floatInputs := linkedChildFloatInputs
+                poolSearchSlots := enemyPoolSlots
+                contextCopyBytes := 0x78
+                setParentPositionOffset := true
+                inheritParentPosition := true
+                effectPositionSource := .childWorldPosition } ]
           intUnaryUpdates :=
             [ { opcode := eclOpcodeInc
                 kind := .inc
