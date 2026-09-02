@@ -273,6 +273,8 @@ lake exe symex list-callret-paths
 lake exe symex query-callret-values th08 ret-child-index-before-array 1 0 | z3 -in
 lake exe symex list-condcall-paths
 lake exe symex query-condcall-values th06 condcall-lookup-fault 1 0 | z3 -in
+lake exe symex list-extension-paths
+lake exe symex query-extension-values th08 extension-install-index-before-array 1 0 | z3 -in
 ./scripts/symex_raw_step.sh th08 1 2
 ./scripts/symex_materialize_raw_step.py th08 jumped-before-buffer 1 0
 ./scripts/symex_materialize_raw_step.py th06 jumped-before-buffer 8 0 --ecl-file
@@ -291,7 +293,10 @@ lake exe symex query-condcall-values th06 condcall-lookup-fault 1 0 | z3 -in
 ./scripts/symex_callret_candidate_queue.py
 ./scripts/symex_materialize_condcall_step.py th06 all 1 0
 ./scripts/symex_condcall_candidate_queue.py
+./scripts/symex_materialize_extension_step.py th08 all 1 0
+./scripts/symex_extension_candidate_queue.py
 python3 scripts/evaluate_symex_effectiveness.py
+python3 scripts/run_ce_campaign.py --name local-full-symex-ce
 ./scripts/check.sh
 ./scripts/retail_inventory.sh
 ./scripts/extract_retail_th06.sh
@@ -322,7 +327,10 @@ animation-control effects, bullet-pattern effects, callback-configuration
 effects, interrupt effects, miscellaneous state controls, cross-enemy boss
 dispatch, and linked-child construction currently have Lean executable controls
 for profile coverage and shared-step execution, but no dedicated
-solver/materializer lane yet. The boss integer-read
+solver/materializer lane yet. The extension-dispatch materializer covers
+TH06/TH07/TH08 immediate and per-frame EX callback-table reads, including
+TH07/TH08 repeated resolver-read install faults and negative-index callback
+clears. The boss integer-read
 materializer covers TH07/TH08
 `g_EnemyManager.bosses[index]` reads, including solver-generated out-of-bounds
 and null-dereference counterexamples. The boss float-read materializer reuses
@@ -335,6 +343,12 @@ body.
 `scripts/evaluate_symex_effectiveness.py` reruns the symbolic candidate queues
 and reports which modeled branches have solver/materializer coverage alongside
 the automatically derived source-opcode profile coverage.
+The current retained full campaign is
+`formal_results/ce_campaigns/2026-09-02-extension-symex/summary.json`: 328/328
+candidates are satisfiable and replay-matched, with 209 high-priority
+counterexamples and 44 medium-priority semantic surprises.
+`docs/symbolic-execution-roadmap.md` records the current solver boundary and
+the next lane order.
 `scripts/retail_inventory.sh` is
 read-only and records archive
 hashes plus executable/data CRCs before any Wine validation. Retail validation

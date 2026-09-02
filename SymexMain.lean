@@ -1,18 +1,19 @@
 import TouhouFormal.Search.Symbolic
+import TouhouFormal.Search.Symbolic.Extension
 
 namespace SymexMain
 
 private def usage : String :=
   "usage: lake exe symex <list-paths|list-body-paths|list-int-resolver-paths|" ++
   "list-callret-paths|list-condcall-paths|list-int-binary-paths|list-boss-int-paths|" ++
-  "list-boss-float-paths|" ++
+  "list-boss-float-paths|list-extension-paths|" ++
   "query|query-values|query-body|query-body-values|query-int-resolver|query-int-resolver-values|" ++
   "query-callret|query-callret-values|query-condcall|query-condcall-values|" ++
   "query-int-binary|query-int-binary-values|query-boss-int|query-boss-int-values|" ++
-  "query-boss-float|query-boss-float-values|" ++
+  "query-boss-float|query-boss-float-values|query-extension|query-extension-values|" ++
   "materialize|materialize-file|materialize-body|materialize-int-resolver|" ++
   "materialize-callret|materialize-condcall|materialize-int-binary|" ++
-  "materialize-boss-int|materialize-boss-float ...>"
+  "materialize-boss-int|materialize-boss-float|materialize-extension ...>"
 
 private def parseNat? (value : String) : Option Nat :=
   value.toNat?
@@ -251,6 +252,35 @@ private def runBossFloatReadQuery
         return 2
     | _, none =>
         IO.eprintln s!"unknown boss float-read path: {pathText}"
+        IO.eprintln usage
+        return 2
+
+private def runExtensionQuery
+    (valuesOnly : Bool)
+    (titleText pathText : String)
+    (activeMask overrideMask : Nat) :
+    IO UInt32 := do
+  if 255 < activeMask || 255 < overrideMask then
+    IO.eprintln "activeMask and overrideMask must fit in an unsigned byte"
+    IO.eprintln usage
+    return 2
+  else
+    match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+          TouhouFormal.Search.Symbolic.RawExtensionPath.parse? pathText with
+    | some title, some path =>
+        if valuesOnly then
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawExtensionValuesQuery title path activeMask overrideMask)
+        else
+          IO.print
+            (TouhouFormal.Search.Symbolic.rawExtensionQuery title path activeMask overrideMask)
+        return 0
+    | none, _ =>
+        IO.eprintln s!"unknown title: {titleText}"
+        IO.eprintln usage
+        return 2
+    | _, none =>
+        IO.eprintln s!"unknown extension-dispatch path: {pathText}"
         IO.eprintln usage
         return 2
 
@@ -747,6 +777,63 @@ private def runBossFloatReadMaterialize
       IO.eprintln usage
       return 2
 
+private def runExtensionMaterialize
+    (titleText pathText currentTimeText instrTimeText opcodeText nextOffsetText
+      instructionMaskText operandMaskText activeMaskText overrideMaskText indexRaw0Text
+      indexHost0Text indexRaw1Text indexHost1Text bufferSizeText : String) :
+    IO UInt32 := do
+  match TouhouFormal.Search.Symbolic.Title.parse? titleText,
+        TouhouFormal.Search.Symbolic.RawExtensionPath.parse? pathText,
+        parseInt? currentTimeText,
+        parseInt? instrTimeText,
+        parseInt? opcodeText,
+        parseInt? nextOffsetText,
+        parseNat? instructionMaskText,
+        parseInt? operandMaskText,
+        parseNat? activeMaskText,
+        parseNat? overrideMaskText,
+        parseInt? indexRaw0Text,
+        parseInt? indexHost0Text,
+        parseInt? indexRaw1Text,
+        parseInt? indexHost1Text,
+        parseNat? bufferSizeText with
+  | some title, some path, some currentTime, some instrTime, some opcode, some nextOffset,
+      some instructionMask, some operandMask, some activeMask, some overrideMask,
+      some indexRaw0, some indexHost0, some indexRaw1, some indexHost1, some bufferSize =>
+      let witness : TouhouFormal.Search.Symbolic.RawExtensionWitness :=
+        { currentTime := currentTime
+          instrTime := instrTime
+          opcode := opcode
+          nextOffset := nextOffset
+          instructionMask := instructionMask
+          operandMask := operandMask
+          activeMask := activeMask
+          overrideMask := overrideMask
+          indexRaw0 := indexRaw0
+          indexHost0 := indexHost0
+          indexRaw1 := indexRaw1
+          indexHost1 := indexHost1
+          bufferSize := bufferSize }
+      match TouhouFormal.Search.Symbolic.rawExtensionMaterialize title path witness with
+      | .ok materialization =>
+          IO.print materialization.report
+          return 0
+      | .error message =>
+          IO.eprintln message
+          return 1
+  | none, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown title: {titleText}"
+      IO.eprintln usage
+      return 2
+  | _, none, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln s!"unknown extension-dispatch path: {pathText}"
+      IO.eprintln usage
+      return 2
+  | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ =>
+      IO.eprintln "invalid materialize-extension witness field"
+      IO.eprintln usage
+      return 2
+
 def main (args : List String) : IO UInt32 := do
   match args with
   | ["list-paths"] =>
@@ -772,6 +859,9 @@ def main (args : List String) : IO UInt32 := do
       return 0
   | ["list-boss-float-paths"] =>
       IO.print TouhouFormal.Search.Symbolic.listRawBossFloatReadPathsText
+      return 0
+  | ["list-extension-paths"] =>
+      IO.print TouhouFormal.Search.Symbolic.listRawExtensionPathsText
       return 0
   | ["query", title, path] =>
       runQuery false title path 1 0
@@ -805,6 +895,10 @@ def main (args : List String) : IO UInt32 := do
       runBossFloatReadQuery false title path 1 0
   | ["query-boss-float-values", title, path] =>
       runBossFloatReadQuery true title path 1 0
+  | ["query-extension", title, path] =>
+      runExtensionQuery false title path 1 0
+  | ["query-extension-values", title, path] =>
+      runExtensionQuery true title path 1 0
   | ["query", title, path, activeMaskText, overrideMaskText] =>
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
@@ -913,6 +1007,22 @@ def main (args : List String) : IO UInt32 := do
       match parseNat? activeMaskText, parseNat? overrideMaskText with
       | some activeMask, some overrideMask =>
           runBossFloatReadQuery true title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-extension", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runExtensionQuery false title path activeMask overrideMask
+      | _, _ =>
+          IO.eprintln "activeMask and overrideMask must be natural numbers"
+          IO.eprintln usage
+          return 2
+  | ["query-extension-values", title, path, activeMaskText, overrideMaskText] =>
+      match parseNat? activeMaskText, parseNat? overrideMaskText with
+      | some activeMask, some overrideMask =>
+          runExtensionQuery true title path activeMask overrideMask
       | _, _ =>
           IO.eprintln "activeMask and overrideMask must be natural numbers"
           IO.eprintln usage
@@ -1100,6 +1210,25 @@ def main (args : List String) : IO UInt32 := do
         bossIndexRaw
         bossIndexHost
         bossPresent
+        bufferSize
+  | [ "materialize-extension", title, path, currentTime, instrTime, opcode, nextOffset,
+      instructionMask, operandMask, activeMask, overrideMask, indexRaw0, indexHost0,
+      indexRaw1, indexHost1, bufferSize ] =>
+      runExtensionMaterialize
+        title
+        path
+        currentTime
+        instrTime
+        opcode
+        nextOffset
+        instructionMask
+        operandMask
+        activeMask
+        overrideMask
+        indexRaw0
+        indexHost0
+        indexRaw1
+        indexHost1
         bufferSize
   | _ =>
       IO.eprintln usage

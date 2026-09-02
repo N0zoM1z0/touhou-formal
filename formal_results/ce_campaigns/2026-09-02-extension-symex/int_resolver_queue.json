@@ -1,0 +1,273 @@
+{
+  "candidateCount": 8,
+  "candidates": [
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "-",
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001000000000000",
+        "hostValue": "-",
+        "matchesPath": "true",
+        "rawValue": "0",
+        "resolvedKind": "resolved-default-raw",
+        "resolvedValue": "0",
+        "selectorKnown": "false",
+        "size": 16
+      },
+      "id": "th06:slot0:resolved-default-raw",
+      "nextAction": "use as metamorphic/control seed: mask-set unknown selector should behave like raw immediate where opcode semantics only reads the resolved value",
+      "path": "resolved-default-raw",
+      "risk": {
+        "class": "mask-set-default-raw",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "operand mask bit is set but selector is unknown, so ZUN's resolver falls back to the raw operand"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 0,
+        "rawValue": 0,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "-",
+        "flagEnabled": "true",
+        "hex": "0000000000000c0000010000efd8ffff",
+        "hostValue": "0",
+        "matchesPath": "true",
+        "rawValue": "-10001",
+        "resolvedKind": "resolved-host",
+        "resolvedValue": "0",
+        "selectorKnown": "true",
+        "size": 16
+      },
+      "id": "th06:slot0:resolved-host",
+      "nextAction": "compose with conditional jumps and arithmetic hazards using symbolic host values",
+      "path": "resolved-host",
+      "risk": {
+        "class": "mask-set-known-selector",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "operand mask bit is set and selector is known, so the value comes from symbolic host state"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th06",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 0,
+        "rawValue": -10001,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "1",
+        "flagEnabled": "true",
+        "hex": "0000000000000c00000101004a270000",
+        "hostValue": "-",
+        "matchesPath": "true",
+        "rawValue": "10058",
+        "resolvedKind": "resolved-default-raw",
+        "resolvedValue": "10058",
+        "selectorKnown": "false",
+        "size": 16
+      },
+      "id": "th07:slot0:resolved-default-raw",
+      "nextAction": "use as metamorphic/control seed: mask-set unknown selector should behave like raw immediate where opcode semantics only reads the resolved value",
+      "path": "resolved-default-raw",
+      "risk": {
+        "class": "mask-set-default-raw",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "operand mask bit is set but selector is unknown, so ZUN's resolver falls back to the raw operand"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 1,
+        "rawValue": 10058,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "1",
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001010010270000",
+        "hostValue": "0",
+        "matchesPath": "true",
+        "rawValue": "10000",
+        "resolvedKind": "resolved-host",
+        "resolvedValue": "0",
+        "selectorKnown": "true",
+        "size": 16
+      },
+      "id": "th07:slot0:resolved-host",
+      "nextAction": "compose with conditional jumps and arithmetic hazards using symbolic host values",
+      "path": "resolved-host",
+      "risk": {
+        "class": "mask-set-known-selector",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "operand mask bit is set and selector is known, so the value comes from symbolic host state"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 1,
+        "rawValue": 10000,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "1",
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001010060270000",
+        "hostValue": "-",
+        "matchesPath": "true",
+        "rawValue": "10080",
+        "resolvedKind": "resolved-default-raw",
+        "resolvedValue": "10080",
+        "selectorKnown": "false",
+        "size": 16
+      },
+      "id": "th08:slot0:resolved-default-raw",
+      "nextAction": "use as metamorphic/control seed: mask-set unknown selector should behave like raw immediate where opcode semantics only reads the resolved value",
+      "path": "resolved-default-raw",
+      "risk": {
+        "class": "mask-set-default-raw",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "operand mask bit is set but selector is unknown, so ZUN's resolver falls back to the raw operand"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 1,
+        "rawValue": 10080,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "1",
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001010010270000",
+        "hostValue": "0",
+        "matchesPath": "true",
+        "rawValue": "10000",
+        "resolvedKind": "resolved-host",
+        "resolvedValue": "0",
+        "selectorKnown": "true",
+        "size": 16
+      },
+      "id": "th08:slot0:resolved-host",
+      "nextAction": "compose with conditional jumps and arithmetic hazards using symbolic host values",
+      "path": "resolved-host",
+      "risk": {
+        "class": "mask-set-known-selector",
+        "priority": "high",
+        "priorityRank": 0,
+        "reason": "operand mask bit is set and selector is known, so the value comes from symbolic host state"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 1,
+        "rawValue": 10000,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "0",
+        "flagEnabled": "false",
+        "hex": "0000000000000c000001000000000000",
+        "hostValue": "-",
+        "matchesPath": "true",
+        "rawValue": "0",
+        "resolvedKind": "raw-immediate",
+        "resolvedValue": "0",
+        "selectorKnown": "false",
+        "size": 16
+      },
+      "id": "th07:slot0:raw-immediate",
+      "nextAction": "keep as mask-clear baseline for TH07/TH08 operandFlags-sensitive opcodes",
+      "path": "raw-immediate",
+      "risk": {
+        "class": "mask-clear-raw-immediate",
+        "priority": "medium",
+        "priorityRank": 1,
+        "reason": "operand mask bit is clear, so the raw operand value is used directly"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th07",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 0,
+        "rawValue": 0,
+        "slot": 0
+      }
+    },
+    {
+      "environment": "slot0",
+      "fixture": {
+        "decodedOperandMask": "0",
+        "flagEnabled": "false",
+        "hex": "0000000000000c000001000000000000",
+        "hostValue": "-",
+        "matchesPath": "true",
+        "rawValue": "0",
+        "resolvedKind": "raw-immediate",
+        "resolvedValue": "0",
+        "selectorKnown": "false",
+        "size": 16
+      },
+      "id": "th08:slot0:raw-immediate",
+      "nextAction": "keep as mask-clear baseline for TH07/TH08 operandFlags-sensitive opcodes",
+      "path": "raw-immediate",
+      "risk": {
+        "class": "mask-clear-raw-immediate",
+        "priority": "medium",
+        "priorityRank": 1,
+        "reason": "operand mask bit is clear, so the raw operand value is used directly"
+      },
+      "slot": 0,
+      "status": "sat",
+      "title": "th08",
+      "witness": {
+        "hostValue": 0,
+        "operandMask": 0,
+        "rawValue": 0,
+        "slot": 0
+      }
+    }
+  ],
+  "environmentCount": 3,
+  "generator": "scripts/symex_int_resolver_queue.py",
+  "pathRequest": "all",
+  "schema": "touhou-formal-symex-int-resolver-queue-v1"
+}

@@ -237,6 +237,41 @@ MODELED_BOSS_FLOAT_PATHS = sorted({
     for path in paths
 })
 
+MODELED_EXTENSION_PATHS_BY_TITLE = {
+    "th06": [
+        "extension-call-index-before-array",
+        "extension-call-index-at-or-past-array",
+        "extension-call-advanced",
+        "extension-install-negative-clear",
+        "extension-install-index-at-or-past-array",
+        "extension-install-advanced",
+    ],
+    "th07": [
+        "extension-call-index-before-array",
+        "extension-call-index-at-or-past-array",
+        "extension-call-advanced",
+        "extension-install-negative-clear",
+        "extension-install-index-before-array",
+        "extension-install-index-at-or-past-array",
+        "extension-install-advanced",
+    ],
+    "th08": [
+        "extension-call-index-before-array",
+        "extension-call-index-at-or-past-array",
+        "extension-call-advanced",
+        "extension-install-negative-clear",
+        "extension-install-index-before-array",
+        "extension-install-index-at-or-past-array",
+        "extension-install-advanced",
+    ],
+}
+
+MODELED_EXTENSION_PATHS = sorted({
+    path
+    for paths in MODELED_EXTENSION_PATHS_BY_TITLE.values()
+    for path in paths
+})
+
 SOURCE_COVERAGE = [
     {
         "area": "ECL loader/header shape",
@@ -404,9 +439,14 @@ SOURCE_COVERAGE = [
         "reason": "every source opcode value is now assigned to an explicit shared/profiled body family (TH06 136/136, TH07 159/159, TH08 184/184); this is complete source-handler coverage, while host calls and exact external arithmetic remain typed boundaries rather than full engine simulations",
     },
     {
-        "area": "interrupts, callbacks, extension dispatch, pending-sub dispatch",
+        "area": "ECL extension dispatch",
+        "status": "covered-by-symbolic-execution",
+        "reason": "fixed-table EX call/install paths are solved and materialized across TH06/TH07/TH08, including TH07/TH08 repeated resolver reads, negative clears, normal calls/installs, and callback-table OOB reads",
+    },
+    {
+        "area": "interrupts, callbacks, pending-sub dispatch",
         "status": "partially-covered",
-        "reason": "callback configuration, explicit interrupt entry, fixed-table EX dispatch/install, and opcode-level pending-sub writes are modeled with partial-write/fault ordering; automatic trigger scheduling and bounded multi-context lifecycles remain",
+        "reason": "callback configuration, explicit interrupt entry, and opcode-level pending-sub writes are modeled with partial-write/fault ordering; automatic trigger scheduling and bounded multi-context lifecycles remain",
     },
     {
         "area": "TH08 child ECL block installation",
@@ -604,6 +644,20 @@ def load_boss_float_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dic
     return payload, command
 
 
+def load_extension_queue(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
+    if args.extension_queue_json:
+        path = Path(args.extension_queue_json)
+        return json.loads(path.read_text()), {
+            "argv": ["read-existing-json", str(path)],
+            "returncode": 0,
+            "elapsedSeconds": 0.0,
+        }
+    payload, command = run_json_command([sys.executable, "scripts/symex_extension_candidate_queue.py"])
+    if not isinstance(payload, dict):
+        raise EvaluationError("extension candidate queue did not return an object")
+    return payload, command
+
+
 def action_from_path(path: str) -> str:
     if path == "yielded":
         return "yielded"
@@ -687,6 +741,14 @@ def boss_float_action_from_path(path: str) -> str:
         return "boss-float-index"
     if path.startswith("boss-float-value-"):
         return "boss-float-value"
+    return path
+
+
+def extension_action_from_path(path: str) -> str:
+    if path.startswith("extension-call-index-"):
+        return "extension-call-index"
+    if path.startswith("extension-install-index-"):
+        return "extension-install-index"
     return path
 
 
@@ -1301,6 +1363,99 @@ def summarize_boss_float_queue(queue: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def summarize_extension_queue(queue: dict[str, Any]) -> dict[str, Any]:
+    candidates = queue.get("candidates", [])
+    if not isinstance(candidates, list):
+        raise EvaluationError("extension candidate queue has no candidate list")
+
+    statuses = Counter(str(candidate.get("status")) for candidate in candidates)
+    risks = Counter(str(candidate.get("risk", {}).get("class")) for candidate in candidates)
+    priorities = Counter(str(candidate.get("risk", {}).get("priority")) for candidate in candidates)
+    actions = Counter(extension_action_from_path(str(candidate.get("path"))) for candidate in candidates)
+    fixture_actions = Counter(str(candidate.get("fixture", {}).get("action")) for candidate in candidates)
+    fault_kinds = Counter(str(candidate.get("fixture", {}).get("faultKind", "-")) for candidate in candidates)
+    called_now = Counter(str(candidate.get("fixture", {}).get("calledNow", "-")) for candidate in candidates)
+    callback_installed = Counter(str(candidate.get("fixture", {}).get("callbackInstalled", "-")) for candidate in candidates)
+    callback_cleared = Counter(str(candidate.get("fixture", {}).get("callbackCleared", "-")) for candidate in candidates)
+    matches = Counter(str(candidate.get("fixture", {}).get("matchesPath")) for candidate in candidates)
+
+    by_title = Counter(str(candidate.get("title")) for candidate in candidates)
+    by_environment: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for candidate in candidates:
+        key = (
+            f"{candidate.get('title')}:{candidate.get('environment')}:"
+            f"active={candidate.get('activeMask')}:override={candidate.get('overrideMask')}"
+        )
+        by_environment[key].append(candidate)
+
+    env_reports = {}
+    for env, env_candidates in sorted(by_environment.items()):
+        title = str(env_candidates[0].get("title"))
+        expected_paths = set(MODELED_EXTENSION_PATHS_BY_TITLE.get(title, MODELED_EXTENSION_PATHS))
+        observed_paths = {str(candidate.get("path")) for candidate in env_candidates}
+        env_reports[env] = {
+            "title": title,
+            "pathCount": len(observed_paths),
+            "candidateCount": len(env_candidates),
+            "satCount": sum(1 for candidate in env_candidates if candidate.get("status") == "sat"),
+            "matchesPathCount": sum(
+                1 for candidate in env_candidates
+                if candidate.get("fixture", {}).get("matchesPath") == "true"
+            ),
+            "modeledPathsForTitle": sorted(expected_paths),
+            "missingModeledPaths": sorted(expected_paths - observed_paths),
+            "extraPaths": sorted(observed_paths - expected_paths),
+        }
+
+    top_candidates = [
+        {
+            "id": candidate.get("id"),
+            "risk": candidate.get("risk", {}).get("class"),
+            "priority": candidate.get("risk", {}).get("priority"),
+            "hex": candidate.get("fixture", {}).get("hex"),
+            "action": candidate.get("fixture", {}).get("action"),
+            "faultKind": candidate.get("fixture", {}).get("faultKind"),
+            "guardIndex": candidate.get("fixture", {}).get("guardIndex"),
+            "tableIndex": candidate.get("fixture", {}).get("tableIndex"),
+            "calledNow": candidate.get("fixture", {}).get("calledNow"),
+            "callbackInstalled": candidate.get("fixture", {}).get("callbackInstalled"),
+            "callbackCleared": candidate.get("fixture", {}).get("callbackCleared"),
+            "indexRaw0": candidate.get("witness", {}).get("indexRaw0"),
+            "indexHost0": candidate.get("witness", {}).get("indexHost0"),
+            "indexHost1": candidate.get("witness", {}).get("indexHost1"),
+        }
+        for candidate in candidates[:10]
+    ]
+
+    return {
+        "schema": queue.get("schema"),
+        "environmentCount": queue.get("environmentCount"),
+        "candidateCount": queue.get("candidateCount"),
+        "uniquePathCount": len({str(candidate.get("path")) for candidate in candidates}),
+        "modeledPathFamilies": MODELED_EXTENSION_PATHS,
+        "modeledPathsByTitle": MODELED_EXTENSION_PATHS_BY_TITLE,
+        "statuses": dict(statuses),
+        "matchesPath": dict(matches),
+        "riskCounts": dict(risks),
+        "priorityCounts": dict(priorities),
+        "pathActionCounts": dict(actions),
+        "fixtureActionCounts": dict(fixture_actions),
+        "faultKindCounts": dict(fault_kinds),
+        "calledNowCounts": dict(called_now),
+        "callbackInstalledCounts": dict(callback_installed),
+        "callbackClearedCounts": dict(callback_cleared),
+        "candidateCountsByTitle": dict(by_title),
+        "allModeledPathsCoveredPerEnvironment": all(
+            not report["missingModeledPaths"] and not report["extraPaths"]
+            for report in env_reports.values()
+        ),
+        "allSat": statuses == Counter({"sat": len(candidates)}),
+        "allMaterializedAndReplayMatched": matches == Counter({"true": len(candidates)}),
+        "byEnvironment": env_reports,
+        "topCandidates": top_candidates,
+    }
+
+
 def unique_preserving(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result = []
@@ -1714,6 +1869,7 @@ def fuzz_comparison() -> dict[str, Any]:
             "enumerating boss-indexed float-read hazards and proving the TH07 unguarded versus TH08 guarded null-policy split with paired sat/unsat controls",
             "separating CALL/RET stack write/read hazards from subTable lookup faults and TH08 child-context RET exits",
             "separating TH06 conditional CALL guard-false fallthrough from guard-true CALL stack/subTable hazards",
+            "enumerating extension callback-table OOB reads and TH07/TH08 repeated resolver-read install hazards without manually choosing callback indices",
             "returning satisfiable/unsatisfiable path facts with concrete byte-realizable witnesses",
             "keeping TH06/TH07/TH08 differences in shared profiles, reducing per-title semantic drift",
             "explaining exact invariants such as cursor must progress and remain in-bounds",
@@ -1727,16 +1883,17 @@ def fuzz_comparison() -> dict[str, Any]:
         "currentVerdict": (
             "The current Lean+SMT baseline is stronger than prior fuzzing on the modeled VM-core skeleton, "
             "because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates "
-            "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, and all 16 TH06 conditional-CALL candidates "
+            "plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, all 16 TH06 conditional-CALL candidates, and all 33 extension-dispatch candidates "
             "are solved and materialized for the default environments. "
-            "All 479 source opcode symbols/case labels now map to explicit Lean body profiles, including the TH08 boss-dispatch and linked-child tail; most gameplay-effect families are Lean-checked but are not yet dedicated solver/materializer lanes. "
+            "All 479 source opcode symbols/case labels now map to explicit Lean body profiles, including the TH08 boss-dispatch and linked-child tail; many gameplay-effect families are Lean-checked but are not yet dedicated solver/materializer lanes. "
             "It is not yet stronger than fuzzing for the full ECL/ANM runtime, because persistent host-state branches, bounded multi-step composition, and ANM execution remain outside the semantics."
         ),
         "nextHighValueFormalWork": [
             "compose integer arithmetic writes with bounded multi-step execution to see which self-writes and host writes become later control/state hazards",
             "improve retail ranking for boss-read OOB/null candidates by selecting execution sites whose host boss-slot state is forced by the stage timeline",
-            "add bounded multi-step raw ECL contexts for nested CALL/RET reachability, callbacks, and stacked jumps",
-            "generate solver/materializer lanes from the new trail, boss-dispatch, and linked-child relations instead of relying only on Lean controls",
+            "add solver/materializer lanes for interrupt, callback, and animation-control families that are already Lean-modeled",
+            "add bounded multi-step raw ECL contexts for nested CALL/RET reachability, callbacks, extension installs, and stacked jumps",
+            "generate solver/materializer lanes from trail, boss-dispatch, and linked-child relations instead of relying only on Lean controls",
             "model float division/fmod preconditions and C/C++-faithful non-finite behavior",
             "extend the reusable retail lowering pipeline to the next host-boundary opcode family",
         ],
@@ -1778,6 +1935,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--boss-float-queue-json",
         help="reuse an existing symex_boss_float_candidate_queue.py JSON payload instead of rerunning the boss float-read solver",
+    )
+    parser.add_argument(
+        "--extension-queue-json",
+        help="reuse an existing symex_extension_candidate_queue.py JSON payload instead of rerunning the extension-dispatch solver",
     )
     parser.add_argument(
         "--run-check",
@@ -1829,10 +1990,13 @@ def main(argv: list[str]) -> int:
     boss_float_queue, boss_float_command = load_boss_float_queue(args)
     commands["bossFloatCandidateQueue"] = boss_float_command
     boss_float_queue_summary = summarize_boss_float_queue(boss_float_queue)
+    extension_queue, extension_command = load_extension_queue(args)
+    commands["extensionCandidateQueue"] = extension_command
+    extension_queue_summary = summarize_extension_queue(extension_queue)
 
     payload = {
         "schema": "touhou-formal-symex-effectiveness-v1",
-        "date": "2026-09-01",
+        "date": "2026-09-02",
         "commands": commands,
         "rawStepSymbolicCoverage": queue_summary,
         "rawBodySymbolicCoverage": body_queue_summary,
@@ -1840,6 +2004,7 @@ def main(argv: list[str]) -> int:
         "rawIntBinaryCoverage": int_binary_queue_summary,
         "rawBossIntReadCoverage": boss_int_queue_summary,
         "rawBossFloatReadCoverage": boss_float_queue_summary,
+        "rawExtensionDispatchCoverage": extension_queue_summary,
         "rawCallRetCoverage": callret_queue_summary,
         "rawConditionalCallCoverage": condcall_queue_summary,
         "sourceOpcodeSurface": source_opcode_surface(args.reference_root),

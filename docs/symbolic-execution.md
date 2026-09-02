@@ -85,6 +85,13 @@ guard resolves `cmpLhs` through the same integer resolver used elsewhere,
 compares it with raw `cmpRhs`, falls through by `offsetToNext` when false, and
 reuses the same shared CALL stack/subTable body when true.
 
+Extension dispatch is now modeled as a solver-backed callback-table layer.
+TH06 uses raw-i32 EX indices against a 17-entry table; TH07 and TH08 resolve
+the same raw operand through `operandFlags` against 24-entry and 32-entry
+tables. Per-frame install opcodes preserve the source behavior where TH07/TH08
+read the index twice: the raw operand is the same, but the host value can differ
+between the guard read and table read.
+
 This intentionally avoids hand-selecting a suspicious bug site. The executor
 enumerates generic path classes and asks Z3 for witnesses.
 
@@ -157,6 +164,13 @@ lake exe symex list-condcall-paths
 lake exe symex query-condcall-values th06 condcall-lookup-fault 1 0 | z3 -in
 ```
 
+List and solve extension-dispatch branches:
+
+```bash
+lake exe symex list-extension-paths
+lake exe symex query-extension-values th08 extension-install-index-before-array 1 0 | z3 -in
+```
+
 Run a matrix for one title and difficulty environment:
 
 ```bash
@@ -222,6 +236,13 @@ Solve/materialize boss-indexed float-read paths:
 ./scripts/symex_boss_float_candidate_queue.py
 ```
 
+Solve/materialize extension-dispatch paths:
+
+```bash
+./scripts/symex_materialize_extension_step.py th08 all 1 0
+./scripts/symex_extension_candidate_queue.py
+```
+
 Solve/materialize CALL/RET stack paths:
 
 ```bash
@@ -241,6 +262,17 @@ Evaluate the current formal-vs-fuzz effectiveness baseline:
 ```bash
 python3 scripts/evaluate_symex_effectiveness.py
 ```
+
+Run and persist every SMT-backed lane as a campaign artifact:
+
+```bash
+python3 scripts/run_ce_campaign.py --name local-full-symex-ce
+```
+
+The current retained full run is
+`formal_results/ce_campaigns/2026-09-02-extension-symex/summary.json`: 328
+solver candidates, 328 replay-matched materializations, 209 high-priority
+counterexamples, and 44 medium-priority semantic surprises.
 
 The optional numeric arguments are `activeMask` and `overrideMask`; both must fit
 in an unsigned byte. `overrideMask` is semantically relevant to TH08 raw ECL and
@@ -341,6 +373,10 @@ Representative Z3 witnesses already covered by `scripts/check.sh`:
 - TH08 `boss-float-null-guarded-skip`: low opcode `87`, value operand mask bit
   set, in-bounds boss index, and `bossPresent=false`; the source-level guard
   skips the write instead of dereferencing.
+- TH08 `extension-install-index-before-array`: install opcode `137`, operand
+  mask bit set, one raw selector reused for both reads, `indexHost0 = 0`, and
+  `indexHost1 = -1`; the guard read passes, then the repeated table-index read
+  faults before callback installation.
 
 These are not final retail findings by themselves. They are the baseline path
 coverage that later bounded opcode semantics, full subroutine state, and

@@ -36,3 +36,4 @@ import TouhouFormal.Search.Random
 import TouhouFormal.Search.ScalarAssignment
 import TouhouFormal.Search.SMT
 import TouhouFormal.Search.Symbolic
+import TouhouFormal.Search.Symbolic.Extension

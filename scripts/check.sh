@@ -16,6 +16,8 @@ python3 -m py_compile \
   scripts/retail_confirm_ecl_symex.py \
   scripts/retail_pbg.py \
   scripts/symex_boss_float_candidate_queue.py \
+  scripts/symex_extension_candidate_queue.py \
+  scripts/symex_materialize_extension_step.py \
   scripts/symex_materialize_boss_float_read.py
 
 lake exe smt th06-sub-oob | z3 -in | tee "$solver_output"
@@ -130,6 +132,20 @@ python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 
 python3 scripts/symex_int_binary_candidate_queue.py --path int-binary-divide-overflow-resolved-host > "$solver_output"
 python3 -m json.tool "$solver_output" >/dev/null
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 5; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert {c["risk"]["class"] for c in data["candidates"]} == {"arithmetic-overflow"}' "$solver_output"
+
+lake exe symex query-extension th06 extension-install-index-before-array 1 0 | z3 -in | tee "$solver_output"
+grep -q '^unsat$' "$solver_output"
+
+lake exe symex query-extension th07 extension-install-index-before-array 1 0 | z3 -in | tee "$solver_output"
+grep -q '^sat$' "$solver_output"
+
+python3 scripts/symex_materialize_extension_step.py th08 all 1 0 > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; xs=json.load(open(sys.argv[1])); assert len(xs) == 7; assert all(r["status"] == "sat" and r["fixture"]["matchesPath"] == "true" for r in xs); assert {r["path"] for r in xs} == {"extension-call-index-before-array", "extension-call-index-at-or-past-array", "extension-call-advanced", "extension-install-negative-clear", "extension-install-index-before-array", "extension-install-index-at-or-past-array", "extension-install-advanced"}; assert any(r["path"] == "extension-install-index-before-array" and r["fixture"]["faultKind"] == "out-of-bounds-read" and r["witness"]["indexHost0"] == 0 and r["witness"]["indexHost1"] == -1 for r in xs)' "$solver_output"
+
+python3 scripts/symex_extension_candidate_queue.py > "$solver_output"
+python3 -m json.tool "$solver_output" >/dev/null
+python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["candidateCount"] == 33; assert all(c["status"] == "sat" and c["fixture"]["matchesPath"] == "true" for c in data["candidates"]); assert sum(1 for c in data["candidates"] if c["risk"]["priority"] == "high") == 18; assert sum(1 for c in data["candidates"] if c["risk"]["priority"] == "medium") == 5; assert {c["risk"]["class"] for c in data["candidates"] if c["risk"]["priority"] == "high"} == {"extension-callback-table-oob-read"}' "$solver_output"
 
 lake exe symex query-boss-int th06 boss-int-index-before-array 1 0 | z3 -in | tee "$solver_output"
 grep -q '^unsat$' "$solver_output"

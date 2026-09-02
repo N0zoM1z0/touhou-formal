@@ -1,0 +1,5991 @@
+{
+  "commands": {
+    "bodyCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/raw_body_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "bossFloatCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/boss_float_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "bossIntCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/boss_int_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "callRetCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/callret_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "candidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/raw_step_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "conditionalCallCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/condcall_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "extensionCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/extension_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "intBinaryCandidateQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/int_binary_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    },
+    "intResolverQueue": {
+      "argv": [
+        "read-existing-json",
+        "/home/yann/yann/touhou/formal/touhou-formal/formal_results/ce_campaigns/2026-09-02-extension-symex/int_resolver_queue.json"
+      ],
+      "elapsedSeconds": 0.0,
+      "returncode": 0
+    }
+  },
+  "danmakuFuzzBaseline": {
+    "available": true,
+    "confirmedRetail": [
+      {
+        "expectedOracle": {
+          "classification": "crash-dialog|retail-frame-stall"
+        },
+        "notes": "14 independent payloads across stages 2-6 reproduced as crash-dialog or retail-frame-stall with clean live baselines.",
+        "scope": "retail-family",
+        "title": "ECL timeline-arg0 retail crash/stall basin"
+      },
+      {
+        "expectedOracle": {
+          "classification": "crash-dialog"
+        },
+        "notes": "3/3 Stage 6 stg6bg.anm target hits reproduced as Wine crash-dialog; first-sprite-offset-zero repeated 2/2 with --require 2.",
+        "scope": "retail-family",
+        "title": "Stage 6 background ANM retail crash basin"
+      },
+      {
+        "expectedOracle": {
+          "classification": "retail-frame-stall"
+        },
+        "notes": "Repeat confirmation passed 2/2; observed retail frame stayed at 441 while required frame was above 510.",
+        "scope": "retail-case",
+        "title": "Stage 5 timeline-arg0=256 retail frame stall"
+      },
+      {
+        "expectedOracle": {
+          "classification": "crash-dialog"
+        },
+        "notes": "Additional values -59, -40, 257, and 32767 reproduced as retail crash-dialog with clean live baselines.",
+        "scope": "retail-family",
+        "title": "Stage 6 timeline-arg0 crash mapping"
+      },
+      {
+        "expectedOracle": {
+          "classification": "crash-dialog"
+        },
+        "notes": null,
+        "scope": "retail-case",
+        "title": "Stage 4 jump-offset=2139062143 retail crash"
+      }
+    ],
+    "confirmedRetailCount": 5,
+    "defaultPolicy": [
+      "A semantic finding without retail evidence remains headless-pending-retail.",
+      "A retail live result with only visual drift is retail-observation or retail-disconfirmed for crash/stall claims.",
+      "A case blocked by weak controls should be blocked-retail-oracle, not retail-disconfirmed.",
+      "Accepted/equivalent parser behavior should be format-observation."
+    ],
+    "entryCount": 16,
+    "manifest": "/home/yann/yann/touhou/formal/reference/DanmakuFuzz/findings/by-status/manifest.json",
+    "statusCounts": {
+      "blocked-retail-oracle": 1,
+      "confirmed-retail": 5,
+      "format-observation": 5,
+      "headless-pending-retail": 2,
+      "retail-disconfirmed": 3
+    },
+    "updated": "2026-08-23"
+  },
+  "date": "2026-09-02",
+  "fuzzComparison": {
+    "currentVerdict": "The current Lean+SMT baseline is stronger than prior fuzzing on the modeled VM-core skeleton, because all 14 raw-step path classes, all 17 current body-step path classes, and all 8 title-specific integer resolver candidates plus all 39 title/environment-specific integer-binary arithmetic candidates, all 18 boss integer-read candidates, all 18 boss float-read candidates, all 41 CALL/RET candidates, all 16 TH06 conditional-CALL candidates, and all 33 extension-dispatch candidates are solved and materialized for the default environments. All 479 source opcode symbols/case labels now map to explicit Lean body profiles, including the TH08 boss-dispatch and linked-child tail; many gameplay-effect families are Lean-checked but are not yet dedicated solver/materializer lanes. It is not yet stronger than fuzzing for the full ECL/ANM runtime, because persistent host-state branches, bounded multi-step composition, and ANM execution remain outside the semantics.",
+    "formalCurrentlyBeatsFuzzFor": [
+      "exhaustively enumerating the implemented raw-step path classes instead of waiting for random mutation to hit each class",
+      "exhaustively enumerating the implemented JUMPDEC and integer conditional jump taken/not-taken cursor classes plus immediate integer div/mod zero-divisor faults",
+      "separating operandFlags resolver branches, including TH06's no-mask behavior and TH07/TH08's mask-clear/mask-set selector behavior",
+      "enumerating title-specific integer lvalue/binary arithmetic paths, including resolver-driven zero divisors and signed idiv overflow",
+      "enumerating boss-indexed integer-read hazards, including bosses[8] underflow/overflow and null boss dereferences without seeding concrete indices by hand",
+      "enumerating boss-indexed float-read hazards and proving the TH07 unguarded versus TH08 guarded null-policy split with paired sat/unsat controls",
+      "separating CALL/RET stack write/read hazards from subTable lookup faults and TH08 child-context RET exits",
+      "separating TH06 conditional CALL guard-false fallthrough from guard-true CALL stack/subTable hazards",
+      "enumerating extension callback-table OOB reads and TH07/TH08 repeated resolver-read install hazards without manually choosing callback indices",
+      "returning satisfiable/unsatisfiable path facts with concrete byte-realizable witnesses",
+      "keeping TH06/TH07/TH08 differences in shared profiles, reducing per-title semantic drift",
+      "explaining exact invariants such as cursor must progress and remain in-bounds"
+    ],
+    "fuzzCurrentlyBeatsFormalFor": [
+      "full gameplay side effects through bullets, lasers, EnemyManager/ItemManager runtime state, ANM, rendering, input, and callbacks",
+      "persistent host-runtime interactions beyond the typed boundary of each source-modeled opcode body",
+      "large multi-resource interactions where a retail oracle is easier to observe than to prove",
+      "empirical prioritization of which formally reachable witnesses are retail-visible bugs"
+    ],
+    "nextHighValueFormalWork": [
+      "compose integer arithmetic writes with bounded multi-step execution to see which self-writes and host writes become later control/state hazards",
+      "improve retail ranking for boss-read OOB/null candidates by selecting execution sites whose host boss-slot state is forced by the stage timeline",
+      "add solver/materializer lanes for interrupt, callback, and animation-control families that are already Lean-modeled",
+      "add bounded multi-step raw ECL contexts for nested CALL/RET reachability, callbacks, extension installs, and stacked jumps",
+      "generate solver/materializer lanes from trail, boss-dispatch, and linked-child relations instead of relying only on Lean controls",
+      "model float division/fmod preconditions and C/C++-faithful non-finite behavior",
+      "extend the reusable retail lowering pipeline to the next host-boundary opcode family"
+    ]
+  },
+  "rawBodySymbolicCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 17,
+        "extraPaths": [],
+        "matchesPathCount": 17,
+        "missingModeledPaths": [],
+        "pathCount": 17,
+        "satCount": 17
+      },
+      "th06:retail-lunatic-bit3:active=8:override=0": {
+        "candidateCount": 17,
+        "extraPaths": [],
+        "matchesPathCount": 17,
+        "missingModeledPaths": [],
+        "pathCount": 17,
+        "satCount": 17
+      },
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 17,
+        "extraPaths": [],
+        "matchesPathCount": 17,
+        "missingModeledPaths": [],
+        "pathCount": 17,
+        "satCount": 17
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 17,
+        "extraPaths": [],
+        "matchesPathCount": 17,
+        "missingModeledPaths": [],
+        "pathCount": 17,
+        "satCount": 17
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 17,
+        "extraPaths": [],
+        "matchesPathCount": 17,
+        "missingModeledPaths": [],
+        "pathCount": 17,
+        "satCount": 17
+      }
+    },
+    "candidateCount": 85,
+    "cursorGoalCounts": {
+      "-": 5,
+      "at-or-past-end": 20,
+      "before-buffer": 20,
+      "in-bounds": 20,
+      "non-progress": 20
+    },
+    "environmentCount": 5,
+    "faultKindCounts": {
+      "-": 80,
+      "divide-by-zero": 5
+    },
+    "fixtureActionCounts": {
+      "advanced": 40,
+      "fault:divide-by-zero": 5,
+      "jumped": 40
+    },
+    "fixtureCursorClassCounts": {
+      "-": 5,
+      "at-or-past-end": 20,
+      "before-buffer": 20,
+      "in-bounds": 20,
+      "non-progress": 20
+    },
+    "matchesPath": {
+      "true": 85
+    },
+    "modeledPathCount": 17,
+    "modeledPaths": [
+      "decjump-taken-before-buffer",
+      "decjump-taken-non-progress",
+      "decjump-taken-in-bounds",
+      "decjump-taken-at-or-past-end",
+      "decjump-not-taken-before-buffer",
+      "decjump-not-taken-non-progress",
+      "decjump-not-taken-in-bounds",
+      "decjump-not-taken-at-or-past-end",
+      "int-condjump-taken-before-buffer",
+      "int-condjump-taken-non-progress",
+      "int-condjump-taken-in-bounds",
+      "int-condjump-taken-at-or-past-end",
+      "int-condjump-not-taken-before-buffer",
+      "int-condjump-not-taken-non-progress",
+      "int-condjump-not-taken-in-bounds",
+      "int-condjump-not-taken-at-or-past-end",
+      "int-divisor-zero"
+    ],
+    "pathActionCounts": {
+      "decjump-not-taken": 20,
+      "decjump-taken": 20,
+      "int-condjump-not-taken": 20,
+      "int-condjump-taken": 20,
+      "int-divisor-zero": 5
+    },
+    "priorityCounts": {
+      "high": 65,
+      "low": 20
+    },
+    "riskCounts": {
+      "arithmetic-fault": 5,
+      "cursor-out-of-range": 20,
+      "cursor-underflow": 20,
+      "liveness": 20,
+      "reachable-control-path": 20
+    },
+    "schema": "touhou-formal-symex-body-candidate-queue-v1",
+    "statuses": {
+      "sat": 85
+    },
+    "topCandidates": [
+      {
+        "action": "fault:divide-by-zero",
+        "cursorClass": "-",
+        "faultDetail": "source integer div opcode reads a zero divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000001000000000010000000000000000000000000000",
+        "id": "th06:formal-active-bit0:int-divisor-zero",
+        "priority": "high",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "cursorClass": "-",
+        "faultDetail": "source integer div opcode reads a zero divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000001000000000080000000000000000000000000000",
+        "id": "th06:retail-lunatic-bit3:int-divisor-zero",
+        "priority": "high",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "cursorClass": "-",
+        "faultDetail": "source integer div opcode reads a zero divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000000f00000000010000000000000000000000000000",
+        "id": "th07:formal-active-bit0:int-divisor-zero",
+        "priority": "high",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "cursorClass": "-",
+        "faultDetail": "source integer div opcode reads a zero divisor from operand index 1",
+        "faultKind": "divide-by-zero",
+        "hex": "000000000d00000000010000000000000000000000000000",
+        "id": "th08:formal-active-bit0:int-divisor-zero",
+        "priority": "high",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "cursorClass": "-",
+        "faultDetail": "source integer div opcode reads a zero divisor from operand index 1",
+        "faultKind": "divide-by-zero",
+        "hex": "000000000d00000000030000000000000000000000000000",
+        "id": "th08:override-mask-delta:int-divisor-zero",
+        "priority": "high",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "faultDetail": "-",
+        "faultKind": "-",
+        "hex": "000000000300180000010000000000000000000000000000",
+        "id": "th06:formal-active-bit0:decjump-not-taken-at-or-past-end",
+        "priority": "high",
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "faultDetail": "-",
+        "faultKind": "-",
+        "hex": "000000000300ffff00010000000000000000000000000000",
+        "id": "th06:formal-active-bit0:decjump-not-taken-before-buffer",
+        "priority": "high",
+        "risk": "cursor-underflow"
+      },
+      {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "faultDetail": "-",
+        "faultKind": "-",
+        "hex": "000000000300000000010000000000001800000002000000",
+        "id": "th06:formal-active-bit0:decjump-taken-at-or-past-end",
+        "priority": "high",
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "faultDetail": "-",
+        "faultKind": "-",
+        "hex": "00000000030000000001000000000000ffffffff02000000",
+        "id": "th06:formal-active-bit0:decjump-taken-before-buffer",
+        "priority": "high",
+        "risk": "cursor-underflow"
+      },
+      {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "faultDetail": "-",
+        "faultKind": "-",
+        "hex": "000000001d001400000100000000000000000000",
+        "id": "th06:formal-active-bit0:int-condjump-not-taken-at-or-past-end",
+        "priority": "high",
+        "risk": "cursor-out-of-range"
+      }
+    ],
+    "uniquePathCount": 17
+  },
+  "rawBossFloatReadCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "bossIndexKindCounts": {
+      "-": 10,
+      "raw-immediate": 8
+    },
+    "byEnvironment": {
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "boss-float-index-at-or-past-array",
+          "boss-float-index-before-array",
+          "boss-float-null-deref",
+          "boss-float-value-raw-no-boss-read",
+          "boss-float-value-resolved-default-raw",
+          "boss-float-value-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th07"
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "boss-float-index-at-or-past-array",
+          "boss-float-index-before-array",
+          "boss-float-null-guarded-skip",
+          "boss-float-value-raw-no-boss-read",
+          "boss-float-value-resolved-default-raw",
+          "boss-float-value-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th08"
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "boss-float-index-at-or-past-array",
+          "boss-float-index-before-array",
+          "boss-float-null-guarded-skip",
+          "boss-float-value-raw-no-boss-read",
+          "boss-float-value-resolved-default-raw",
+          "boss-float-value-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th08"
+      }
+    },
+    "candidateCount": 18,
+    "candidateCountsByTitle": {
+      "th07": 6,
+      "th08": 12
+    },
+    "environmentCount": 3,
+    "faultKindCounts": {
+      "-": 11,
+      "null-dereference": 1,
+      "out-of-bounds-read": 6
+    },
+    "fixtureActionCounts": {
+      "advanced": 6,
+      "fault:null-dereference": 1,
+      "fault:out-of-bounds-read": 6,
+      "null-guarded-skip": 2,
+      "value-raw-no-boss-read": 3
+    },
+    "matchesPath": {
+      "true": 18
+    },
+    "modeledPathFamilies": [
+      "boss-float-index-at-or-past-array",
+      "boss-float-index-before-array",
+      "boss-float-null-deref",
+      "boss-float-null-guarded-skip",
+      "boss-float-value-raw-no-boss-read",
+      "boss-float-value-resolved-default-raw",
+      "boss-float-value-resolved-host"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [],
+      "th07": [
+        "boss-float-value-raw-no-boss-read",
+        "boss-float-index-before-array",
+        "boss-float-index-at-or-past-array",
+        "boss-float-null-deref",
+        "boss-float-value-resolved-host",
+        "boss-float-value-resolved-default-raw"
+      ],
+      "th08": [
+        "boss-float-value-raw-no-boss-read",
+        "boss-float-index-before-array",
+        "boss-float-index-at-or-past-array",
+        "boss-float-null-guarded-skip",
+        "boss-float-value-resolved-host",
+        "boss-float-value-resolved-default-raw"
+      ]
+    },
+    "outputKindCounts": {
+      "-": 7,
+      "raw-operand-cell": 11
+    },
+    "pathActionCounts": {
+      "boss-float-index": 6,
+      "boss-float-null-deref": 1,
+      "boss-float-null-guarded-skip": 2,
+      "boss-float-value": 9
+    },
+    "priorityCounts": {
+      "high": 7,
+      "low": 5,
+      "medium": 6
+    },
+    "riskCounts": {
+      "boss-index-oob-read": 6,
+      "boss-null-deref": 1,
+      "boss-null-guarded-skip": 2,
+      "boss-read-default-raw": 3,
+      "boss-read-host-value": 3,
+      "operand-flag-bypass": 3
+    },
+    "schema": "touhou-formal-symex-boss-float-candidate-queue-v1",
+    "statuses": {
+      "sat": 18
+    },
+    "topCandidates": [
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 8,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002c00180000010200000000800000008008000000",
+        "id": "th07:formal-active-bit0:boss-float-index-at-or-past-array",
+        "opcode": "44",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": -1,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002c001800000102000000008000000080ffffffff",
+        "id": "th07:formal-active-bit0:boss-float-index-before-array",
+        "opcode": "44",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:null-dereference",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "null-dereference",
+        "hex": "000000002c001800000102000000008000501c4600000000",
+        "id": "th07:formal-active-bit0:boss-float-null-deref",
+        "opcode": "44",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-null-deref",
+        "valueRaw": 1176260608
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 8,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000005700180000010200000000800000008008000000",
+        "id": "th08:formal-active-bit0:boss-float-index-at-or-past-array",
+        "opcode": "87",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": -1,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "0000000057001800000102000000008000000080ffffffff",
+        "id": "th08:formal-active-bit0:boss-float-index-before-array",
+        "opcode": "87",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 8,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000005700180000030200000000800000008008000000",
+        "id": "th08:override-mask-delta:boss-float-index-at-or-past-array",
+        "opcode": "87",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": -1,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "0000000057001800000302000000008000000080ffffffff",
+        "id": "th08:override-mask-delta:boss-float-index-before-array",
+        "opcode": "87",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "value-raw-no-boss-read",
+        "bossIndexHost": 0,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "-",
+        "hex": "000000002c00180000010000000000000000000000000000",
+        "id": "th07:formal-active-bit0:boss-float-value-raw-no-boss-read",
+        "opcode": "44",
+        "operandMask": "0",
+        "priority": "medium",
+        "risk": "operand-flag-bypass",
+        "valueRaw": 0
+      },
+      {
+        "action": "advanced",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 0,
+        "bossPresent": true,
+        "faultKind": "-",
+        "hex": "000000002c001800000102000000008000681d4600000000",
+        "id": "th07:formal-active-bit0:boss-float-value-resolved-default-raw",
+        "opcode": "44",
+        "operandMask": "2",
+        "priority": "medium",
+        "risk": "boss-read-default-raw",
+        "valueRaw": 1176332288
+      },
+      {
+        "action": "value-raw-no-boss-read",
+        "bossIndexHost": 0,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "-",
+        "hex": "000000005700180000010000000000000000000000000000",
+        "id": "th08:formal-active-bit0:boss-float-value-raw-no-boss-read",
+        "opcode": "87",
+        "operandMask": "0",
+        "priority": "medium",
+        "risk": "operand-flag-bypass",
+        "valueRaw": 0
+      }
+    ],
+    "uniquePathCount": 7,
+    "valueKindCounts": {
+      "-": 9,
+      "raw-immediate": 3,
+      "resolved-default-raw": 3,
+      "resolved-host": 3
+    }
+  },
+  "rawBossIntReadCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "bossIndexKindCounts": {
+      "-": 12,
+      "raw-immediate": 6
+    },
+    "byEnvironment": {
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "boss-int-index-at-or-past-array",
+          "boss-int-index-before-array",
+          "boss-int-null-deref",
+          "boss-int-value-raw-no-boss-read",
+          "boss-int-value-resolved-default-raw",
+          "boss-int-value-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th07"
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "boss-int-index-at-or-past-array",
+          "boss-int-index-before-array",
+          "boss-int-null-deref",
+          "boss-int-value-raw-no-boss-read",
+          "boss-int-value-resolved-default-raw",
+          "boss-int-value-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th08"
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "boss-int-index-at-or-past-array",
+          "boss-int-index-before-array",
+          "boss-int-null-deref",
+          "boss-int-value-raw-no-boss-read",
+          "boss-int-value-resolved-default-raw",
+          "boss-int-value-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th08"
+      }
+    },
+    "candidateCount": 18,
+    "candidateCountsByTitle": {
+      "th07": 6,
+      "th08": 12
+    },
+    "environmentCount": 3,
+    "faultKindCounts": {
+      "-": 9,
+      "null-dereference": 3,
+      "out-of-bounds-read": 6
+    },
+    "fixtureActionCounts": {
+      "advanced": 6,
+      "fault:null-dereference": 3,
+      "fault:out-of-bounds-read": 6,
+      "value-raw-no-boss-read": 3
+    },
+    "matchesPath": {
+      "true": 18
+    },
+    "modeledPathFamilies": [
+      "boss-int-index-at-or-past-array",
+      "boss-int-index-before-array",
+      "boss-int-null-deref",
+      "boss-int-value-raw-no-boss-read",
+      "boss-int-value-resolved-default-raw",
+      "boss-int-value-resolved-host"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [],
+      "th07": [
+        "boss-int-value-raw-no-boss-read",
+        "boss-int-index-before-array",
+        "boss-int-index-at-or-past-array",
+        "boss-int-null-deref",
+        "boss-int-value-resolved-host",
+        "boss-int-value-resolved-default-raw"
+      ],
+      "th08": [
+        "boss-int-value-raw-no-boss-read",
+        "boss-int-index-before-array",
+        "boss-int-index-at-or-past-array",
+        "boss-int-null-deref",
+        "boss-int-value-resolved-host",
+        "boss-int-value-resolved-default-raw"
+      ]
+    },
+    "outputKindCounts": {
+      "-": 9,
+      "raw-operand-cell": 9
+    },
+    "pathActionCounts": {
+      "boss-int-index": 6,
+      "boss-int-null-deref": 3,
+      "boss-int-value": 9
+    },
+    "priorityCounts": {
+      "high": 9,
+      "low": 3,
+      "medium": 6
+    },
+    "riskCounts": {
+      "boss-index-oob-read": 6,
+      "boss-null-deref": 3,
+      "boss-read-default-raw": 3,
+      "boss-read-host-value": 3,
+      "operand-flag-bypass": 3
+    },
+    "schema": "touhou-formal-symex-boss-int-candidate-queue-v1",
+    "statuses": {
+      "sat": 18
+    },
+    "topCandidates": [
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 8,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002b00180000010200000000800000008008000000",
+        "id": "th07:formal-active-bit0:boss-int-index-at-or-past-array",
+        "opcode": "43",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": -1,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002b001800000102000000008000000080ffffffff",
+        "id": "th07:formal-active-bit0:boss-int-index-before-array",
+        "opcode": "43",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:null-dereference",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "null-dereference",
+        "hex": "000000002b00180000010200000000801027000000000000",
+        "id": "th07:formal-active-bit0:boss-int-null-deref",
+        "opcode": "43",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-null-deref",
+        "valueRaw": 10000
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 8,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000005600180000010200000000800000008008000000",
+        "id": "th08:formal-active-bit0:boss-int-index-at-or-past-array",
+        "opcode": "86",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": -1,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "0000000056001800000102000000008000000080ffffffff",
+        "id": "th08:formal-active-bit0:boss-int-index-before-array",
+        "opcode": "86",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:null-dereference",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "null-dereference",
+        "hex": "000000005600180000010200000000801027000000000000",
+        "id": "th08:formal-active-bit0:boss-int-null-deref",
+        "opcode": "86",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-null-deref",
+        "valueRaw": 10000
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 8,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000005600180000030200000000800000008008000000",
+        "id": "th08:override-mask-delta:boss-int-index-at-or-past-array",
+        "opcode": "86",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": -1,
+        "bossPresent": false,
+        "faultKind": "out-of-bounds-read",
+        "hex": "0000000056001800000302000000008000000080ffffffff",
+        "id": "th08:override-mask-delta:boss-int-index-before-array",
+        "opcode": "86",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-index-oob-read",
+        "valueRaw": -2147483648
+      },
+      {
+        "action": "fault:null-dereference",
+        "bossIndexHost": -2147483648,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "null-dereference",
+        "hex": "000000005600180000030200000000801027000000000000",
+        "id": "th08:override-mask-delta:boss-int-null-deref",
+        "opcode": "86",
+        "operandMask": "2",
+        "priority": "high",
+        "risk": "boss-null-deref",
+        "valueRaw": 10000
+      },
+      {
+        "action": "value-raw-no-boss-read",
+        "bossIndexHost": 0,
+        "bossIndexRaw": 0,
+        "bossPresent": false,
+        "faultKind": "-",
+        "hex": "000000002b00180000010000000000000000000000000000",
+        "id": "th07:formal-active-bit0:boss-int-value-raw-no-boss-read",
+        "opcode": "43",
+        "operandMask": "0",
+        "priority": "medium",
+        "risk": "operand-flag-bypass",
+        "valueRaw": 0
+      }
+    ],
+    "uniquePathCount": 6,
+    "valueKindCounts": {
+      "-": 9,
+      "raw-immediate": 3,
+      "resolved-default-raw": 3,
+      "resolved-host": 3
+    }
+  },
+  "rawCallRetCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 7,
+        "extraPaths": [],
+        "matchesPathCount": 7,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "call-entered",
+          "call-lookup-fault",
+          "call-stack-write-at-or-past-stack",
+          "call-stack-write-before-stack",
+          "ret-restored",
+          "ret-stack-read-at-or-past-stack",
+          "ret-stack-read-before-stack"
+        ],
+        "pathCount": 7,
+        "satCount": 7,
+        "title": "th06"
+      },
+      "th06:retail-lunatic-bit3:active=8:override=0": {
+        "candidateCount": 7,
+        "extraPaths": [],
+        "matchesPathCount": 7,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "call-entered",
+          "call-lookup-fault",
+          "call-stack-write-at-or-past-stack",
+          "call-stack-write-before-stack",
+          "ret-restored",
+          "ret-stack-read-at-or-past-stack",
+          "ret-stack-read-before-stack"
+        ],
+        "pathCount": 7,
+        "satCount": 7,
+        "title": "th06"
+      },
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 7,
+        "extraPaths": [],
+        "matchesPathCount": 7,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "call-entered",
+          "call-lookup-fault",
+          "call-stack-write-at-or-past-stack",
+          "call-stack-write-before-stack",
+          "ret-restored",
+          "ret-stack-read-at-or-past-stack",
+          "ret-stack-read-before-stack"
+        ],
+        "pathCount": 7,
+        "satCount": 7,
+        "title": "th07"
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 10,
+        "extraPaths": [],
+        "matchesPathCount": 10,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "call-entered",
+          "call-lookup-fault",
+          "call-no-op",
+          "call-stack-write-at-or-past-stack",
+          "call-stack-write-before-stack",
+          "ret-child-index-at-or-past-array",
+          "ret-child-index-before-array",
+          "ret-exit-child",
+          "ret-restored",
+          "ret-stack-read-at-or-past-stack"
+        ],
+        "pathCount": 10,
+        "satCount": 10,
+        "title": "th08"
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 10,
+        "extraPaths": [],
+        "matchesPathCount": 10,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "call-entered",
+          "call-lookup-fault",
+          "call-no-op",
+          "call-stack-write-at-or-past-stack",
+          "call-stack-write-before-stack",
+          "ret-child-index-at-or-past-array",
+          "ret-child-index-before-array",
+          "ret-exit-child",
+          "ret-restored",
+          "ret-stack-read-at-or-past-stack"
+        ],
+        "pathCount": 10,
+        "satCount": 10,
+        "title": "th08"
+      }
+    },
+    "candidateCount": 41,
+    "environmentCount": 5,
+    "faultKindCounts": {
+      "-": 14,
+      "out-of-bounds-read": 17,
+      "out-of-bounds-write": 10
+    },
+    "fixtureActionCounts": {
+      "call-entered": 5,
+      "call-no-op": 2,
+      "fault:out-of-bounds-read": 17,
+      "fault:out-of-bounds-write": 10,
+      "ret-exited-child": 2,
+      "ret-restored": 5
+    },
+    "matchesPath": {
+      "true": 41
+    },
+    "modeledPathFamilies": [
+      "call-entered",
+      "call-lookup-fault",
+      "call-no-op",
+      "call-stack-write-at-or-past-stack",
+      "call-stack-write-before-stack",
+      "ret-child-index-at-or-past-array",
+      "ret-child-index-before-array",
+      "ret-exit-child",
+      "ret-restored",
+      "ret-stack-read-at-or-past-stack",
+      "ret-stack-read-before-stack"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [
+        "call-stack-write-before-stack",
+        "call-stack-write-at-or-past-stack",
+        "call-lookup-fault",
+        "call-entered",
+        "ret-stack-read-before-stack",
+        "ret-stack-read-at-or-past-stack",
+        "ret-restored"
+      ],
+      "th07": [
+        "call-stack-write-before-stack",
+        "call-stack-write-at-or-past-stack",
+        "call-lookup-fault",
+        "call-entered",
+        "ret-stack-read-before-stack",
+        "ret-stack-read-at-or-past-stack",
+        "ret-restored"
+      ],
+      "th08": [
+        "call-stack-write-before-stack",
+        "call-stack-write-at-or-past-stack",
+        "call-lookup-fault",
+        "call-entered",
+        "call-no-op",
+        "ret-stack-read-at-or-past-stack",
+        "ret-restored",
+        "ret-exit-child",
+        "ret-child-index-before-array",
+        "ret-child-index-at-or-past-array"
+      ]
+    },
+    "pathActionCounts": {
+      "call-entered": 5,
+      "call-lookup-fault": 5,
+      "call-no-op": 2,
+      "call-stack-write": 10,
+      "ret-child-index": 4,
+      "ret-exit-child": 2,
+      "ret-restored": 5,
+      "ret-stack-read": 8
+    },
+    "priorityCounts": {
+      "high": 27,
+      "low": 10,
+      "medium": 4
+    },
+    "riskCounts": {
+      "call-negative-no-op": 2,
+      "call-stack-oob-write": 10,
+      "call-subtable-oob-read": 5,
+      "callret-control": 10,
+      "ret-child-context-exit": 2,
+      "ret-child-context-oob-read": 4,
+      "ret-stack-oob-read": 8
+    },
+    "schema": "touhou-formal-symex-callret-candidate-queue-v1",
+    "statuses": {
+      "sat": 41
+    },
+    "topCandidates": [
+      {
+        "action": "fault:out-of-bounds-read",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002300000000010000ffffffff",
+        "id": "th06:formal-active-bit0:call-lookup-fault",
+        "priority": "high",
+        "risk": "call-subtable-oob-read",
+        "stackDepth": 0,
+        "stackDisabled": true,
+        "subId": -1
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-write",
+        "hex": "00000000230000000001000000000000",
+        "id": "th06:formal-active-bit0:call-stack-write-at-or-past-stack",
+        "priority": "high",
+        "risk": "call-stack-oob-write",
+        "stackDepth": 8,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-write",
+        "hex": "00000000230000000001000000000000",
+        "id": "th06:formal-active-bit0:call-stack-write-before-stack",
+        "priority": "high",
+        "risk": "call-stack-oob-write",
+        "stackDepth": -1,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002400000000010000",
+        "id": "th06:formal-active-bit0:ret-stack-read-at-or-past-stack",
+        "priority": "high",
+        "risk": "ret-stack-oob-read",
+        "stackDepth": 9,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002400000000010000",
+        "id": "th06:formal-active-bit0:ret-stack-read-before-stack",
+        "priority": "high",
+        "risk": "ret-stack-oob-read",
+        "stackDepth": 0,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002300000000080000ffffffff",
+        "id": "th06:retail-lunatic-bit3:call-lookup-fault",
+        "priority": "high",
+        "risk": "call-subtable-oob-read",
+        "stackDepth": 0,
+        "stackDisabled": true,
+        "subId": -1
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-write",
+        "hex": "00000000230000000008000000000000",
+        "id": "th06:retail-lunatic-bit3:call-stack-write-at-or-past-stack",
+        "priority": "high",
+        "risk": "call-stack-oob-write",
+        "stackDepth": 8,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-write",
+        "hex": "00000000230000000008000000000000",
+        "id": "th06:retail-lunatic-bit3:call-stack-write-before-stack",
+        "priority": "high",
+        "risk": "call-stack-oob-write",
+        "stackDepth": -1,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002400000000080000",
+        "id": "th06:retail-lunatic-bit3:ret-stack-read-at-or-past-stack",
+        "priority": "high",
+        "risk": "ret-stack-oob-read",
+        "stackDepth": 9,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "childContextSlot": 0,
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002400000000080000",
+        "id": "th06:retail-lunatic-bit3:ret-stack-read-before-stack",
+        "priority": "high",
+        "risk": "ret-stack-oob-read",
+        "stackDepth": 0,
+        "stackDisabled": false,
+        "subId": 0
+      }
+    ],
+    "uniquePathCount": 11
+  },
+  "rawConditionalCallCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 8,
+        "extraPaths": [],
+        "matchesPathCount": 8,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "condcall-entered",
+          "condcall-false-at-or-past-end",
+          "condcall-false-before-buffer",
+          "condcall-false-in-bounds",
+          "condcall-false-non-progress",
+          "condcall-lookup-fault",
+          "condcall-stack-write-at-or-past-stack",
+          "condcall-stack-write-before-stack"
+        ],
+        "pathCount": 8,
+        "satCount": 8,
+        "title": "th06"
+      },
+      "th06:retail-lunatic-bit3:active=8:override=0": {
+        "candidateCount": 8,
+        "extraPaths": [],
+        "matchesPathCount": 8,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "condcall-entered",
+          "condcall-false-at-or-past-end",
+          "condcall-false-before-buffer",
+          "condcall-false-in-bounds",
+          "condcall-false-non-progress",
+          "condcall-lookup-fault",
+          "condcall-stack-write-at-or-past-stack",
+          "condcall-stack-write-before-stack"
+        ],
+        "pathCount": 8,
+        "satCount": 8,
+        "title": "th06"
+      }
+    },
+    "candidateCount": 16,
+    "environmentCount": 2,
+    "faultKindCounts": {
+      "-": 10,
+      "out-of-bounds-read": 2,
+      "out-of-bounds-write": 4
+    },
+    "fixtureActionCounts": {
+      "call-condition-false": 8,
+      "call-entered": 2,
+      "fault:out-of-bounds-read": 2,
+      "fault:out-of-bounds-write": 4
+    },
+    "matchesPath": {
+      "true": 16
+    },
+    "modeledPathFamilies": [
+      "condcall-entered",
+      "condcall-false-at-or-past-end",
+      "condcall-false-before-buffer",
+      "condcall-false-in-bounds",
+      "condcall-false-non-progress",
+      "condcall-lookup-fault",
+      "condcall-stack-write-at-or-past-stack",
+      "condcall-stack-write-before-stack"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [
+        "condcall-false-before-buffer",
+        "condcall-false-non-progress",
+        "condcall-false-in-bounds",
+        "condcall-false-at-or-past-end",
+        "condcall-stack-write-before-stack",
+        "condcall-stack-write-at-or-past-stack",
+        "condcall-lookup-fault",
+        "condcall-entered"
+      ],
+      "th07": [],
+      "th08": []
+    },
+    "pathActionCounts": {
+      "condcall-entered": 2,
+      "condcall-false": 8,
+      "condcall-lookup-fault": 2,
+      "condcall-stack-write": 4
+    },
+    "priorityCounts": {
+      "high": 6,
+      "low": 2,
+      "medium": 8
+    },
+    "riskCounts": {
+      "call-stack-oob-write": 4,
+      "call-subtable-oob-read": 2,
+      "condcall-control": 2,
+      "condcall-fallthrough-cursor": 8
+    },
+    "schema": "touhou-formal-symex-condcall-candidate-queue-v1",
+    "statuses": {
+      "sat": 16
+    },
+    "topCandidates": [
+      {
+        "action": "fault:out-of-bounds-read",
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002a00000000010000ffffffff0000000000000000d6d8ffffd5d8ffff",
+        "id": "th06:formal-active-bit0:condcall-lookup-fault",
+        "lhsHost": 0,
+        "lhsRaw": -10026,
+        "priority": "high",
+        "rhsRaw": -10027,
+        "risk": "call-subtable-oob-read",
+        "stackDepth": 0,
+        "stackDisabled": true,
+        "subId": -1
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "faultKind": "out-of-bounds-write",
+        "hex": "000000002a000000000100000000000000000000000000000000000001000000",
+        "id": "th06:formal-active-bit0:condcall-stack-write-at-or-past-stack",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "high",
+        "rhsRaw": 1,
+        "risk": "call-stack-oob-write",
+        "stackDepth": 8,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "faultKind": "out-of-bounds-write",
+        "hex": "000000002a000000000100000000000000000000000000000000000001000000",
+        "id": "th06:formal-active-bit0:condcall-stack-write-before-stack",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "high",
+        "rhsRaw": 1,
+        "risk": "call-stack-oob-write",
+        "stackDepth": -1,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-read",
+        "faultKind": "out-of-bounds-read",
+        "hex": "000000002a00000000080000ffffffff0000000000000000d6d8ffffd5d8ffff",
+        "id": "th06:retail-lunatic-bit3:condcall-lookup-fault",
+        "lhsHost": 0,
+        "lhsRaw": -10026,
+        "priority": "high",
+        "rhsRaw": -10027,
+        "risk": "call-subtable-oob-read",
+        "stackDepth": 0,
+        "stackDisabled": true,
+        "subId": -1
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "faultKind": "out-of-bounds-write",
+        "hex": "000000002a000000000800000000000000000000000000000000000001000000",
+        "id": "th06:retail-lunatic-bit3:condcall-stack-write-at-or-past-stack",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "high",
+        "rhsRaw": 1,
+        "risk": "call-stack-oob-write",
+        "stackDepth": 8,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "fault:out-of-bounds-write",
+        "faultKind": "out-of-bounds-write",
+        "hex": "000000002a000000000800000000000000000000000000000000000001000000",
+        "id": "th06:retail-lunatic-bit3:condcall-stack-write-before-stack",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "high",
+        "rhsRaw": 1,
+        "risk": "call-stack-oob-write",
+        "stackDepth": -1,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "call-condition-false",
+        "faultKind": "-",
+        "hex": "000000002700200000010000000000000000000000000000d6d8ffffd7d8ffff",
+        "id": "th06:formal-active-bit0:condcall-false-at-or-past-end",
+        "lhsHost": 0,
+        "lhsRaw": -10026,
+        "priority": "medium",
+        "rhsRaw": -10025,
+        "risk": "condcall-fallthrough-cursor",
+        "stackDepth": 0,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "call-condition-false",
+        "faultKind": "-",
+        "hex": "000000002700ffff000100000000000000000000000000000000000001000000",
+        "id": "th06:formal-active-bit0:condcall-false-before-buffer",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "medium",
+        "rhsRaw": 1,
+        "risk": "condcall-fallthrough-cursor",
+        "stackDepth": 0,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "call-condition-false",
+        "faultKind": "-",
+        "hex": "000000002a000100000100000000000000000000000000000000000000000000",
+        "id": "th06:formal-active-bit0:condcall-false-in-bounds",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "medium",
+        "rhsRaw": 0,
+        "risk": "condcall-fallthrough-cursor",
+        "stackDepth": 0,
+        "stackDisabled": false,
+        "subId": 0
+      },
+      {
+        "action": "call-condition-false",
+        "faultKind": "-",
+        "hex": "000000002a000000000100000000000000000000000000000000000000000000",
+        "id": "th06:formal-active-bit0:condcall-false-non-progress",
+        "lhsHost": 0,
+        "lhsRaw": 0,
+        "priority": "medium",
+        "rhsRaw": 0,
+        "risk": "condcall-fallthrough-cursor",
+        "stackDepth": 0,
+        "stackDisabled": false,
+        "subId": 0
+      }
+    ],
+    "uniquePathCount": 8
+  },
+  "rawExtensionDispatchCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "extension-call-advanced",
+          "extension-call-index-at-or-past-array",
+          "extension-call-index-before-array",
+          "extension-install-advanced",
+          "extension-install-index-at-or-past-array",
+          "extension-install-negative-clear"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th06"
+      },
+      "th06:retail-lunatic-bit3:active=8:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "extension-call-advanced",
+          "extension-call-index-at-or-past-array",
+          "extension-call-index-before-array",
+          "extension-install-advanced",
+          "extension-install-index-at-or-past-array",
+          "extension-install-negative-clear"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th06"
+      },
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 7,
+        "extraPaths": [],
+        "matchesPathCount": 7,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "extension-call-advanced",
+          "extension-call-index-at-or-past-array",
+          "extension-call-index-before-array",
+          "extension-install-advanced",
+          "extension-install-index-at-or-past-array",
+          "extension-install-index-before-array",
+          "extension-install-negative-clear"
+        ],
+        "pathCount": 7,
+        "satCount": 7,
+        "title": "th07"
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 7,
+        "extraPaths": [],
+        "matchesPathCount": 7,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "extension-call-advanced",
+          "extension-call-index-at-or-past-array",
+          "extension-call-index-before-array",
+          "extension-install-advanced",
+          "extension-install-index-at-or-past-array",
+          "extension-install-index-before-array",
+          "extension-install-negative-clear"
+        ],
+        "pathCount": 7,
+        "satCount": 7,
+        "title": "th08"
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 7,
+        "extraPaths": [],
+        "matchesPathCount": 7,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "extension-call-advanced",
+          "extension-call-index-at-or-past-array",
+          "extension-call-index-before-array",
+          "extension-install-advanced",
+          "extension-install-index-at-or-past-array",
+          "extension-install-index-before-array",
+          "extension-install-negative-clear"
+        ],
+        "pathCount": 7,
+        "satCount": 7,
+        "title": "th08"
+      }
+    },
+    "callbackClearedCounts": {
+      "false": 28,
+      "true": 5
+    },
+    "callbackInstalledCounts": {
+      "false": 28,
+      "true": 5
+    },
+    "calledNowCounts": {
+      "false": 28,
+      "true": 5
+    },
+    "candidateCount": 33,
+    "candidateCountsByTitle": {
+      "th06": 12,
+      "th07": 7,
+      "th08": 14
+    },
+    "environmentCount": 5,
+    "faultKindCounts": {
+      "-": 15,
+      "out-of-bounds-read": 18
+    },
+    "fixtureActionCounts": {
+      "advanced": 15,
+      "host-fault": 18
+    },
+    "matchesPath": {
+      "true": 33
+    },
+    "modeledPathFamilies": [
+      "extension-call-advanced",
+      "extension-call-index-at-or-past-array",
+      "extension-call-index-before-array",
+      "extension-install-advanced",
+      "extension-install-index-at-or-past-array",
+      "extension-install-index-before-array",
+      "extension-install-negative-clear"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [
+        "extension-call-index-before-array",
+        "extension-call-index-at-or-past-array",
+        "extension-call-advanced",
+        "extension-install-negative-clear",
+        "extension-install-index-at-or-past-array",
+        "extension-install-advanced"
+      ],
+      "th07": [
+        "extension-call-index-before-array",
+        "extension-call-index-at-or-past-array",
+        "extension-call-advanced",
+        "extension-install-negative-clear",
+        "extension-install-index-before-array",
+        "extension-install-index-at-or-past-array",
+        "extension-install-advanced"
+      ],
+      "th08": [
+        "extension-call-index-before-array",
+        "extension-call-index-at-or-past-array",
+        "extension-call-advanced",
+        "extension-install-negative-clear",
+        "extension-install-index-before-array",
+        "extension-install-index-at-or-past-array",
+        "extension-install-advanced"
+      ]
+    },
+    "pathActionCounts": {
+      "extension-call-advanced": 5,
+      "extension-call-index": 10,
+      "extension-install-advanced": 5,
+      "extension-install-index": 8,
+      "extension-install-negative-clear": 5
+    },
+    "priorityCounts": {
+      "high": 18,
+      "low": 10,
+      "medium": 5
+    },
+    "riskCounts": {
+      "extension-callback-table-oob-read": 18,
+      "extension-control": 10,
+      "extension-negative-index-clears-callback": 5
+    },
+    "schema": "touhou-formal-symex-extension-candidate-queue-v1",
+    "statuses": {
+      "sat": 33
+    },
+    "topCandidates": [
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "-",
+        "hex": "00000000790010000001000011000000",
+        "id": "th06:formal-active-bit0:extension-call-index-at-or-past-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": 17,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "17"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "-",
+        "hex": "000000007900100000010000ffffffff",
+        "id": "th06:formal-active-bit0:extension-call-index-before-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": -1,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "-1"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "17",
+        "hex": "000000007a0010000001000011000000",
+        "id": "th06:formal-active-bit0:extension-install-index-at-or-past-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": 17,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "17"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "-",
+        "hex": "00000000790010000008000011000000",
+        "id": "th06:retail-lunatic-bit3:extension-call-index-at-or-past-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": 17,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "17"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "-",
+        "hex": "000000007900100000080000ffffffff",
+        "id": "th06:retail-lunatic-bit3:extension-call-index-before-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": -1,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "-1"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "17",
+        "hex": "000000007a0010000008000011000000",
+        "id": "th06:retail-lunatic-bit3:extension-install-index-at-or-past-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": 17,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "17"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "-",
+        "hex": "00000000790010000001000018000000",
+        "id": "th07:formal-active-bit0:extension-call-index-at-or-past-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": 24,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "24"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "-",
+        "hex": "000000007900100000010000ffffffff",
+        "id": "th07:formal-active-bit0:extension-call-index-before-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": -1,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "-1"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "24",
+        "hex": "000000007a0010000001000018000000",
+        "id": "th07:formal-active-bit0:extension-install-index-at-or-past-array",
+        "indexHost0": 0,
+        "indexHost1": 0,
+        "indexRaw0": 24,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "24"
+      },
+      {
+        "action": "host-fault",
+        "callbackCleared": "false",
+        "callbackInstalled": "false",
+        "calledNow": "false",
+        "faultKind": "out-of-bounds-read",
+        "guardIndex": "0",
+        "hex": "000000007a0010000001010010270000",
+        "id": "th07:formal-active-bit0:extension-install-index-before-array",
+        "indexHost0": 0,
+        "indexHost1": -1,
+        "indexRaw0": 10000,
+        "priority": "high",
+        "risk": "extension-callback-table-oob-read",
+        "tableIndex": "-1"
+      }
+    ],
+    "uniquePathCount": 7
+  },
+  "rawIntBinaryCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "int-binary-divide-overflow-resolved-default-raw",
+          "int-binary-divide-overflow-resolved-host",
+          "int-binary-divisor-zero-resolved-default-raw",
+          "int-binary-divisor-zero-resolved-host",
+          "int-binary-non-int-output",
+          "int-binary-output-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th06"
+      },
+      "th06:retail-lunatic-bit3:active=8:override=0": {
+        "candidateCount": 6,
+        "extraPaths": [],
+        "matchesPathCount": 6,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "int-binary-divide-overflow-resolved-default-raw",
+          "int-binary-divide-overflow-resolved-host",
+          "int-binary-divisor-zero-resolved-default-raw",
+          "int-binary-divisor-zero-resolved-host",
+          "int-binary-non-int-output",
+          "int-binary-output-resolved-host"
+        ],
+        "pathCount": 6,
+        "satCount": 6,
+        "title": "th06"
+      },
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 9,
+        "extraPaths": [],
+        "matchesPathCount": 9,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "int-binary-divide-overflow-raw-immediate",
+          "int-binary-divide-overflow-resolved-default-raw",
+          "int-binary-divide-overflow-resolved-host",
+          "int-binary-divisor-zero-raw-immediate",
+          "int-binary-divisor-zero-resolved-default-raw",
+          "int-binary-divisor-zero-resolved-host",
+          "int-binary-output-default-raw-cell",
+          "int-binary-output-raw-cell",
+          "int-binary-output-resolved-host"
+        ],
+        "pathCount": 9,
+        "satCount": 9,
+        "title": "th07"
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 9,
+        "extraPaths": [],
+        "matchesPathCount": 9,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "int-binary-divide-overflow-raw-immediate",
+          "int-binary-divide-overflow-resolved-default-raw",
+          "int-binary-divide-overflow-resolved-host",
+          "int-binary-divisor-zero-raw-immediate",
+          "int-binary-divisor-zero-resolved-default-raw",
+          "int-binary-divisor-zero-resolved-host",
+          "int-binary-output-default-raw-cell",
+          "int-binary-output-raw-cell",
+          "int-binary-output-resolved-host"
+        ],
+        "pathCount": 9,
+        "satCount": 9,
+        "title": "th08"
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 9,
+        "extraPaths": [],
+        "matchesPathCount": 9,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "int-binary-divide-overflow-raw-immediate",
+          "int-binary-divide-overflow-resolved-default-raw",
+          "int-binary-divide-overflow-resolved-host",
+          "int-binary-divisor-zero-raw-immediate",
+          "int-binary-divisor-zero-resolved-default-raw",
+          "int-binary-divisor-zero-resolved-host",
+          "int-binary-output-default-raw-cell",
+          "int-binary-output-raw-cell",
+          "int-binary-output-resolved-host"
+        ],
+        "pathCount": 9,
+        "satCount": 9,
+        "title": "th08"
+      }
+    },
+    "candidateCount": 39,
+    "candidateCountsByTitle": {
+      "th06": 12,
+      "th07": 9,
+      "th08": 18
+    },
+    "environmentCount": 5,
+    "faultKindCounts": {
+      "-": 13,
+      "arithmetic-overflow": 13,
+      "divide-by-zero": 13
+    },
+    "fixtureActionCounts": {
+      "advanced": 11,
+      "fault:arithmetic-overflow": 13,
+      "fault:divide-by-zero": 13,
+      "non-int-output": 2
+    },
+    "lhsKindCounts": {
+      "output-before": 11,
+      "raw-immediate": 18,
+      "resolved-default-raw": 10
+    },
+    "matchesPath": {
+      "true": 39
+    },
+    "modeledPathFamilies": [
+      "int-binary-divide-overflow-raw-immediate",
+      "int-binary-divide-overflow-resolved-default-raw",
+      "int-binary-divide-overflow-resolved-host",
+      "int-binary-divisor-zero-raw-immediate",
+      "int-binary-divisor-zero-resolved-default-raw",
+      "int-binary-divisor-zero-resolved-host",
+      "int-binary-non-int-output",
+      "int-binary-output-default-raw-cell",
+      "int-binary-output-raw-cell",
+      "int-binary-output-resolved-host"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [
+        "int-binary-output-resolved-host",
+        "int-binary-non-int-output",
+        "int-binary-divisor-zero-resolved-host",
+        "int-binary-divisor-zero-resolved-default-raw",
+        "int-binary-divide-overflow-resolved-host",
+        "int-binary-divide-overflow-resolved-default-raw"
+      ],
+      "th07": [
+        "int-binary-output-raw-cell",
+        "int-binary-output-resolved-host",
+        "int-binary-output-default-raw-cell",
+        "int-binary-divisor-zero-raw-immediate",
+        "int-binary-divisor-zero-resolved-host",
+        "int-binary-divisor-zero-resolved-default-raw",
+        "int-binary-divide-overflow-raw-immediate",
+        "int-binary-divide-overflow-resolved-host",
+        "int-binary-divide-overflow-resolved-default-raw"
+      ],
+      "th08": [
+        "int-binary-output-raw-cell",
+        "int-binary-output-resolved-host",
+        "int-binary-output-default-raw-cell",
+        "int-binary-divisor-zero-raw-immediate",
+        "int-binary-divisor-zero-resolved-host",
+        "int-binary-divisor-zero-resolved-default-raw",
+        "int-binary-divide-overflow-raw-immediate",
+        "int-binary-divide-overflow-resolved-host",
+        "int-binary-divide-overflow-resolved-default-raw"
+      ]
+    },
+    "opCounts": {
+      "add/assign": 7,
+      "add/update-in-place": 5,
+      "div/assign": 15,
+      "div/update-in-place": 3,
+      "mod/assign": 8,
+      "sub/update-in-place": 1
+    },
+    "outputKindCounts": {
+      "non-int-output": 2,
+      "raw-operand-cell": 21,
+      "resolved-default-raw-cell": 3,
+      "resolved-host": 13
+    },
+    "pathActionCounts": {
+      "int-binary-divide-overflow": 13,
+      "int-binary-divisor-zero": 13,
+      "int-binary-non-int-output": 2,
+      "int-binary-output": 11
+    },
+    "priorityCounts": {
+      "high": 26,
+      "low": 5,
+      "medium": 8
+    },
+    "rhsKindCounts": {
+      "-": 2,
+      "raw-immediate": 15,
+      "resolved-default-raw": 12,
+      "resolved-host": 10
+    },
+    "riskCounts": {
+      "arithmetic-fault": 13,
+      "arithmetic-overflow": 13,
+      "default-raw-self-write": 3,
+      "host-lvalue-write": 5,
+      "raw-operand-self-write": 3,
+      "silent-no-op": 2
+    },
+    "schema": "touhou-formal-symex-int-binary-candidate-queue-v1",
+    "statuses": {
+      "sat": 39
+    },
+    "topCandidates": [
+      {
+        "action": "fault:arithmetic-overflow",
+        "faultDetail": "source integer div opcode reaches signed i32 divide overflow: INT_MIN / -1",
+        "faultKind": "arithmetic-overflow",
+        "hex": "000000001000180000010000efd8ffff00000080ffffffff",
+        "id": "th06:formal-active-bit0:int-binary-divide-overflow-resolved-default-raw",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "-2147483648",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-default-raw",
+        "rhsValue": "-1",
+        "risk": "arithmetic-overflow"
+      },
+      {
+        "action": "fault:arithmetic-overflow",
+        "faultDetail": "source integer div opcode reaches signed i32 divide overflow: INT_MIN / -1",
+        "faultKind": "arithmetic-overflow",
+        "hex": "000000001000180000010000efd8ffff00000080efd8ffff",
+        "id": "th06:formal-active-bit0:int-binary-divide-overflow-resolved-host",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "-2147483648",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-host",
+        "rhsValue": "-1",
+        "risk": "arithmetic-overflow"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "faultDetail": "source integer div opcode reads a zero RHS/divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000001000180000010000efd8ffff0000000000000000",
+        "id": "th06:formal-active-bit0:int-binary-divisor-zero-resolved-default-raw",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "0",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-default-raw",
+        "rhsValue": "0",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "faultDetail": "source integer div opcode reads a zero RHS/divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000001000180000010000efd8ffff00000000efd8ffff",
+        "id": "th06:formal-active-bit0:int-binary-divisor-zero-resolved-host",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "0",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-host",
+        "rhsValue": "0",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:arithmetic-overflow",
+        "faultDetail": "source integer div opcode reaches signed i32 divide overflow: INT_MIN / -1",
+        "faultKind": "arithmetic-overflow",
+        "hex": "000000001000180000080000efd8ffff00000080ffffffff",
+        "id": "th06:retail-lunatic-bit3:int-binary-divide-overflow-resolved-default-raw",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "-2147483648",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-default-raw",
+        "rhsValue": "-1",
+        "risk": "arithmetic-overflow"
+      },
+      {
+        "action": "fault:arithmetic-overflow",
+        "faultDetail": "source integer div opcode reaches signed i32 divide overflow: INT_MIN / -1",
+        "faultKind": "arithmetic-overflow",
+        "hex": "000000001000180000080000efd8ffff00000080efd8ffff",
+        "id": "th06:retail-lunatic-bit3:int-binary-divide-overflow-resolved-host",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "-2147483648",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-host",
+        "rhsValue": "-1",
+        "risk": "arithmetic-overflow"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "faultDetail": "source integer div opcode reads a zero RHS/divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000001000180000080000efd8ffff0000000000000000",
+        "id": "th06:retail-lunatic-bit3:int-binary-divisor-zero-resolved-default-raw",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "0",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-default-raw",
+        "rhsValue": "0",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:divide-by-zero",
+        "faultDetail": "source integer div opcode reads a zero RHS/divisor from operand index 2",
+        "faultKind": "divide-by-zero",
+        "hex": "000000001000180000080000efd8ffff00000000efd8ffff",
+        "id": "th06:retail-lunatic-bit3:int-binary-divisor-zero-resolved-host",
+        "lhsKind": "resolved-default-raw",
+        "lhsValue": "0",
+        "op": "div/assign",
+        "outputKind": "resolved-host",
+        "priority": "high",
+        "rhsKind": "resolved-host",
+        "rhsValue": "0",
+        "risk": "arithmetic-fault"
+      },
+      {
+        "action": "fault:arithmetic-overflow",
+        "faultDetail": "source integer div opcode reaches signed i32 divide overflow: INT_MIN / -1",
+        "faultKind": "arithmetic-overflow",
+        "hex": "000000000f001800000100000000000000000080ffffffff",
+        "id": "th07:formal-active-bit0:int-binary-divide-overflow-raw-immediate",
+        "lhsKind": "raw-immediate",
+        "lhsValue": "-2147483648",
+        "op": "div/assign",
+        "outputKind": "raw-operand-cell",
+        "priority": "high",
+        "rhsKind": "raw-immediate",
+        "rhsValue": "-1",
+        "risk": "arithmetic-overflow"
+      },
+      {
+        "action": "fault:arithmetic-overflow",
+        "faultDetail": "source integer div opcode reaches signed i32 divide overflow: INT_MIN / -1",
+        "faultKind": "arithmetic-overflow",
+        "hex": "000000000f00180000010c000000008000000080ffffffff",
+        "id": "th07:formal-active-bit0:int-binary-divide-overflow-resolved-default-raw",
+        "lhsKind": "raw-immediate",
+        "lhsValue": "-2147483648",
+        "op": "div/assign",
+        "outputKind": "raw-operand-cell",
+        "priority": "high",
+        "rhsKind": "resolved-default-raw",
+        "rhsValue": "-1",
+        "risk": "arithmetic-overflow"
+      }
+    ],
+    "uniquePathCount": 10
+  },
+  "rawIntResolverCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:slot0": {
+        "candidateCount": 2,
+        "extraPaths": [],
+        "matchesPathCount": 2,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "resolved-default-raw",
+          "resolved-host"
+        ],
+        "pathCount": 2,
+        "satCount": 2,
+        "title": "th06"
+      },
+      "th07:slot0": {
+        "candidateCount": 3,
+        "extraPaths": [],
+        "matchesPathCount": 3,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "raw-immediate",
+          "resolved-default-raw",
+          "resolved-host"
+        ],
+        "pathCount": 3,
+        "satCount": 3,
+        "title": "th07"
+      },
+      "th08:slot0": {
+        "candidateCount": 3,
+        "extraPaths": [],
+        "matchesPathCount": 3,
+        "missingModeledPaths": [],
+        "modeledPathsForTitle": [
+          "raw-immediate",
+          "resolved-default-raw",
+          "resolved-host"
+        ],
+        "pathCount": 3,
+        "satCount": 3,
+        "title": "th08"
+      }
+    },
+    "candidateCount": 8,
+    "environmentCount": 3,
+    "flagEnabledCounts": {
+      "false": 2,
+      "true": 6
+    },
+    "matchesPath": {
+      "true": 8
+    },
+    "modeledPathFamilies": [
+      "raw-immediate",
+      "resolved-default-raw",
+      "resolved-host"
+    ],
+    "modeledPathsByTitle": {
+      "th06": [
+        "resolved-host",
+        "resolved-default-raw"
+      ],
+      "th07": [
+        "raw-immediate",
+        "resolved-host",
+        "resolved-default-raw"
+      ],
+      "th08": [
+        "raw-immediate",
+        "resolved-host",
+        "resolved-default-raw"
+      ]
+    },
+    "pathCounts": {
+      "raw-immediate": 2,
+      "resolved-default-raw": 3,
+      "resolved-host": 3
+    },
+    "priorityCounts": {
+      "high": 6,
+      "medium": 2
+    },
+    "resolvedKindCounts": {
+      "raw-immediate": 2,
+      "resolved-default-raw": 3,
+      "resolved-host": 3
+    },
+    "riskCounts": {
+      "mask-clear-raw-immediate": 2,
+      "mask-set-default-raw": 3,
+      "mask-set-known-selector": 3
+    },
+    "schema": "touhou-formal-symex-int-resolver-queue-v1",
+    "selectorKnownCounts": {
+      "false": 5,
+      "true": 3
+    },
+    "statuses": {
+      "sat": 8
+    },
+    "topCandidates": [
+      {
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001000000000000",
+        "id": "th06:slot0:resolved-default-raw",
+        "priority": "high",
+        "rawValue": "0",
+        "resolvedKind": "resolved-default-raw",
+        "risk": "mask-set-default-raw",
+        "selectorKnown": "false"
+      },
+      {
+        "flagEnabled": "true",
+        "hex": "0000000000000c0000010000efd8ffff",
+        "id": "th06:slot0:resolved-host",
+        "priority": "high",
+        "rawValue": "-10001",
+        "resolvedKind": "resolved-host",
+        "risk": "mask-set-known-selector",
+        "selectorKnown": "true"
+      },
+      {
+        "flagEnabled": "true",
+        "hex": "0000000000000c00000101004a270000",
+        "id": "th07:slot0:resolved-default-raw",
+        "priority": "high",
+        "rawValue": "10058",
+        "resolvedKind": "resolved-default-raw",
+        "risk": "mask-set-default-raw",
+        "selectorKnown": "false"
+      },
+      {
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001010010270000",
+        "id": "th07:slot0:resolved-host",
+        "priority": "high",
+        "rawValue": "10000",
+        "resolvedKind": "resolved-host",
+        "risk": "mask-set-known-selector",
+        "selectorKnown": "true"
+      },
+      {
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001010060270000",
+        "id": "th08:slot0:resolved-default-raw",
+        "priority": "high",
+        "rawValue": "10080",
+        "resolvedKind": "resolved-default-raw",
+        "risk": "mask-set-default-raw",
+        "selectorKnown": "false"
+      },
+      {
+        "flagEnabled": "true",
+        "hex": "0000000000000c000001010010270000",
+        "id": "th08:slot0:resolved-host",
+        "priority": "high",
+        "rawValue": "10000",
+        "resolvedKind": "resolved-host",
+        "risk": "mask-set-known-selector",
+        "selectorKnown": "true"
+      },
+      {
+        "flagEnabled": "false",
+        "hex": "0000000000000c000001000000000000",
+        "id": "th07:slot0:raw-immediate",
+        "priority": "medium",
+        "rawValue": "0",
+        "resolvedKind": "raw-immediate",
+        "risk": "mask-clear-raw-immediate",
+        "selectorKnown": "false"
+      },
+      {
+        "flagEnabled": "false",
+        "hex": "0000000000000c000001000000000000",
+        "id": "th08:slot0:raw-immediate",
+        "priority": "medium",
+        "rawValue": "0",
+        "resolvedKind": "raw-immediate",
+        "risk": "mask-clear-raw-immediate",
+        "selectorKnown": "false"
+      }
+    ],
+    "uniquePathCount": 3
+  },
+  "rawStepSymbolicCoverage": {
+    "allMaterializedAndReplayMatched": true,
+    "allModeledPathsCoveredPerEnvironment": true,
+    "allSat": true,
+    "byEnvironment": {
+      "th06:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 14,
+        "extraPaths": [],
+        "matchesPathCount": 14,
+        "missingModeledPaths": [],
+        "pathCount": 14,
+        "satCount": 14
+      },
+      "th06:retail-lunatic-bit3:active=8:override=0": {
+        "candidateCount": 14,
+        "extraPaths": [],
+        "matchesPathCount": 14,
+        "missingModeledPaths": [],
+        "pathCount": 14,
+        "satCount": 14
+      },
+      "th07:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 14,
+        "extraPaths": [],
+        "matchesPathCount": 14,
+        "missingModeledPaths": [],
+        "pathCount": 14,
+        "satCount": 14
+      },
+      "th08:formal-active-bit0:active=1:override=0": {
+        "candidateCount": 14,
+        "extraPaths": [],
+        "matchesPathCount": 14,
+        "missingModeledPaths": [],
+        "pathCount": 14,
+        "satCount": 14
+      },
+      "th08:override-mask-delta:active=1:override=2": {
+        "candidateCount": 14,
+        "extraPaths": [],
+        "matchesPathCount": 14,
+        "missingModeledPaths": [],
+        "pathCount": 14,
+        "satCount": 14
+      }
+    },
+    "candidateCount": 70,
+    "cursorGoalCounts": {
+      "-": 10,
+      "at-or-past-end": 15,
+      "before-buffer": 15,
+      "in-bounds": 15,
+      "non-progress": 15
+    },
+    "environmentCount": 5,
+    "fixtureActionCounts": {
+      "advanced": 20,
+      "jumped": 20,
+      "skipped": 20,
+      "vm-error": 5,
+      "yielded": 5
+    },
+    "fixtureCursorClassCounts": {
+      "-": 10,
+      "at-or-past-end": 15,
+      "before-buffer": 15,
+      "in-bounds": 15,
+      "non-progress": 15
+    },
+    "matchesPath": {
+      "true": 70
+    },
+    "modeledPathCount": 14,
+    "modeledPaths": [
+      "yielded",
+      "skipped-before-buffer",
+      "skipped-non-progress",
+      "skipped-in-bounds",
+      "skipped-at-or-past-end",
+      "advanced-before-buffer",
+      "advanced-non-progress",
+      "advanced-in-bounds",
+      "advanced-at-or-past-end",
+      "jumped-before-buffer",
+      "jumped-non-progress",
+      "jumped-in-bounds",
+      "jumped-at-or-past-end",
+      "vm-error"
+    ],
+    "pathActionCounts": {
+      "advanced": 20,
+      "jumped": 20,
+      "skipped": 20,
+      "vm-error": 5,
+      "yielded": 5
+    },
+    "priorityCounts": {
+      "control": 5,
+      "high": 45,
+      "low": 15,
+      "medium": 5
+    },
+    "riskCounts": {
+      "cursor-out-of-range": 15,
+      "cursor-underflow": 15,
+      "explicit-vm-error": 5,
+      "liveness": 15,
+      "reachable-control-path": 15,
+      "time-gate-control": 5
+    },
+    "schema": "touhou-formal-symex-candidate-queue-v1",
+    "statuses": {
+      "sat": 70
+    },
+    "topCandidates": [
+      {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000010000",
+        "id": "th06:formal-active-bit0:advanced-at-or-past-end",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00010000",
+        "id": "th06:formal-active-bit0:advanced-before-buffer",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-underflow"
+      },
+      {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000002000000000100000000000014000000",
+        "id": "th06:formal-active-bit0:jumped-at-or-past-end",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000020000000001000000000000ffffffff",
+        "id": "th06:formal-active-bit0:jumped-before-buffer",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-underflow"
+      },
+      {
+        "action": "skipped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000000000",
+        "id": "th06:formal-active-bit0:skipped-at-or-past-end",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "skipped",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00000000",
+        "id": "th06:formal-active-bit0:skipped-before-buffer",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-underflow"
+      },
+      {
+        "action": "advanced",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000000000c0000080000",
+        "id": "th06:retail-lunatic-bit3:advanced-at-or-past-end",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "advanced",
+        "cursorClass": "before-buffer",
+        "hex": "000000000000ffff00080000",
+        "id": "th06:retail-lunatic-bit3:advanced-before-buffer",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-underflow"
+      },
+      {
+        "action": "jumped",
+        "cursorClass": "at-or-past-end",
+        "hex": "0000000002000000000800000000000014000000",
+        "id": "th06:retail-lunatic-bit3:jumped-at-or-past-end",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-out-of-range"
+      },
+      {
+        "action": "jumped",
+        "cursorClass": "before-buffer",
+        "hex": "00000000020000000008000000000000ffffffff",
+        "id": "th06:retail-lunatic-bit3:jumped-before-buffer",
+        "priority": "high",
+        "rawInstructionHex": null,
+        "risk": "cursor-underflow"
+      }
+    ],
+    "uniquePathCount": 14
+  },
+  "retailConfirmations": [
+    {
+      "available": true,
+      "classifications": [
+        "crash-dialog"
+      ],
+      "expectationPassed": true,
+      "name": "TH06 raw symex jumped-before-buffer",
+      "passedAttempts": 2,
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th06-raw-symex-jumped-before-buffer-20260831T111946Z/report.json",
+      "requiredAttempts": 2,
+      "retailSignatureKeys": [
+        "crash-dialog:wine: unhandled page fault on read access to <value> at address <addr> (thread <thread>), starting debugger..."
+      ],
+      "schema": "danmakufuzz-retail-confirmation-repeat-v1"
+    },
+    {
+      "available": true,
+      "baselineTerminationReason": "game-window-live",
+      "classification": "retail-frame-stall",
+      "mutantTerminationReason": "retail-frame-stall",
+      "name": "TH06 timeline arg0=256 subTable counterexample",
+      "patchedArchiveSha256": "22c23b353601aff7ab2fab8ef2458c937bd3db12610acf187a5674429c4714ed",
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th06-stage5-arg0-256-run3-long-probe/report.json",
+      "payloadSha256": "2ff0c53669575690e60298536be0f43d32affa7be1e6f9073f793c5488d02304",
+      "retailSignatureKey": "retail-frame-stall",
+      "schema": "single-retail-report"
+    },
+    {
+      "available": true,
+      "bossReadFamily": null,
+      "cfgSha256": "595b7c04f94acb6f81e01f947a132083cc3d5991164ab008e43744f96a67796a",
+      "classification": "crash-dialog",
+      "interesting": true,
+      "leanModel": "TouhouFormal.ECL.rawBossIntReadStep",
+      "mutationFamily": "boss-int-read-symbolic-step",
+      "name": "TH08 boss-int null-deref",
+      "patchedArchiveSha256": "3e097bcb413646bc443eca4dd3be243f110246f0222b331f4721df6b014c12c6",
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/report.json",
+      "retailSignatureKey": "wine: Unhandled page fault on read access to 00002CA0 at address 0041F456 (thread 0148), starting debugger...",
+      "schema": "touhou-formal-retail-boss-int-read-candidate-v1",
+      "sourceResult": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-int-boss-int-null-deref-20260901T024506Z/source-result/result.json",
+      "symexPath": "boss-int-null-deref",
+      "timedOut": true,
+      "witnessHex": "000000005600180000020200000000801027000000000000"
+    },
+    {
+      "available": true,
+      "bossReadFamily": "boss-float",
+      "cfgSha256": "0f769f0fdcc26548b4a34e113599f060cacaf53a8b131d70d3bc8ddab30ddeec",
+      "classification": "game-window-live",
+      "interesting": false,
+      "leanModel": "TouhouFormal.ECL.rawBossFloatReadStep",
+      "mutationFamily": "boss-float-read-symbolic-step",
+      "name": "TH07 boss-float null-deref",
+      "patchedArchiveSha256": "49000c3748a68bf371d7e6adc3183fe0af03ded16142c1a843a0a27427405a2f",
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/report.json",
+      "retailSignatureKey": null,
+      "schema": "touhou-formal-retail-boss-float-read-candidate-v1",
+      "sourceResult": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-null-deref-20260901T034027Z/source-result/result.json",
+      "symexPath": "boss-float-null-deref",
+      "timedOut": true,
+      "witnessHex": "000000002c001800000802000000008000501c4600000000"
+    },
+    {
+      "available": true,
+      "bossReadFamily": "boss-float",
+      "cfgSha256": "0f769f0fdcc26548b4a34e113599f060cacaf53a8b131d70d3bc8ddab30ddeec",
+      "classification": "game-window-live",
+      "interesting": false,
+      "leanModel": "TouhouFormal.ECL.rawBossFloatReadStep",
+      "mutationFamily": "boss-float-read-symbolic-step",
+      "name": "TH07 boss-float index-at-or-past-array",
+      "patchedArchiveSha256": "7f0c12f8df75b2a7c702cd1767f77194f9812f25b107271e59a9468a1f18fd60",
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z/report.json",
+      "retailSignatureKey": null,
+      "schema": "touhou-formal-retail-boss-float-read-candidate-v1",
+      "sourceResult": "/home/yann/yann/touhou/formal/retail_validation/formal-th07-boss-float-boss-float-index-at-or-past-array-20260901T034254Z/source-result/result.json",
+      "symexPath": "boss-float-index-at-or-past-array",
+      "timedOut": true,
+      "witnessHex": "000000002c00180000080200000000800000008008000000"
+    },
+    {
+      "available": true,
+      "bossReadFamily": "boss-float",
+      "cfgSha256": "f622d5eab63e9754a6034efe8b9e3799671fb024fdde911d77525ec68c12e74a",
+      "classification": "game-window-live",
+      "interesting": false,
+      "leanModel": "TouhouFormal.ECL.rawBossFloatReadStep",
+      "mutationFamily": "boss-float-read-symbolic-step",
+      "name": "TH08 boss-float null-guarded-skip",
+      "patchedArchiveSha256": "9d56e04b9e83fc1a85ebbc83fc2e858b070ae629b19db22511576599917b545c",
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/report.json",
+      "retailSignatureKey": null,
+      "schema": "touhou-formal-retail-boss-float-read-candidate-v1",
+      "sourceResult": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-null-guarded-skip-20260901T034119Z/source-result/result.json",
+      "symexPath": "boss-float-null-guarded-skip",
+      "timedOut": true,
+      "witnessHex": "000000005700180000080200000000800000008000000000"
+    },
+    {
+      "available": true,
+      "bossReadFamily": "boss-float",
+      "cfgSha256": "f622d5eab63e9754a6034efe8b9e3799671fb024fdde911d77525ec68c12e74a",
+      "classification": "game-window-live",
+      "interesting": false,
+      "leanModel": "TouhouFormal.ECL.rawBossFloatReadStep",
+      "mutationFamily": "boss-float-read-symbolic-step",
+      "name": "TH08 boss-float index-at-or-past-array",
+      "patchedArchiveSha256": "419c24e1041b5d7de7a918b97c25cdf25256f436460d81c8e98e12593a83811f",
+      "path": "/home/yann/yann/touhou/formal/touhou-formal/retail_validation/formal-th08-boss-float-boss-float-index-at-or-past-array-20260901T034207Z/report.json",
+      "retailSignatureKey": null,
+      "schema": "touhou-formal-retail-boss-float-read-candidate-v1",
+      "sourceResult": "/home/yann/yann/touhou/formal/retail_validation/formal-th08-boss-float-boss-float-index-at-or-past-array-20260901T034207Z/source-result/result.json",
+      "symexPath": "boss-float-index-at-or-past-array",
+      "timedOut": true,
+      "witnessHex": "000000005700180000080200000000800000008008000000"
+    }
+  ],
+  "schema": "touhou-formal-symex-effectiveness-v1",
+  "sourceCoverage": [
+    {
+      "area": "ECL loader/header shape",
+      "reason": "shared HeaderShape drives TH06/TH07/TH08 header counts, timeline slots, sub offsets, and first missing-byte faults",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "CallEclSub lookup policy",
+      "reason": "negative-sub-id policy is title-profiled; positive out-of-bounds lookup is covered across titles",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "timeline prefix cursor movement",
+      "reason": "timeline size width is profile-derived and checked for before-buffer, non-progress, in-bounds, and at/past-end transfers",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "raw ECL dispatch skeleton",
+      "reason": "time gate, difficulty skip, ordinary advance, fixed jump, VM error, and cursor classes are enumerated by SMT path constraints",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "JUMPDEC body semantics",
+      "reason": "shared profile records opcode, target-time slot, displacement slot, and counter slot; SMT enumerates taken/not-taken cursor classes",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "integer div/mod immediate divisor hazards",
+      "reason": "legacy body-slice check still records source-backed integer div/mod opcodes and immediate divisor operand slots; the fuller integer-binary slice supersedes this for resolver-driven arithmetic",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "integer operandFlags / rvalue resolver",
+      "reason": "shared resolver profile distinguishes TH06 always-resolve from TH07/TH08 bit-set operand masks, known selector ranges, exclusions, and default-to-raw fallthrough",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "integer lvalue writes and binary arithmetic",
+      "reason": "shared RawIntBinaryOpShape models ADD/SUB/MUL/DIV/MOD, title-specific assign versus in-place operand layouts, output lvalue resolution, RHS resolution, zero divisors, and signed i32 idiv overflow",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "scalar assignment and integer unary updates",
+      "reason": "shared title profiles model integer/float SET and INC/DEC, including TH06's GetVar-pointer/SetVar behavior and TH07/TH08 operandFlags-controlled lvalues",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "float arithmetic and scalar float functions",
+      "reason": "shared profiles model float ADD/SUB/MUL/DIV/MOD plus title-specific SIN/COS/ATAN2 or VectorAngle and angle normalization operand layouts; host float result bits remain explicit inputs",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "special numeric operations and interpolation slots",
+      "reason": "shared semantics cover nine self-position/LERP/vector/distance opcodes plus TH07/TH08 8-slot interpolation installation, repeated resolver reads, IEEE slot-key equality, no-slot suppression, and unchecked callback-table indices",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "bullet command and transform tables",
+      "reason": "shared installation semantics cover TH07's 6-entry legacy command table and TH08's 18-entry transform table, including first-access OOB faults, later-operand suppression, and title-specific record fields",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "random scalar generation",
+      "reason": "shared profiles model TH06 range generators, TH07 range/add/sign generators, and TH08 sign generators with explicit RNG words and the TH06 SetVar re-resolution quirk",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "boss-indexed integer reads",
+      "reason": "shared RawBossIntReadShape models TH07 ECL_GET_BOSS_INT and TH08 low opcode 86, including value operand flag bypass, boss index resolution, bosses[8] bounds, null boss pointers, and host/default value resolution",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "boss-indexed float reads",
+      "reason": "shared RawBossFloatReadShape models TH07 ECL_GET_BOSS_FLOAT and TH08 low opcode 87 with the same bosses[8] boundary, float selector bit-pattern ranges, and the TH07 unguarded versus TH08 guarded null-policy delta",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "integer conditional jumps",
+      "reason": "TH06 compare-register jumps and TH07/TH08 operand-resolved compare jumps are modeled as shared RawIntConditionJumpShape profiles",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "float comparisons and conditional jumps",
+      "reason": "TH06 CMPFLOAT compare-register production and TH07/TH08 float conditional jumps share an explicit IEEE ordered/unordered relation, including NaN's unequal-only branch behavior",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "CALL/RET core stack semantics",
+      "reason": "plain CALL/RET opcodes are modeled with title-profiled stack sizes, increment guards, subTable lookup policy, and TH08's child-context RET underflow path",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "TH06 conditional CALL guard and shared CALL body",
+      "reason": "TH06 CALLLSS/CALLLEQ/CALLEQU/CALLGRE/CALLGEQ/CALLNEQ resolve cmpLhs, compare raw cmpRhs, and reuse the same modeled CALL stack/subTable body when taken",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "raw ECL difficulty mask policy",
+      "reason": "TH06/TH07 active-bit intersection and TH08 contains(active|override) are separate profile policies",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "immediate movement state writes",
+      "reason": "shared movement effects cover position, axis/polar velocity, angular velocity, speed, acceleration, player-relative angle, and movement bounds while preserving title-specific resolution, normalization, clamp, mode, and timer updates",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "timed movement state writes",
+      "reason": "one consecutive-family model covers TH06 opcode-selected easing and TH07/TH08 operand-driven direction/position interpolation, including repeated resolver reads, nonpositive-duration branches, mirror-X, origin/delta source differences, and timer writes",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "enemy hitbox and flag state writes",
+      "reason": "shared enemy-state effects cover primary/secondary hitboxes, source-width flag truncation, TH08 replace/disable/enable masks, alignment-effect collision mirroring, presentation-guarded death-mode writes, life/gauge updates, and exact timer-history resets",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "shooting control state writes",
+      "reason": "shared shooting effects cover ranked immediate/random intervals, timer initialization, suppress/defer gates, previous-pattern spawn requests, and resolved offsets with title-specific zero guards and Z writes",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "ECL time and wait controls",
+      "reason": "shared time-control effects cover ordinary no-op advance, TH06 GetVar-backed TIMESET, TH07 waitTimer/scriptWaitTime/add-time controls, TH08 secondaryTime/add-time controls, and the wait-gate pre-tail time decrement that produces a net frame stall",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "enemy lifecycle host effects",
+      "reason": "shared enemy-lifecycle effects cover TH06/TH07/TH08 absolute/relative spawn and non-boss remove-all opcodes, preserving parent-life gates, operand resolution, host truncation, context-copy policy, pool size, and remove-all loop deltas",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "item/drop host effects",
+      "reason": "shared item/drop effects cover looped power-or-point drops, point-only drops, single item spawns, and TH08 item-drop state writes while preserving raw/resolved counts, item ids, spread constants, power-threshold policy, and default item-state use",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "boss/spellcard lifecycle host effects",
+      "reason": "shared boss/spellcard lifecycle effects cover unchecked boss-slot/gauge boundaries, legacy TH06/TH07 spellcard start/end, TH08 StartSpell/EndSpell host calls, life markers, timeout/survival flags, run interrupts, and TH08 spellcard effect/bonus controls while preserving title deltas such as u8 bossSlot truncation and primary-slot-only GUI presence",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "effect, particle, and sound host effects",
+      "reason": "shared host-effect semantics cover 15 cross-title opcodes with raw/resolved operands, 12/24-slot tracked-effect arrays, 28-entry color-table reads, TH07 specialEffect null writes, and TH08 alignment-effect policy",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "bullet control host effects",
+      "reason": "shared bullet-control effects cover all-bullet clears, item/no-item/radius/transition variants, TH08's integer mode-4 call, sound flag and override writes, repeated primary sound reads, title-specific targets, and signed-i16 rank-count truncation",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "laser spawn descriptors",
+      "reason": "shared laser-spawn effects cover fixed/aimed descriptor writes, shifted TH07/TH08 operandFlags, title-specific descriptor targets and position sources, spawn requests, and unchecked selected-slot pointer writes after the spawn call",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "ANM entry header/nextOffset profile",
+      "reason": "entry table shape and nextOffset chain headers are modeled, but ANM opcode execution and resource side effects are not",
+      "status": "partially-covered"
+    },
+    {
+      "area": "full raw ECL opcode bodies",
+      "reason": "every source opcode value is now assigned to an explicit shared/profiled body family (TH06 136/136, TH07 159/159, TH08 184/184); this is complete source-handler coverage, while host calls and exact external arithmetic remain typed boundaries rather than full engine simulations",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "ECL extension dispatch",
+      "reason": "fixed-table EX call/install paths are solved and materialized across TH06/TH07/TH08, including TH07/TH08 repeated resolver reads, negative clears, normal calls/installs, and callback-table OOB reads",
+      "status": "covered-by-symbolic-execution"
+    },
+    {
+      "area": "interrupts, callbacks, pending-sub dispatch",
+      "reason": "callback configuration, explicit interrupt entry, and opcode-level pending-sub writes are modeled with partial-write/fault ordering; automatic trigger scheduling and bounded multi-context lifecycles remain",
+      "status": "partially-covered"
+    },
+    {
+      "area": "TH08 child ECL block installation",
+      "reason": "opcode 135 models the unchecked 4-slot table, release/clear ordering, allocator outcome, 0x24b0 zeroing, repeated sub-id reads, i16 CallEclSub boundary, partial lookup faults, and 0x78-byte variable copy",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "TH08 cross-enemy boss dispatch",
+      "reason": "opcodes 88/89 model unchecked bosses[8] reads, null behavior, repeated boss-index resolution, target-context advance and call-stack writes, i16 sub ids, CallEclSub lookup, parameter copy, and pending-sub stores",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "TH08 linked-child construction",
+      "reason": "opcodes 90--92 share one model for attachment-tail traversal/divergence, parent-state spawn gates, 480-slot SpawnEnemy2 requests, 0x78 context copy, repeated alignment reads, effect null faults, parent links, inherited positions, and unconditional sound",
+      "status": "covered-by-model"
+    },
+    {
+      "area": "remaining arithmetic body faults",
+      "reason": "integer div/mod zero and signed idiv overflow are modeled; exact signed add/sub/mul overflow behavior, float divide/fmod edge cases, and numeric non-finite behavior still require C/C++/x87/SSE-faithful arithmetic semantics",
+      "status": "not-yet-modeled"
+    },
+    {
+      "area": "bullet/laser/enemy/ANM/sound host side effects",
+      "reason": "all ECL handlers now reach typed state/effect boundaries, including linked children, boss dispatch, trails, GUI/clock calls, movement, bullets, lasers, items, spellcards, and effects; full laser/effect/audio runtime, full persistent EnemyManager/ItemManager/GUI/Spellcard/Catk state, and ANM execution still require additional game-state models and invariants",
+      "status": "partially-covered"
+    },
+    {
+      "area": "integrated multi-context scheduler",
+      "reason": "timeline spawning, enemy contexts, time progression, and inter-resource callbacks are outside the one-step raw dispatch baseline",
+      "status": "not-yet-modeled"
+    }
+  ],
+  "sourceOpcodeSurface": {
+    "available": true,
+    "referenceRoot": "/home/yann/yann/touhou/formal/reference",
+    "titles": {
+      "th06": {
+        "firstSymbols": [
+          "ECL_OPCODE_NOP",
+          "ECL_OPCODE_UNIMP",
+          "ECL_OPCODE_JUMP",
+          "ECL_OPCODE_JUMPDEC",
+          "ECL_OPCODE_SETINT",
+          "ECL_OPCODE_SETFLOAT",
+          "ECL_OPCODE_SETINTRAND",
+          "ECL_OPCODE_SETINTRANDMIN"
+        ],
+        "lastSymbols": [
+          "ECL_OPCODE_ANMINTERRUPTMAIN",
+          "ECL_OPCODE_ANMINTERRUPTSLOT",
+          "ECL_OPCODE_ENEMYFLAGDISABLECALLSTACK",
+          "ECL_OPCODE_BULLETRANKINFLUENCE",
+          "ECL_OPCODE_ENEMYFLAGINVISIBLE",
+          "ECL_OPCODE_BOSSTIMERCLEAR",
+          "ECL_OPCODE_LASERCLEARALL",
+          "ECL_OPCODE_SPELLCARDFLAGTIMEOUT"
+        ],
+        "modeledOpcodeSpecificCount": 136,
+        "modeledOpcodeSpecificSymbols": [
+          "ECL_OPCODE_NOP",
+          "ECL_OPCODE_UNIMP",
+          "ECL_OPCODE_JUMP",
+          "ECL_OPCODE_JUMPDEC",
+          "ECL_OPCODE_SETINT",
+          "ECL_OPCODE_SETFLOAT",
+          "ECL_OPCODE_SETINTRAND",
+          "ECL_OPCODE_SETINTRANDMIN",
+          "ECL_OPCODE_SETFLOATRAND",
+          "ECL_OPCODE_SETFLOATRANDMIN",
+          "ECL_OPCODE_SETVARSELFX",
+          "ECL_OPCODE_SETVARSELFY",
+          "ECL_OPCODE_SETVARSELFZ",
+          "ECL_OPCODE_MATHINTADD",
+          "ECL_OPCODE_MATHINTSUB",
+          "ECL_OPCODE_MATHINTMUL",
+          "ECL_OPCODE_MATHINTDIV",
+          "ECL_OPCODE_MATHINTMOD",
+          "ECL_OPCODE_MATHINC",
+          "ECL_OPCODE_MATHDEC",
+          "ECL_OPCODE_MATHFLOATADD",
+          "ECL_OPCODE_MATHFLOATSUB",
+          "ECL_OPCODE_MATHFLOATMUL",
+          "ECL_OPCODE_MATHFLOATDIV",
+          "ECL_OPCODE_MATHFLOATMOD",
+          "ECL_OPCODE_MATHATAN2",
+          "ECL_OPCODE_MATHNORMANGLE",
+          "ECL_OPCODE_CMPINT",
+          "ECL_OPCODE_CMPFLOAT",
+          "ECL_OPCODE_JUMPLSS",
+          "ECL_OPCODE_JUMPLEQ",
+          "ECL_OPCODE_JUMPEQU",
+          "ECL_OPCODE_JUMPGRE",
+          "ECL_OPCODE_JUMPGEQ",
+          "ECL_OPCODE_JUMPNEQ",
+          "ECL_OPCODE_CALL",
+          "ECL_OPCODE_RET",
+          "ECL_OPCODE_CALLLSS",
+          "ECL_OPCODE_CALLLEQ",
+          "ECL_OPCODE_CALLEQU",
+          "ECL_OPCODE_CALLGRE",
+          "ECL_OPCODE_CALLGEQ",
+          "ECL_OPCODE_CALLNEQ",
+          "ECL_OPCODE_MOVEPOSITION",
+          "ECL_OPCODE_MOVEAXISVELOCITY",
+          "ECL_OPCODE_MOVEVELOCITY",
+          "ECL_OPCODE_MOVEANGULARVELOCITY",
+          "ECL_OPCODE_MOVESPEED",
+          "ECL_OPCODE_MOVEACCELERATION",
+          "ECL_OPCODE_MOVERAND",
+          "ECL_OPCODE_MOVERANDINBOUND",
+          "ECL_OPCODE_MOVEATPLAYER",
+          "ECL_OPCODE_MOVEDIRTIMEDECELERATE",
+          "ECL_OPCODE_MOVEDIRTIMEDECELERATEFAST",
+          "ECL_OPCODE_MOVEDIRTIMEACCELERATE",
+          "ECL_OPCODE_MOVEDIRTIMEACCELERATEFAST",
+          "ECL_OPCODE_MOVEPOSITIONTIMELINEAR",
+          "ECL_OPCODE_MOVEPOSITIONTIMEDECELERATE",
+          "ECL_OPCODE_MOVEPOSITIONTIMEDECELERATEFAST",
+          "ECL_OPCODE_MOVEPOSITIONTIMEACCELERATE",
+          "ECL_OPCODE_MOVEPOSITIONTIMEACCELERATEFAST",
+          "ECL_OPCODE_MOVETIMEDECELERATE",
+          "ECL_OPCODE_MOVETIMEDECELERATEFAST",
+          "ECL_OPCODE_MOVETIMEACCELERATE",
+          "ECL_OPCODE_MOVETIMEACCELERATEFAST",
+          "ECL_OPCODE_MOVEBOUNDSSET",
+          "ECL_OPCODE_MOVEBOUNDSDISABLE",
+          "ECL_OPCODE_BULLETFANAIMED",
+          "ECL_OPCODE_BULLETFAN",
+          "ECL_OPCODE_BULLETCIRCLEAIMED",
+          "ECL_OPCODE_BULLETCIRCLE",
+          "ECL_OPCODE_BULLETOFFSETCIRCLEAIMED",
+          "ECL_OPCODE_BULLETOFFSETCIRCLE",
+          "ECL_OPCODE_BULLETRANDOMANGLE",
+          "ECL_OPCODE_BULLETRANDOMSPEED",
+          "ECL_OPCODE_BULLETRANDOM",
+          "ECL_OPCODE_SHOOTINTERVAL",
+          "ECL_OPCODE_SHOOTINTERVALDELAYED",
+          "ECL_OPCODE_SHOOTDISABLED",
+          "ECL_OPCODE_SHOOTENABLED",
+          "ECL_OPCODE_SHOOTNOW",
+          "ECL_OPCODE_SHOOTOFFSET",
+          "ECL_OPCODE_BULLETEFFECTS",
+          "ECL_OPCODE_BULLETCANCEL",
+          "ECL_OPCODE_BULLETSOUND",
+          "ECL_OPCODE_LASERCREATE",
+          "ECL_OPCODE_LASERCREATEAIMED",
+          "ECL_OPCODE_LASERINDEX",
+          "ECL_OPCODE_LASERROTATE",
+          "ECL_OPCODE_LASERROTATEFROMPLAYER",
+          "ECL_OPCODE_LASEROFFSET",
+          "ECL_OPCODE_LASERTEST",
+          "ECL_OPCODE_LASERCANCEL",
+          "ECL_OPCODE_SPELLCARDSTART",
+          "ECL_OPCODE_SPELLCARDEND",
+          "ECL_OPCODE_ENEMYCREATE",
+          "ECL_OPCODE_ENEMYKILLALL",
+          "ECL_OPCODE_ANMSETMAIN",
+          "ECL_OPCODE_ANMSETPOSES",
+          "ECL_OPCODE_ANMSETSLOT",
+          "ECL_OPCODE_ANMSETDEATH",
+          "ECL_OPCODE_BOSSSET",
+          "ECL_OPCODE_SPELLCARDEFFECT",
+          "ECL_OPCODE_ENEMYSETHITBOX",
+          "ECL_OPCODE_ENEMYFLAGCOLLISION",
+          "ECL_OPCODE_ENEMYFLAGCANTAKEDAMAGE",
+          "ECL_OPCODE_EFFECTSOUND",
+          "ECL_OPCODE_ENEMYFLAGDEATH",
+          "ECL_OPCODE_DEATHCALLBACKSUB",
+          "ECL_OPCODE_ENEMYINTERRUPTSET",
+          "ECL_OPCODE_ENEMYINTERRUPT",
+          "ECL_OPCODE_ENEMYLIFESET",
+          "ECL_OPCODE_BOSSTIMERSET",
+          "ECL_OPCODE_LIFECALLBACKTHRESHOLD",
+          "ECL_OPCODE_LIFECALLBACKSUB",
+          "ECL_OPCODE_TIMERCALLBACKTHRESHOLD",
+          "ECL_OPCODE_TIMERCALLBACKSUB",
+          "ECL_OPCODE_ENEMYFLAGINTERACTABLE",
+          "ECL_OPCODE_EFFECTPARTICLE",
+          "ECL_OPCODE_DROPITEMS",
+          "ECL_OPCODE_ANMFLAGROTATION",
+          "ECL_OPCODE_EXINSCALL",
+          "ECL_OPCODE_EXINSREPEAT",
+          "ECL_OPCODE_TIMESET",
+          "ECL_OPCODE_DROPITEMID",
+          "ECL_OPCODE_STDUNPAUSE",
+          "ECL_OPCODE_BOSSSETLIFECOUNT",
+          "ECL_OPCODE_DEBUGWATCH",
+          "ECL_OPCODE_ANMINTERRUPTMAIN",
+          "ECL_OPCODE_ANMINTERRUPTSLOT",
+          "ECL_OPCODE_ENEMYFLAGDISABLECALLSTACK",
+          "ECL_OPCODE_BULLETRANKINFLUENCE",
+          "ECL_OPCODE_ENEMYFLAGINVISIBLE",
+          "ECL_OPCODE_BOSSTIMERCLEAR",
+          "ECL_OPCODE_LASERCLEARALL",
+          "ECL_OPCODE_SPELLCARDFLAGTIMEOUT"
+        ],
+        "modeledOpcodeSpecificValues": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135
+        ],
+        "notYetOpcodeBodyModeledCountLowerBound": 0,
+        "notYetOpcodeBodyModeledSymbols": [],
+        "notYetOpcodeBodyModeledValues": [],
+        "profileOpcodeConstantsByValue": {
+          "0": [
+            "eclOpcodeNoOp"
+          ],
+          "1": [
+            "unimplementedOpcode"
+          ],
+          "10": [
+            "eclOpcodeSetVarSelfX"
+          ],
+          "100": [
+            "eclOpcodeAnmSetDeath"
+          ],
+          "101": [
+            "eclOpcodeBossSet"
+          ],
+          "102": [
+            "eclOpcodeSpellcardEffect"
+          ],
+          "103": [
+            "eclOpcodeSetHitbox"
+          ],
+          "104": [
+            "eclOpcodeSetCollidable"
+          ],
+          "105": [
+            "eclOpcodeSetDamageable"
+          ],
+          "106": [
+            "eclOpcodeEffectSound"
+          ],
+          "107": [
+            "eclOpcodeSetDeathMode"
+          ],
+          "108": [
+            "eclOpcodeSetDeathCallbackSub"
+          ],
+          "109": [
+            "eclOpcodeSetInterrupt"
+          ],
+          "11": [
+            "eclOpcodeSetVarSelfY"
+          ],
+          "110": [
+            "eclOpcodeRunInterrupt"
+          ],
+          "111": [
+            "eclOpcodeSetLife"
+          ],
+          "112": [
+            "eclOpcodeSetBossTimer"
+          ],
+          "113": [
+            "eclOpcodeSetLifeCallbackThreshold"
+          ],
+          "114": [
+            "eclOpcodeSetLifeCallbackSub"
+          ],
+          "115": [
+            "eclOpcodeSetTimerCallbackThreshold"
+          ],
+          "116": [
+            "eclOpcodeSetTimerCallbackSub"
+          ],
+          "117": [
+            "eclOpcodeSetInteractable"
+          ],
+          "118": [
+            "eclOpcodeEffectParticle"
+          ],
+          "119": [
+            "eclOpcodeDropItems"
+          ],
+          "12": [
+            "eclOpcodeSetVarSelfZ"
+          ],
+          "120": [
+            "eclOpcodeAnmFlagRotation"
+          ],
+          "121": [
+            "eclOpcodeExtensionCall"
+          ],
+          "122": [
+            "eclOpcodeExtensionRepeat"
+          ],
+          "123": [
+            "eclOpcodeTimeSet"
+          ],
+          "124": [
+            "eclOpcodeDropItemId"
+          ],
+          "125": [
+            "eclOpcodeStandardUnpause"
+          ],
+          "126": [
+            "eclOpcodeBossSetLifeCount"
+          ],
+          "127": [
+            "eclOpcodeDebugWatch"
+          ],
+          "128": [
+            "eclOpcodeAnmInterruptMain"
+          ],
+          "129": [
+            "eclOpcodeAnmInterruptSlot"
+          ],
+          "13": [
+            "eclOpcodeMathIntAdd"
+          ],
+          "130": [
+            "eclOpcodeSetCallStackDisabled"
+          ],
+          "131": [
+            "eclOpcodeBulletRankInfluence"
+          ],
+          "132": [
+            "eclOpcodeEnemyInvisible"
+          ],
+          "133": [
+            "eclOpcodeBindTimerCallbackToDeath"
+          ],
+          "134": [
+            "eclOpcodeLaserClearAll"
+          ],
+          "135": [
+            "eclOpcodeSpellcardFlagTimeout"
+          ],
+          "14": [
+            "eclOpcodeMathIntSub"
+          ],
+          "15": [
+            "eclOpcodeMathIntMul"
+          ],
+          "16": [
+            "eclOpcodeMathIntDiv"
+          ],
+          "17": [
+            "eclOpcodeMathIntMod"
+          ],
+          "18": [
+            "eclOpcodeMathInc"
+          ],
+          "19": [
+            "eclOpcodeMathDec"
+          ],
+          "2": [
+            "eclOpcodeJump"
+          ],
+          "20": [
+            "eclOpcodeMathFloatAdd"
+          ],
+          "21": [
+            "eclOpcodeMathFloatSub"
+          ],
+          "22": [
+            "eclOpcodeMathFloatMul"
+          ],
+          "23": [
+            "eclOpcodeMathFloatDiv"
+          ],
+          "24": [
+            "eclOpcodeMathFloatMod"
+          ],
+          "25": [
+            "eclOpcodeMathAtan2"
+          ],
+          "26": [
+            "eclOpcodeMathNormAngle"
+          ],
+          "27": [
+            "eclOpcodeCmpInt"
+          ],
+          "28": [
+            "eclOpcodeCmpFloat"
+          ],
+          "29": [
+            "eclOpcodeJumpLss"
+          ],
+          "3": [
+            "eclOpcodeJumpDec"
+          ],
+          "30": [
+            "eclOpcodeJumpLeq"
+          ],
+          "31": [
+            "eclOpcodeJumpEqu"
+          ],
+          "32": [
+            "eclOpcodeJumpGre"
+          ],
+          "33": [
+            "eclOpcodeJumpGeq"
+          ],
+          "34": [
+            "eclOpcodeJumpNeq"
+          ],
+          "35": [
+            "eclOpcodeCall"
+          ],
+          "36": [
+            "eclOpcodeRet"
+          ],
+          "37": [
+            "eclOpcodeCallLss"
+          ],
+          "38": [
+            "eclOpcodeCallLeq"
+          ],
+          "39": [
+            "eclOpcodeCallEqu"
+          ],
+          "4": [
+            "eclOpcodeSetInt"
+          ],
+          "40": [
+            "eclOpcodeCallGre"
+          ],
+          "41": [
+            "eclOpcodeCallGeq"
+          ],
+          "42": [
+            "eclOpcodeCallNeq"
+          ],
+          "43": [
+            "eclOpcodeMovePosition"
+          ],
+          "44": [
+            "eclOpcodeMoveAxisVelocity"
+          ],
+          "45": [
+            "eclOpcodeMoveVelocity"
+          ],
+          "46": [
+            "eclOpcodeMoveAngularVelocity"
+          ],
+          "47": [
+            "eclOpcodeMoveSpeed"
+          ],
+          "48": [
+            "eclOpcodeMoveAcceleration"
+          ],
+          "49": [
+            "eclOpcodeMoveRandom"
+          ],
+          "5": [
+            "eclOpcodeSetFloat"
+          ],
+          "50": [
+            "eclOpcodeMoveRandomInBounds"
+          ],
+          "51": [
+            "eclOpcodeMoveAtPlayer"
+          ],
+          "52": [
+            "eclOpcodeMoveDirTimeFirst",
+            "eclOpcodeMoveDirTimeFirst..eclOpcodeMoveDirTimeLast"
+          ],
+          "53": [
+            "eclOpcodeMoveDirTimeFirst..eclOpcodeMoveDirTimeLast"
+          ],
+          "54": [
+            "eclOpcodeMoveDirTimeFirst..eclOpcodeMoveDirTimeLast"
+          ],
+          "55": [
+            "eclOpcodeMoveDirTimeFirst..eclOpcodeMoveDirTimeLast",
+            "eclOpcodeMoveDirTimeLast"
+          ],
+          "56": [
+            "eclOpcodeMovePositionTimeFirst",
+            "eclOpcodeMovePositionTimeFirst..eclOpcodeMovePositionTimeLast"
+          ],
+          "57": [
+            "eclOpcodeMovePositionTimeFirst..eclOpcodeMovePositionTimeLast"
+          ],
+          "58": [
+            "eclOpcodeMovePositionTimeFirst..eclOpcodeMovePositionTimeLast"
+          ],
+          "59": [
+            "eclOpcodeMovePositionTimeFirst..eclOpcodeMovePositionTimeLast"
+          ],
+          "6": [
+            "eclOpcodeSetIntRand"
+          ],
+          "60": [
+            "eclOpcodeMovePositionTimeFirst..eclOpcodeMovePositionTimeLast",
+            "eclOpcodeMovePositionTimeLast"
+          ],
+          "61": [
+            "eclOpcodeMoveCurrentTimeFirst",
+            "eclOpcodeMoveCurrentTimeFirst..eclOpcodeMoveCurrentTimeLast"
+          ],
+          "62": [
+            "eclOpcodeMoveCurrentTimeFirst..eclOpcodeMoveCurrentTimeLast"
+          ],
+          "63": [
+            "eclOpcodeMoveCurrentTimeFirst..eclOpcodeMoveCurrentTimeLast"
+          ],
+          "64": [
+            "eclOpcodeMoveCurrentTimeFirst..eclOpcodeMoveCurrentTimeLast",
+            "eclOpcodeMoveCurrentTimeLast"
+          ],
+          "65": [
+            "eclOpcodeMoveBoundsSet"
+          ],
+          "66": [
+            "eclOpcodeMoveBoundsDisable"
+          ],
+          "67": [
+            "eclOpcodeSpawnBulletPatternFirst",
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "68": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "69": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "7": [
+            "eclOpcodeSetIntRandMin"
+          ],
+          "70": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "71": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "72": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "73": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "74": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "75": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast",
+            "eclOpcodeSpawnBulletPatternLast"
+          ],
+          "76": [
+            "eclOpcodeSetShootInterval"
+          ],
+          "77": [
+            "eclOpcodeSetRandomShootInterval"
+          ],
+          "78": [
+            "eclOpcodeDisableShooting"
+          ],
+          "79": [
+            "eclOpcodeEnableShooting"
+          ],
+          "8": [
+            "eclOpcodeSetFloatRand"
+          ],
+          "80": [
+            "eclOpcodeSpawnPreviousPattern"
+          ],
+          "81": [
+            "eclOpcodeSetShootOffset"
+          ],
+          "82": [
+            "eclOpcodeBulletEffects"
+          ],
+          "83": [
+            "eclOpcodeBulletCancel"
+          ],
+          "84": [
+            "eclOpcodeBulletSound"
+          ],
+          "85": [
+            "eclOpcodeLaserCreate"
+          ],
+          "86": [
+            "eclOpcodeLaserCreateAimed"
+          ],
+          "87": [
+            "eclOpcodeLaserIndex"
+          ],
+          "88": [
+            "eclOpcodeLaserRotate"
+          ],
+          "89": [
+            "eclOpcodeLaserRotateFromPlayer"
+          ],
+          "9": [
+            "eclOpcodeSetFloatRandMin"
+          ],
+          "90": [
+            "eclOpcodeLaserOffset"
+          ],
+          "91": [
+            "eclOpcodeLaserTest"
+          ],
+          "92": [
+            "eclOpcodeLaserCancel"
+          ],
+          "93": [
+            "eclOpcodeSpellcardStart"
+          ],
+          "94": [
+            "eclOpcodeSpellcardEnd"
+          ],
+          "95": [
+            "eclOpcodeEnemyCreate"
+          ],
+          "96": [
+            "eclOpcodeEnemyKillAll"
+          ],
+          "97": [
+            "eclOpcodeAnmSetMain"
+          ],
+          "98": [
+            "eclOpcodeAnmSetPoses"
+          ],
+          "99": [
+            "eclOpcodeAnmSetSlot"
+          ]
+        },
+        "profileOpcodeValues": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135
+        ],
+        "profileOpcodesAbsentFromSource": [],
+        "profileSource": "/home/yann/yann/touhou/formal/touhou-formal/TouhouFormal/TH06/Wire.lean",
+        "rawOpcodeSymbolCount": 136,
+        "source": "/home/yann/yann/touhou/formal/reference/th06/src/EclManager.hpp",
+        "unresolvedProfileConstants": []
+      },
+      "th07": {
+        "firstSymbols": [
+          "ECL_UNIMP",
+          "ECL_SET_WAIT_TIMER",
+          "ECL_DEC_JUMP",
+          "ECL_JUMP",
+          "ECL_SET_INT",
+          "ECL_SET_FLOAT",
+          "ECL_NORMALIZE_ANGLE",
+          "ECL_RAND"
+        ],
+        "lastSymbols": [
+          "ECL_SET_BOSS_RUN_INTERRUPT",
+          "ECL_REMOVE_ALL_BULLETS_NO_ITEMS",
+          "ECL_SET_SPECIAL_EFFECT_POS",
+          "ECL_SET_PRIMARY_VM_ROT_Z",
+          "ECL_VEC_FROM_ANGLE_MAG",
+          "ECL_RAND_EXIT_ANGLE",
+          "ECL_ADD_CHERRY_PLUS",
+          "ECL_FREEZE_ECL_DURING_BOMB"
+        ],
+        "modeledOpcodeSpecificCount": 159,
+        "modeledOpcodeSpecificSymbols": [
+          "ECL_UNIMP",
+          "ECL_SET_WAIT_TIMER",
+          "ECL_DEC_JUMP",
+          "ECL_JUMP",
+          "ECL_SET_INT",
+          "ECL_SET_FLOAT",
+          "ECL_NORMALIZE_ANGLE",
+          "ECL_RAND",
+          "ECL_RAND_ADD",
+          "ECL_RAND_FLOAT",
+          "ECL_RAND_FLOAT_ADD",
+          "ECL_RAND_SIGN",
+          "ECL_RAND_SIGN_FLOAT",
+          "ECL_INC",
+          "ECL_DEC",
+          "ECL_GET_BOSS_INT",
+          "ECL_GET_BOSS_FLOAT",
+          "ECL_ADD",
+          "ECL_ADD_FLOAT",
+          "ECL_SUB",
+          "ECL_SUB_FLOAT",
+          "ECL_MUL",
+          "ECL_MUL_FLOAT",
+          "ECL_DIV",
+          "ECL_DIV_FLOAT",
+          "ECL_MOD",
+          "ECL_MOD_FLOAT",
+          "ECL_SIN",
+          "ECL_COS",
+          "ECL_ATAN2",
+          "ECL_LERP",
+          "ECL_INIT_INTERP",
+          "ECL_JUMP_IF_EQ",
+          "ECL_JUMP_IF_EQ_FLOAT",
+          "ECL_JUMP_IF_NEQ",
+          "ECL_JUMP_IF_NEQ_FLOAT",
+          "ECL_JUMP_IF_LT",
+          "ECL_JUMP_IF_LT_FLOAT",
+          "ECL_JUMP_IF_LEQ",
+          "ECL_JUMP_IF_LEQ_FLOAT",
+          "ECL_JUMP_IF_GT",
+          "ECL_JUMP_IF_GT_FLOAT",
+          "ECL_JUMP_IF_GEQ",
+          "ECL_JUMP_IF_GEQ_FLOAT",
+          "ECL_SUB_CALL",
+          "ECL_SUB_RET",
+          "ECL_SET_ANM",
+          "ECL_SET_SUB_ANM",
+          "ECL_SET_POS",
+          "ECL_SET_AXIS_SPEED",
+          "ECL_SET_ANGULAR_VEL",
+          "ECL_MOVE_AT_PLAYER",
+          "ECL_SET_MOVE_SPEED",
+          "ECL_SET_MOVE_ACCEL",
+          "ECL_SET_MOVE_INTERP_TIMER_POLAR",
+          "ECL_SET_MOVE_INTERP_TIMER_RADIAL",
+          "ECL_SET_MOVE_INTERP_TIMER_INTERP",
+          "ECL_SPAWN_BULLET_PATTERN_SPREAD_AIMED",
+          "ECL_SPAWN_BULLET_PATTERN_SPREAD_ABS",
+          "ECL_SPAWN_BULLET_PATTERN_RING_AIMED",
+          "ECL_SPAWN_BULLET_PATTERN_RING_ABS",
+          "ECL_SPAWN_BULLET_PATTERN_RING_SHIFTED_AIMED",
+          "ECL_SPAWN_BULLET_PATTERN_RING_SHIFTED_ABS",
+          "ECL_SPAWN_BULLET_PATTERN_ANGLE_RANDOM",
+          "ECL_SPAWN_BULLET_PATTERN_RING_SPEED_RANDOM",
+          "ECL_SPAWN_BULLET_PATTERN_RANDOM",
+          "ECL_INIT_BULLET_CMD",
+          "ECL_SET_DEATH_ANM",
+          "ECL_SET_SHOOT_INTERVAL",
+          "ECL_SET_SHOOT_INTERVAL_RAND",
+          "ECL_DISABLE_BULLETS",
+          "ECL_ENABLE_BULLETS",
+          "ECL_SPAWN_PREV_BULLET_PATTERN",
+          "ECL_SET_SHOOT_OFFSET",
+          "ECL_SPAWN_LASER_PATTERN_FIXED",
+          "ECL_SPAWN_LASER_PATTERN_MOVING",
+          "ECL_SET_LASER_IDX",
+          "ECL_ADD_LASER_ANGLE",
+          "ECL_SET_LASER_ANGLE",
+          "ECL_AIM_LASER_ANGLE_AT_PLAYER",
+          "ECL_SET_LASER_POS_REL",
+          "ECL_SET_LASER_HIDE_WARNING",
+          "ECL_TEST_LASER_NOT_IN_USE",
+          "ECL_STOP_LASER",
+          "ECL_CLEAR_LASERS",
+          "ECL_SET_LASER_START_LEN",
+          "ECL_SET_LASER_OFFSETS",
+          "ECL_IDFK",
+          "ECL_SET_BOSS",
+          "ECL_SPAWN_EFFECT",
+          "ECL_MOVE_DIR_TIME",
+          "ECL_MOVE_POS_TIME",
+          "ECL_MOVE_ORBIT",
+          "ECL_SET_ORBIT_RADIUS",
+          "ECL_SET_ORBIT_ANGLE",
+          "ECL_SET_MOVEMENT_BOUNDS",
+          "ECL_DISABLE_MOVEMENT_BOUNDS",
+          "ECL_RAND_FLOAT_RANGE",
+          "ECL_GET_EXIT_ANGLE",
+          "ECL_SET_MOVE_ANM",
+          "ECL_SET_HITBOX_SIZE",
+          "ECL_SET_GRAZE_SIZE",
+          "ECL_SET_HAS_CONTACT_HITBOX",
+          "ECL_SET_CAN_BE_DAMAGED",
+          "ECL_SET_IS_HITTABLE",
+          "ECL_PLAY_SOUND",
+          "ECL_SET_DEATH_TYPE",
+          "ECL_SET_DEATH_CALLBACK_SUB",
+          "ECL_SET_INTERRUPT",
+          "ECL_SET_RUN_INTERRUPT",
+          "ECL_SET_LIFE",
+          "ECL_SET_BOSS_HEALTH",
+          "ECL_BEGIN_SPELLCARD",
+          "ECL_END_SPELLCARD",
+          "ECL_SET_TIMER",
+          "ECL_SET_LIFE_CALLBACK_THRESHOLD",
+          "ECL_SET_LIFE_CALLBACK_SUB",
+          "ECL_SET_LIFE_CALLBACK",
+          "ECL_SET_TIMER_CALLBACK_THRESHOLD",
+          "ECL_SET_TIMER_CALLBACK_SUB",
+          "ECL_SET_PERIODIC_CALLBACK",
+          "ECL_SET_ENEMY_CAN_DIE",
+          "ECL_SPAWN_PARTICLES",
+          "ECL_SPAWN_MOVING_PARTICLES",
+          "ECL_SPAWN_ITEMS",
+          "ECL_SPAWN_POINT_ITEMS",
+          "ECL_SET_VM_AUTO_ROTATE",
+          "ECL_RUN_EX_INS",
+          "ECL_SET_EX_INS",
+          "ECL_ADD_TIME",
+          "ECL_SPAWN_ITEM",
+          "ECL_SET_SCRIPT_WAIT_TIME",
+          "ECL_SET_NUM_BOSS_LIFE_MARKERS",
+          "ECL_SPAWN_ENEMY_ABS",
+          "ECL_SPAWN_ENEMY_REL",
+          "ECL_REMOVE_ALL_ENEMIES",
+          "ECL_SET_PRIMARY_VM_INTERRUPT",
+          "ECL_SET_VM_INTERRUPT",
+          "ECL_REMOVE_ALL_BULLETS_SPAWN_ITEMS",
+          "ECL_SET_BULLET_SOUND",
+          "ECL_SET_NO_STACK_RET",
+          "ECL_SET_BULLET_RANK_PARAMS",
+          "ECL_SET_HAS_NO_COLLISION",
+          "ECL_BIND_TIMER_CALLBACK_TO_DEATH",
+          "ECL_SET_IS_SURVIVAL_SPELLCARD",
+          "ECL_SET_IS_PROJECTILE",
+          "ECL_SET_DESPAWN_ON_OOB",
+          "ECL_SET_TRAIL",
+          "ECL_SET_GLOBAL_EFFECT_COLOR_MUL",
+          "ECL_SET_INVINCIBILITY_TIMER",
+          "ECL_REMOVE_BULLETS_RADIUS",
+          "ECL_SET_BOSS_RUN_INTERRUPT",
+          "ECL_REMOVE_ALL_BULLETS_NO_ITEMS",
+          "ECL_SET_SPECIAL_EFFECT_POS",
+          "ECL_SET_PRIMARY_VM_ROT_Z",
+          "ECL_VEC_FROM_ANGLE_MAG",
+          "ECL_RAND_EXIT_ANGLE",
+          "ECL_ADD_CHERRY_PLUS",
+          "ECL_FREEZE_ECL_DURING_BOMB"
+        ],
+        "modeledOpcodeSpecificValues": [
+          1,
+          45,
+          3,
+          2,
+          4,
+          5,
+          40,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          17,
+          18,
+          43,
+          44,
+          12,
+          19,
+          13,
+          20,
+          14,
+          21,
+          15,
+          22,
+          16,
+          23,
+          24,
+          25,
+          26,
+          159,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          41,
+          42,
+          95,
+          97,
+          46,
+          47,
+          48,
+          53,
+          49,
+          50,
+          59,
+          60,
+          61,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          79,
+          98,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          82,
+          83,
+          84,
+          85,
+          152,
+          86,
+          87,
+          156,
+          88,
+          89,
+          134,
+          157,
+          158,
+          147,
+          99,
+          100,
+          54,
+          55,
+          56,
+          57,
+          58,
+          62,
+          63,
+          51,
+          52,
+          96,
+          101,
+          153,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          139,
+          90,
+          91,
+          111,
+          112,
+          113,
+          148,
+          114,
+          115,
+          144,
+          116,
+          117,
+          118,
+          119,
+          154,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          92,
+          93,
+          94,
+          128,
+          129,
+          80,
+          81,
+          130,
+          131,
+          132,
+          133,
+          135,
+          136,
+          137,
+          138,
+          140,
+          142,
+          143,
+          145,
+          146,
+          149,
+          150,
+          151,
+          155,
+          160,
+          161
+        ],
+        "notYetOpcodeBodyModeledCountLowerBound": 0,
+        "notYetOpcodeBodyModeledSymbols": [],
+        "notYetOpcodeBodyModeledValues": [],
+        "profileOpcodeConstantsByValue": {
+          "1": [
+            "unimplementedOpcode"
+          ],
+          "10": [
+            "eclOpcodeRandSign"
+          ],
+          "100": [
+            "eclOpcodeSpawnEffect"
+          ],
+          "101": [
+            "eclOpcodeSetHitboxSize"
+          ],
+          "102": [
+            "eclOpcodeSetContactHitbox"
+          ],
+          "103": [
+            "eclOpcodeSetCanBeDamaged"
+          ],
+          "104": [
+            "eclOpcodeSetHittable"
+          ],
+          "105": [
+            "eclOpcodePlaySound"
+          ],
+          "106": [
+            "eclOpcodeSetDeathType"
+          ],
+          "107": [
+            "eclOpcodeSetDeathCallbackSub"
+          ],
+          "108": [
+            "eclOpcodeSetInterrupt"
+          ],
+          "109": [
+            "eclOpcodeRunInterrupt"
+          ],
+          "11": [
+            "eclOpcodeRandSignFloat"
+          ],
+          "110": [
+            "eclOpcodeSetLife"
+          ],
+          "111": [
+            "eclOpcodeSetTimer"
+          ],
+          "112": [
+            "eclOpcodeSetLifeCallbackThreshold"
+          ],
+          "113": [
+            "eclOpcodeSetLifeCallbackSub"
+          ],
+          "114": [
+            "eclOpcodeSetTimerCallbackThreshold"
+          ],
+          "115": [
+            "eclOpcodeSetTimerCallbackSub"
+          ],
+          "116": [
+            "eclOpcodeSetCanDie"
+          ],
+          "117": [
+            "eclOpcodeSpawnParticles"
+          ],
+          "118": [
+            "eclOpcodeSpawnMovingParticles"
+          ],
+          "119": [
+            "eclOpcodeSpawnItems"
+          ],
+          "12": [
+            "eclOpcodeIntAdd"
+          ],
+          "120": [
+            "eclOpcodeSetVmAutoRotate"
+          ],
+          "121": [
+            "eclOpcodeRunExtension"
+          ],
+          "122": [
+            "eclOpcodeSetExtension"
+          ],
+          "123": [
+            "eclOpcodeAddTime"
+          ],
+          "124": [
+            "eclOpcodeSpawnItem"
+          ],
+          "125": [
+            "eclOpcodeSetScriptWaitTime"
+          ],
+          "126": [
+            "eclOpcodeSetNumBossLifeMarkers"
+          ],
+          "128": [
+            "eclOpcodeSetPrimaryVmInterrupt"
+          ],
+          "129": [
+            "eclOpcodeSetVmInterrupt"
+          ],
+          "13": [
+            "eclOpcodeIntSub"
+          ],
+          "130": [
+            "eclOpcodeSetCallStackDisabled"
+          ],
+          "131": [
+            "eclOpcodeSetBulletRankParams"
+          ],
+          "132": [
+            "eclOpcodeSetHasNoCollision"
+          ],
+          "133": [
+            "eclOpcodeBindTimerCallbackToDeath"
+          ],
+          "134": [
+            "eclOpcodeClearLasers"
+          ],
+          "135": [
+            "eclOpcodeSetIsSurvivalSpellcard"
+          ],
+          "136": [
+            "eclOpcodeSetIsProjectile"
+          ],
+          "137": [
+            "eclOpcodeSetDespawnOnOob"
+          ],
+          "138": [
+            "eclOpcodeSetTrail"
+          ],
+          "139": [
+            "eclOpcodeSetBossHealth"
+          ],
+          "14": [
+            "eclOpcodeIntMul"
+          ],
+          "140": [
+            "eclOpcodeSetGlobalEffectColorMultiplier"
+          ],
+          "142": [
+            "eclOpcodeSetInvincibilityTimer"
+          ],
+          "143": [
+            "eclOpcodeRemoveBulletsRadius"
+          ],
+          "144": [
+            "eclOpcodeSetPeriodicCallback"
+          ],
+          "145": [
+            "eclOpcodeSetBossRunInterrupt"
+          ],
+          "146": [
+            "eclOpcodeRemoveAllBulletsNoItems"
+          ],
+          "147": [
+            "eclOpcodeIdfk"
+          ],
+          "148": [
+            "eclOpcodeSetLifeCallback"
+          ],
+          "149": [
+            "eclOpcodeSetSpecialEffectPosition"
+          ],
+          "15": [
+            "eclOpcodeIntDiv"
+          ],
+          "150": [
+            "eclOpcodeSetPrimaryVmRotZ"
+          ],
+          "151": [
+            "eclOpcodeVectorFromAngleMagnitude"
+          ],
+          "152": [
+            "eclOpcodeSetLaserAngle"
+          ],
+          "153": [
+            "eclOpcodeSetGrazeSize"
+          ],
+          "154": [
+            "eclOpcodeSpawnPointItems"
+          ],
+          "155": [
+            "eclOpcodeRandomExitAngle"
+          ],
+          "156": [
+            "eclOpcodeSetLaserHideWarning"
+          ],
+          "157": [
+            "eclOpcodeSetLaserStartLen"
+          ],
+          "158": [
+            "eclOpcodeSetLaserOffsets"
+          ],
+          "159": [
+            "eclOpcodeLerp"
+          ],
+          "16": [
+            "eclOpcodeIntMod"
+          ],
+          "160": [
+            "eclOpcodeAddCherryPlus"
+          ],
+          "161": [
+            "eclOpcodeFreezeEclDuringBomb"
+          ],
+          "17": [
+            "eclOpcodeInc"
+          ],
+          "18": [
+            "eclOpcodeDec"
+          ],
+          "19": [
+            "eclOpcodeFloatAdd"
+          ],
+          "2": [
+            "eclOpcodeJump"
+          ],
+          "20": [
+            "eclOpcodeFloatSub"
+          ],
+          "21": [
+            "eclOpcodeFloatMul"
+          ],
+          "22": [
+            "eclOpcodeFloatDiv"
+          ],
+          "23": [
+            "eclOpcodeFloatMod"
+          ],
+          "24": [
+            "eclOpcodeSin"
+          ],
+          "25": [
+            "eclOpcodeCos"
+          ],
+          "26": [
+            "eclOpcodeAtan2"
+          ],
+          "27": [
+            "eclOpcodeInitInterpolation"
+          ],
+          "28": [
+            "eclOpcodeJumpIfEq"
+          ],
+          "29": [
+            "eclOpcodeJumpIfEqFloat"
+          ],
+          "3": [
+            "eclOpcodeDecJump"
+          ],
+          "30": [
+            "eclOpcodeJumpIfNeq"
+          ],
+          "31": [
+            "eclOpcodeJumpIfNeqFloat"
+          ],
+          "32": [
+            "eclOpcodeJumpIfLt"
+          ],
+          "33": [
+            "eclOpcodeJumpIfLtFloat"
+          ],
+          "34": [
+            "eclOpcodeJumpIfLeq"
+          ],
+          "35": [
+            "eclOpcodeJumpIfLeqFloat"
+          ],
+          "36": [
+            "eclOpcodeJumpIfGt"
+          ],
+          "37": [
+            "eclOpcodeJumpIfGtFloat"
+          ],
+          "38": [
+            "eclOpcodeJumpIfGeq"
+          ],
+          "39": [
+            "eclOpcodeJumpIfGeqFloat"
+          ],
+          "4": [
+            "eclOpcodeSetInt"
+          ],
+          "40": [
+            "eclOpcodeNormalizeAngle"
+          ],
+          "41": [
+            "eclOpcodeSubCall"
+          ],
+          "42": [
+            "eclOpcodeSubRet"
+          ],
+          "43": [
+            "eclOpcodeGetBossInt"
+          ],
+          "44": [
+            "eclOpcodeGetBossFloat"
+          ],
+          "45": [
+            "eclOpcodeSetWaitTimer"
+          ],
+          "46": [
+            "eclOpcodeSetPosition"
+          ],
+          "47": [
+            "eclOpcodeSetAxisSpeed"
+          ],
+          "48": [
+            "eclOpcodeSetAngularVelocity"
+          ],
+          "49": [
+            "eclOpcodeSetMoveSpeed"
+          ],
+          "5": [
+            "eclOpcodeSetFloat"
+          ],
+          "50": [
+            "eclOpcodeSetMoveAcceleration"
+          ],
+          "51": [
+            "eclOpcodeRandomFloatBetween"
+          ],
+          "52": [
+            "eclOpcodeGetExitAngle"
+          ],
+          "53": [
+            "eclOpcodeMoveAtPlayer"
+          ],
+          "54": [
+            "eclOpcodeMoveDirectionTimed",
+            "eclOpcodeMoveDirectionTimed..eclOpcodeMoveDirectionTimed"
+          ],
+          "55": [
+            "eclOpcodeMovePositionTimed",
+            "eclOpcodeMovePositionTimed..eclOpcodeMovePositionTimed"
+          ],
+          "56": [
+            "eclOpcodeMoveOrbit"
+          ],
+          "57": [
+            "eclOpcodeSetOrbitRadius"
+          ],
+          "58": [
+            "eclOpcodeSetOrbitAngle"
+          ],
+          "59": [
+            "eclOpcodeSetMoveTimerPolar"
+          ],
+          "6": [
+            "eclOpcodeRand"
+          ],
+          "60": [
+            "eclOpcodeSetMoveTimerOrbit"
+          ],
+          "61": [
+            "eclOpcodeSetMoveTimerInterpolation"
+          ],
+          "62": [
+            "eclOpcodeSetMovementBounds"
+          ],
+          "63": [
+            "eclOpcodeDisableMovementBounds"
+          ],
+          "64": [
+            "eclOpcodeSpawnBulletPatternFirst",
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "65": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "66": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "67": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "68": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "69": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "7": [
+            "eclOpcodeRandAdd"
+          ],
+          "70": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "71": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "72": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast",
+            "eclOpcodeSpawnBulletPatternLast"
+          ],
+          "73": [
+            "eclOpcodeSetShootInterval"
+          ],
+          "74": [
+            "eclOpcodeSetRandomShootInterval"
+          ],
+          "75": [
+            "eclOpcodeDisableShooting"
+          ],
+          "76": [
+            "eclOpcodeEnableShooting"
+          ],
+          "77": [
+            "eclOpcodeSpawnPreviousPattern"
+          ],
+          "78": [
+            "eclOpcodeSetShootOffset"
+          ],
+          "79": [
+            "eclOpcodeInitBulletCommand"
+          ],
+          "8": [
+            "eclOpcodeRandFloat"
+          ],
+          "80": [
+            "eclOpcodeRemoveAllBulletsSpawnItems"
+          ],
+          "81": [
+            "eclOpcodeSetBulletSound"
+          ],
+          "82": [
+            "eclOpcodeSpawnLaserPatternFixed"
+          ],
+          "83": [
+            "eclOpcodeSpawnLaserPatternMoving"
+          ],
+          "84": [
+            "eclOpcodeSetLaserIdx"
+          ],
+          "85": [
+            "eclOpcodeAddLaserAngle"
+          ],
+          "86": [
+            "eclOpcodeAimLaserAngleAtPlayer"
+          ],
+          "87": [
+            "eclOpcodeSetLaserPosRel"
+          ],
+          "88": [
+            "eclOpcodeTestLaserNotInUse"
+          ],
+          "89": [
+            "eclOpcodeStopLaser"
+          ],
+          "9": [
+            "eclOpcodeRandFloatAdd"
+          ],
+          "90": [
+            "eclOpcodeBeginSpellcard"
+          ],
+          "91": [
+            "eclOpcodeEndSpellcard"
+          ],
+          "92": [
+            "eclOpcodeSpawnEnemyAbs"
+          ],
+          "93": [
+            "eclOpcodeSpawnEnemyRel"
+          ],
+          "94": [
+            "eclOpcodeRemoveAllEnemies"
+          ],
+          "95": [
+            "eclOpcodeSetAnm"
+          ],
+          "96": [
+            "eclOpcodeSetMoveAnm"
+          ],
+          "97": [
+            "eclOpcodeSetSubAnm"
+          ],
+          "98": [
+            "eclOpcodeSetDeathAnm"
+          ],
+          "99": [
+            "eclOpcodeSetBoss"
+          ]
+        },
+        "profileOpcodeValues": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140,
+          142,
+          143,
+          144,
+          145,
+          146,
+          147,
+          148,
+          149,
+          150,
+          151,
+          152,
+          153,
+          154,
+          155,
+          156,
+          157,
+          158,
+          159,
+          160,
+          161
+        ],
+        "profileOpcodesAbsentFromSource": [],
+        "profileSource": "/home/yann/yann/touhou/formal/touhou-formal/TouhouFormal/TH07/Wire.lean",
+        "rawOpcodeSymbolCount": 159,
+        "source": "/home/yann/yann/touhou/formal/reference/th07/src/th07/EclManager.hpp",
+        "unresolvedProfileConstants": []
+      },
+      "th08": {
+        "firstCaseLabels": [
+          1,
+          2,
+          3,
+          5,
+          4,
+          6,
+          7,
+          8,
+          9,
+          10,
+          15,
+          11
+        ],
+        "highOpcodeCaseLabelCount": 93,
+        "highSource": "/home/yann/yann/touhou/formal/reference/th08/src/EclRunHigh.inl",
+        "lastCaseLabels": [
+          183,
+          176,
+          82,
+          83,
+          174,
+          175,
+          177,
+          179,
+          180,
+          181,
+          182,
+          184
+        ],
+        "lowOpcodeCaseLabelCount": 91,
+        "modeledOpcodeSpecificCases": [
+          "case 1",
+          "case 2",
+          "case 3",
+          "case 5",
+          "case 4",
+          "case 6",
+          "case 7",
+          "case 8",
+          "case 9",
+          "case 10",
+          "case 15",
+          "case 11",
+          "case 16",
+          "case 12",
+          "case 17",
+          "case 13",
+          "case 18",
+          "case 14",
+          "case 19",
+          "case 20",
+          "case 25",
+          "case 21",
+          "case 26",
+          "case 22",
+          "case 27",
+          "case 23",
+          "case 28",
+          "case 24",
+          "case 29",
+          "case 30",
+          "case 31",
+          "case 32",
+          "case 33",
+          "case 34",
+          "case 37",
+          "case 35",
+          "case 36",
+          "case 38",
+          "case 39",
+          "case 40",
+          "case 41",
+          "case 42",
+          "case 43",
+          "case 44",
+          "case 45",
+          "case 46",
+          "case 47",
+          "case 48",
+          "case 49",
+          "case 50",
+          "case 51",
+          "case 52",
+          "case 53",
+          "case 54",
+          "case 55",
+          "case 56",
+          "case 57",
+          "case 58",
+          "case 59",
+          "case 60",
+          "case 61",
+          "case 62",
+          "case 63",
+          "case 64",
+          "case 65",
+          "case 66",
+          "case 67",
+          "case 178",
+          "case 68",
+          "case 69",
+          "case 70",
+          "case 71",
+          "case 72",
+          "case 73",
+          "case 74",
+          "case 75",
+          "case 76",
+          "case 77",
+          "case 78",
+          "case 79",
+          "case 80",
+          "case 81",
+          "case 84",
+          "case 85",
+          "case 86",
+          "case 87",
+          "case 88",
+          "case 89",
+          "case 90",
+          "case 91",
+          "case 92",
+          "case 96",
+          "case 97",
+          "case 98",
+          "case 99",
+          "case 100",
+          "case 101",
+          "case 102",
+          "case 103",
+          "case 104",
+          "case 111",
+          "case 138",
+          "case 105",
+          "case 106",
+          "case 107",
+          "case 108",
+          "case 109",
+          "case 110",
+          "case 114",
+          "case 115",
+          "case 116",
+          "case 117",
+          "case 167",
+          "case 118",
+          "case 119",
+          "case 170",
+          "case 120",
+          "case 121",
+          "case 154",
+          "case 171",
+          "case 172",
+          "case 163",
+          "case 127",
+          "case 128",
+          "case 159",
+          "case 124",
+          "case 129",
+          "case 130",
+          "case 126",
+          "case 125",
+          "case 131",
+          "case 158",
+          "case 122",
+          "case 123",
+          "case 132",
+          "case 133",
+          "case 134",
+          "case 135",
+          "case 139",
+          "case 140",
+          "case 143",
+          "case 144",
+          "case 142",
+          "case 168",
+          "case 145",
+          "case 136",
+          "case 137",
+          "case 146",
+          "case 141",
+          "case 147",
+          "case 148",
+          "case 93",
+          "case 94",
+          "case 95",
+          "case 149",
+          "case 150",
+          "case 112",
+          "case 113",
+          "case 151",
+          "case 152",
+          "case 153",
+          "case 155",
+          "case 156",
+          "case 157",
+          "case 160",
+          "case 161",
+          "case 162",
+          "case 164",
+          "case 165",
+          "case 166",
+          "case 169",
+          "case 173",
+          "case 183",
+          "case 176",
+          "case 82",
+          "case 83",
+          "case 174",
+          "case 175",
+          "case 177",
+          "case 179",
+          "case 180",
+          "case 181",
+          "case 182",
+          "case 184"
+        ],
+        "modeledOpcodeSpecificCount": 184,
+        "modeledOpcodeSpecificValues": [
+          1,
+          2,
+          3,
+          5,
+          4,
+          6,
+          7,
+          8,
+          9,
+          10,
+          15,
+          11,
+          16,
+          12,
+          17,
+          13,
+          18,
+          14,
+          19,
+          20,
+          25,
+          21,
+          26,
+          22,
+          27,
+          23,
+          28,
+          24,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          37,
+          35,
+          36,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          178,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          111,
+          138,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          114,
+          115,
+          116,
+          117,
+          167,
+          118,
+          119,
+          170,
+          120,
+          121,
+          154,
+          171,
+          172,
+          163,
+          127,
+          128,
+          159,
+          124,
+          129,
+          130,
+          126,
+          125,
+          131,
+          158,
+          122,
+          123,
+          132,
+          133,
+          134,
+          135,
+          139,
+          140,
+          143,
+          144,
+          142,
+          168,
+          145,
+          136,
+          137,
+          146,
+          141,
+          147,
+          148,
+          93,
+          94,
+          95,
+          149,
+          150,
+          112,
+          113,
+          151,
+          152,
+          153,
+          155,
+          156,
+          157,
+          160,
+          161,
+          162,
+          164,
+          165,
+          166,
+          169,
+          173,
+          183,
+          176,
+          82,
+          83,
+          174,
+          175,
+          177,
+          179,
+          180,
+          181,
+          182,
+          184
+        ],
+        "notYetOpcodeBodyModeledCases": [],
+        "notYetOpcodeBodyModeledCountLowerBound": 0,
+        "notYetOpcodeBodyModeledValues": [],
+        "profileOpcodeConstantsByValue": {
+          "1": [
+            "unimplementedOpcode"
+          ],
+          "10": [
+            "eclOpcodeIntAddInPlace"
+          ],
+          "100": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "101": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "102": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "103": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "104": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast",
+            "eclOpcodeSpawnBulletPatternLast"
+          ],
+          "105": [
+            "eclOpcodeSetShootInterval"
+          ],
+          "106": [
+            "eclOpcodeSetRandomShootInterval"
+          ],
+          "107": [
+            "eclOpcodeDisableShooting"
+          ],
+          "108": [
+            "eclOpcodeEnableShooting"
+          ],
+          "109": [
+            "eclOpcodeSpawnPreviousPattern"
+          ],
+          "11": [
+            "eclOpcodeIntSubInPlace"
+          ],
+          "110": [
+            "eclOpcodeSetShootOffset"
+          ],
+          "111": [
+            "eclOpcodeInitBulletTransform"
+          ],
+          "112": [
+            "eclOpcodeClearBulletsForTransition"
+          ],
+          "113": [
+            "eclOpcodeSetBulletSound"
+          ],
+          "114": [
+            "eclOpcodeSpawnLaserFixed"
+          ],
+          "115": [
+            "eclOpcodeSpawnLaserAimed"
+          ],
+          "116": [
+            "eclOpcodeSetLaserIdx"
+          ],
+          "117": [
+            "eclOpcodeAddLaserAngle"
+          ],
+          "118": [
+            "eclOpcodeAimLaserAngleAtPlayer"
+          ],
+          "119": [
+            "eclOpcodeSetLaserPosRel"
+          ],
+          "12": [
+            "eclOpcodeIntMulInPlace"
+          ],
+          "120": [
+            "eclOpcodeTestLaserInUse"
+          ],
+          "121": [
+            "eclOpcodeStopLaser"
+          ],
+          "122": [
+            "eclOpcodeBeginSpellcard"
+          ],
+          "123": [
+            "eclOpcodeEndSpellcard"
+          ],
+          "124": [
+            "eclOpcodePlayPositionedSound"
+          ],
+          "125": [
+            "eclOpcodeRunInterrupt"
+          ],
+          "126": [
+            "eclOpcodeSetInterrupt"
+          ],
+          "127": [
+            "eclOpcodeSetBoss"
+          ],
+          "128": [
+            "eclOpcodeSpawnTrackedEffect"
+          ],
+          "129": [
+            "eclOpcodeSetDeathMode"
+          ],
+          "13": [
+            "eclOpcodeIntDivInPlace"
+          ],
+          "130": [
+            "eclOpcodeSetDeathCallbackSub"
+          ],
+          "131": [
+            "eclOpcodeSetLife"
+          ],
+          "132": [
+            "eclOpcodeSetBossTimer"
+          ],
+          "133": [
+            "eclOpcodeSetLifeCallback"
+          ],
+          "134": [
+            "eclOpcodeSetTimerCallback"
+          ],
+          "135": [
+            "eclOpcodeSetChildContext"
+          ],
+          "136": [
+            "eclOpcodeRunExtension"
+          ],
+          "137": [
+            "eclOpcodeSetExtension"
+          ],
+          "138": [
+            "eclOpcodeSetDeathAnm"
+          ],
+          "139": [
+            "eclOpcodeSpawnEffect"
+          ],
+          "14": [
+            "eclOpcodeIntModInPlace"
+          ],
+          "140": [
+            "eclOpcodeSpawnMovingEffect"
+          ],
+          "141": [
+            "eclOpcodeSpawnItem"
+          ],
+          "142": [
+            "eclOpcodeSpawnItems"
+          ],
+          "143": [
+            "eclOpcodeSetItemDropType"
+          ],
+          "144": [
+            "eclOpcodeSetItemDropCounts"
+          ],
+          "145": [
+            "eclOpcodeSetRotateAnmWithMovement"
+          ],
+          "146": [
+            "eclOpcodeAddTime"
+          ],
+          "147": [
+            "eclOpcodeSetBackgroundLabel"
+          ],
+          "148": [
+            "eclOpcodeSetBossLifeMarkerCount"
+          ],
+          "149": [
+            "eclOpcodeSetPrimaryVmInterrupt"
+          ],
+          "15": [
+            "eclOpcodeFloatAddInPlace"
+          ],
+          "150": [
+            "eclOpcodeSetSecondaryVmInterrupt"
+          ],
+          "151": [
+            "eclOpcodeSetCallStackDisabled"
+          ],
+          "152": [
+            "eclOpcodeSetBulletRankInfluence"
+          ],
+          "153": [
+            "eclOpcodeBindTimerCallbackToDeath"
+          ],
+          "154": [
+            "eclOpcodeClearLasers"
+          ],
+          "155": [
+            "eclOpcodeSetTimeoutSpell"
+          ],
+          "156": [
+            "eclOpcodeSetSpecialInteraction"
+          ],
+          "157": [
+            "eclOpcodeSetTrail"
+          ],
+          "158": [
+            "eclOpcodeSetBossGauge"
+          ],
+          "159": [
+            "eclOpcodeSetDrawGroup"
+          ],
+          "16": [
+            "eclOpcodeFloatSubInPlace"
+          ],
+          "160": [
+            "eclOpcodeSetDamageReductionTimer"
+          ],
+          "161": [
+            "eclOpcodeRemoveBulletsRadius"
+          ],
+          "162": [
+            "eclOpcodeRemoveAllBulletsMode4"
+          ],
+          "163": [
+            "eclOpcodeSetEnemyManagerValue"
+          ],
+          "164": [
+            "eclOpcodeSetSpellcardEffectTracking"
+          ],
+          "165": [
+            "eclOpcodeSetPrimaryVmRotZ"
+          ],
+          "166": [
+            "eclOpcodeVectorFromAngleMagnitude"
+          ],
+          "167": [
+            "eclOpcodeSetLaserAngle"
+          ],
+          "168": [
+            "eclOpcodeSpawnPointItems"
+          ],
+          "169": [
+            "eclOpcodeRandomExitAngle"
+          ],
+          "17": [
+            "eclOpcodeFloatMulInPlace"
+          ],
+          "170": [
+            "eclOpcodeSetLaserHideCapDuringStartup"
+          ],
+          "171": [
+            "eclOpcodeSetLaserStartLength"
+          ],
+          "172": [
+            "eclOpcodeSetLaserOffsets"
+          ],
+          "173": [
+            "eclOpcodeSetPauseTimer"
+          ],
+          "174": [
+            "eclOpcodeSpawnAlignmentEffect"
+          ],
+          "175": [
+            "eclOpcodeSuppressTimelineSpawns"
+          ],
+          "176": [
+            "eclOpcodeConfigurePause"
+          ],
+          "177": [
+            "eclOpcodeSetPhaseStartingLife"
+          ],
+          "178": [
+            "eclOpcodeMoveRandomBiasedTimed",
+            "eclOpcodeMoveRandomBiasedTimed..eclOpcodeMoveRandomBiasedTimed"
+          ],
+          "179": [
+            "eclOpcodeStartStageBackground"
+          ],
+          "18": [
+            "eclOpcodeFloatDivInPlace"
+          ],
+          "180": [
+            "eclOpcodeHideClock"
+          ],
+          "181": [
+            "eclOpcodeAdvanceClock"
+          ],
+          "182": [
+            "eclOpcodeSetExtraVmFixedOffset"
+          ],
+          "183": [
+            "eclOpcodeSetNoDamageDuringStop"
+          ],
+          "184": [
+            "eclOpcodeSetSpellcardBonusUpdatesDisabled"
+          ],
+          "19": [
+            "eclOpcodeFloatModInPlace"
+          ],
+          "2": [
+            "eclOpcodeSetSecondaryTime"
+          ],
+          "20": [
+            "eclOpcodeIntAdd"
+          ],
+          "21": [
+            "eclOpcodeIntSub"
+          ],
+          "22": [
+            "eclOpcodeIntMul"
+          ],
+          "23": [
+            "eclOpcodeIntDiv"
+          ],
+          "24": [
+            "eclOpcodeIntMod"
+          ],
+          "25": [
+            "eclOpcodeFloatAdd"
+          ],
+          "26": [
+            "eclOpcodeFloatSub"
+          ],
+          "27": [
+            "eclOpcodeFloatMul"
+          ],
+          "28": [
+            "eclOpcodeFloatDiv"
+          ],
+          "29": [
+            "eclOpcodeFloatMod"
+          ],
+          "3": [
+            "eclOpcodeNoOp"
+          ],
+          "30": [
+            "eclOpcodeInc"
+          ],
+          "31": [
+            "eclOpcodeDec"
+          ],
+          "32": [
+            "eclOpcodeSin"
+          ],
+          "33": [
+            "eclOpcodeCos"
+          ],
+          "34": [
+            "eclOpcodeVectorAngle"
+          ],
+          "35": [
+            "eclOpcodeLerp"
+          ],
+          "36": [
+            "eclOpcodeInstallInterpolation"
+          ],
+          "37": [
+            "eclOpcodeNormalizeAngle"
+          ],
+          "38": [
+            "eclOpcodePolarToCartesian"
+          ],
+          "39": [
+            "eclOpcodeDistance2d"
+          ],
+          "4": [
+            "eclOpcodeJump"
+          ],
+          "40": [
+            "eclOpcodeJumpIfEq"
+          ],
+          "41": [
+            "eclOpcodeJumpIfEqFloat"
+          ],
+          "42": [
+            "eclOpcodeJumpIfNeq"
+          ],
+          "43": [
+            "eclOpcodeJumpIfNeqFloat"
+          ],
+          "44": [
+            "eclOpcodeJumpIfLt"
+          ],
+          "45": [
+            "eclOpcodeJumpIfLtFloat"
+          ],
+          "46": [
+            "eclOpcodeJumpIfLeq"
+          ],
+          "47": [
+            "eclOpcodeJumpIfLeqFloat"
+          ],
+          "48": [
+            "eclOpcodeJumpIfGt"
+          ],
+          "49": [
+            "eclOpcodeJumpIfGtFloat"
+          ],
+          "5": [
+            "eclOpcodeDecJump"
+          ],
+          "50": [
+            "eclOpcodeJumpIfGeq"
+          ],
+          "51": [
+            "eclOpcodeJumpIfGeqFloat"
+          ],
+          "52": [
+            "eclOpcodeSubCall"
+          ],
+          "53": [
+            "eclOpcodeSubRet"
+          ],
+          "54": [
+            "eclOpcodeSetPrimaryAnm"
+          ],
+          "55": [
+            "eclOpcodeSetPrimaryAnmSequential"
+          ],
+          "56": [
+            "eclOpcodeSetPrimaryAnmExplicit"
+          ],
+          "57": [
+            "eclOpcodeSetExtraAnm"
+          ],
+          "58": [
+            "eclOpcodeSetAlternateAnm"
+          ],
+          "59": [
+            "eclOpcodeSetAlternateAnmSequential"
+          ],
+          "6": [
+            "eclOpcodeSetInt"
+          ],
+          "60": [
+            "eclOpcodeSetAlternateAnmExplicit"
+          ],
+          "61": [
+            "eclOpcodeSetAlternateExtraAnm"
+          ],
+          "62": [
+            "eclOpcodePlaySpecialAnm"
+          ],
+          "63": [
+            "eclOpcodeSetPosition"
+          ],
+          "64": [
+            "eclOpcodeMovePositionTimed",
+            "eclOpcodeMovePositionTimed..eclOpcodeMovePositionTimed"
+          ],
+          "65": [
+            "eclOpcodeSetPolarVelocity"
+          ],
+          "66": [
+            "eclOpcodeMoveDirectionTimed",
+            "eclOpcodeMoveDirectionTimed..eclOpcodeMoveDirectionTimed"
+          ],
+          "67": [
+            "eclOpcodeMoveBoundaryAwareTimed",
+            "eclOpcodeMoveBoundaryAwareTimed..eclOpcodeMoveBoundaryAwareTimed"
+          ],
+          "68": [
+            "eclOpcodeMoveAtPlayer"
+          ],
+          "69": [
+            "eclOpcodeMoveAtPlayerTimed",
+            "eclOpcodeMoveAtPlayerTimed..eclOpcodeMoveAtPlayerTimed"
+          ],
+          "7": [
+            "eclOpcodeSetFloat"
+          ],
+          "70": [
+            "eclOpcodeSetAngularVelocity"
+          ],
+          "71": [
+            "eclOpcodeSetAcceleration"
+          ],
+          "72": [
+            "eclOpcodeMoveOrbit"
+          ],
+          "73": [
+            "eclOpcodeMoveOrbitFromPosition"
+          ],
+          "74": [
+            "eclOpcodeSetOrbitVelocities"
+          ],
+          "75": [
+            "eclOpcodeSetMovementBounds"
+          ],
+          "76": [
+            "eclOpcodeDisableMovementBounds"
+          ],
+          "77": [
+            "eclOpcodeSetPrimaryHitbox"
+          ],
+          "78": [
+            "eclOpcodeSetSecondaryHitbox"
+          ],
+          "79": [
+            "eclOpcodeReplaceEnemyFlags"
+          ],
+          "8": [
+            "eclOpcodeRandSign"
+          ],
+          "80": [
+            "eclOpcodeDisableEnemyFlags"
+          ],
+          "81": [
+            "eclOpcodeEnableEnemyFlags"
+          ],
+          "82": [
+            "eclOpcodeSetMinimumPlayerDistance"
+          ],
+          "83": [
+            "eclOpcodeSetFormEffect"
+          ],
+          "84": [
+            "eclOpcodeOrdinaryAdvance84"
+          ],
+          "85": [
+            "eclOpcodeOrdinaryAdvance85"
+          ],
+          "86": [
+            "eclOpcodeGetBossInt"
+          ],
+          "87": [
+            "eclOpcodeGetBossFloat"
+          ],
+          "88": [
+            "eclOpcodeCallBossSub"
+          ],
+          "89": [
+            "eclOpcodeSetBossPendingSub"
+          ],
+          "9": [
+            "eclOpcodeRandSignFloat"
+          ],
+          "90": [
+            "eclOpcodeSpawnLinkedChild"
+          ],
+          "91": [
+            "eclOpcodeSpawnLinkedChildAtParentOffset"
+          ],
+          "92": [
+            "eclOpcodeSpawnLinkedChildInheritingPosition"
+          ],
+          "93": [
+            "eclOpcodeSpawnEnemyAbs"
+          ],
+          "94": [
+            "eclOpcodeSpawnEnemyRel"
+          ],
+          "95": [
+            "eclOpcodeKillAllNonBossEnemies"
+          ],
+          "96": [
+            "eclOpcodeSpawnBulletPatternFirst",
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "97": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "98": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ],
+          "99": [
+            "eclOpcodeSpawnBulletPatternFirst..eclOpcodeSpawnBulletPatternLast"
+          ]
+        },
+        "profileOpcodeValues": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140,
+          141,
+          142,
+          143,
+          144,
+          145,
+          146,
+          147,
+          148,
+          149,
+          150,
+          151,
+          152,
+          153,
+          154,
+          155,
+          156,
+          157,
+          158,
+          159,
+          160,
+          161,
+          162,
+          163,
+          164,
+          165,
+          166,
+          167,
+          168,
+          169,
+          170,
+          171,
+          172,
+          173,
+          174,
+          175,
+          176,
+          177,
+          178,
+          179,
+          180,
+          181,
+          182,
+          183,
+          184
+        ],
+        "profileOpcodesAbsentFromSource": [],
+        "profileSource": "/home/yann/yann/touhou/formal/touhou-formal/TouhouFormal/TH08/Wire.lean",
+        "rawOpcodeCaseLabelCount": 184,
+        "runSource": "/home/yann/yann/touhou/formal/reference/th08/src/EclRun.cpp",
+        "source": "/home/yann/yann/touhou/formal/reference/th08/src/EclRunLow.inl",
+        "unresolvedProfileConstants": []
+      }
+    }
+  }
+}

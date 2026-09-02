@@ -7,14 +7,15 @@ already better than the previous fuzzing lane?
 Short answer: it is already better than fuzzing for the path families that have
 dedicated symbolic queues: the VM-core dispatch skeleton, first shared body
 slice, integer resolver/binary arithmetic, TH07/TH08 boss reads, and
-CALL/RET/conditional-CALL. Separately, the Lean source model now assigns every
-raw ECL opcode value to an explicit body family—TH06 136/136, TH07 159/159,
-TH08 184/184—including gameplay effects, cross-enemy boss dispatch, and linked
-children. Most of those families do not yet have dedicated SMT/materializer
-lanes. Formal therefore does not yet beat fuzzing for the full ECL/ANM runtime:
-persistent BulletManager/EnemyManager/ItemManager/GUI/audio state, exact host
-arithmetic, full ANM execution, and bounded multi-context scheduling remain
-outside the current relation.
+CALL/RET/conditional-CALL, plus extension callback-table dispatch. Separately,
+the Lean source model now assigns every raw ECL opcode value to an explicit
+body family—TH06 136/136, TH07 159/159, TH08 184/184—including gameplay
+effects, cross-enemy boss dispatch, and linked children. Many of those families
+do not yet have dedicated SMT/materializer lanes. Formal therefore does not yet
+beat fuzzing for the full ECL/ANM runtime: persistent
+BulletManager/EnemyManager/ItemManager/GUI/audio state, exact host arithmetic,
+full ANM execution, and bounded multi-context scheduling remain outside the
+current relation.
 
 ## Reproducible evaluation
 
@@ -36,13 +37,14 @@ The script reruns `scripts/symex_candidate_queue.py` and
 `scripts/symex_int_binary_candidate_queue.py`,
 `scripts/symex_boss_int_candidate_queue.py`,
 `scripts/symex_boss_float_candidate_queue.py`,
-`scripts/symex_callret_candidate_queue.py`, and
-`scripts/symex_condcall_candidate_queue.py`, summarizes path coverage, reads
+`scripts/symex_callret_candidate_queue.py`,
+`scripts/symex_condcall_candidate_queue.py`, and
+`scripts/symex_extension_candidate_queue.py`, summarizes path coverage, reads
 the local reference source tree for opcode-surface counts, reads DanmakuFuzz's
 retained finding-status manifest, and folds in retained retail validation
 summaries from `retail_validation/` when present.
 
-The current manual verification run on 2026-09-01 executed:
+The current manual verification run on 2026-09-02 executes:
 
 ```bash
 lake build
@@ -53,7 +55,7 @@ python3 scripts/evaluate_symex_effectiveness.py
 
 All completed successfully on the complete source-profiled raw ECL model and
 the raw-step, raw-body, resolver, integer-binary, boss-int, boss-float,
-CALL/RET, and conditional-CALL symbolic queues.
+CALL/RET, conditional-CALL, and extension-dispatch symbolic queues.
 When previous queue results should be reused instead of recomputed, the
 equivalent assessment is:
 
@@ -66,7 +68,8 @@ python3 scripts/evaluate_symex_effectiveness.py \
   --boss-int-queue-json /tmp/boss_queue.json \
   --boss-float-queue-json /tmp/boss_float_queue.json \
   --callret-queue-json /tmp/callret_queue.json \
-  --condcall-queue-json /tmp/condcall_queue.json
+  --condcall-queue-json /tmp/condcall_queue.json \
+  --extension-queue-json /tmp/extension_queue.json
 ```
 
 The cost is mostly process startup: the current queues launch
@@ -736,6 +739,10 @@ Concrete advantages already demonstrated:
   replayed;
 - every TH06 conditional-CALL branch in the current guard abstraction is solved
   and replayed;
+- every title/environment-specific extension-dispatch branch is solved and
+  replayed; the default queue now contributes 33 candidates, including 18
+  high-priority callback-table OOB reads, 5 negative-index callback clears, and
+  10 normal controls;
 - solver witnesses are materialized into bytes by Lean using shared profile
   offsets, then replay-checked;
 - the body queue finds immediate integer div/mod zero-divisor paths for all
@@ -763,7 +770,8 @@ Concrete advantages already demonstrated:
   later operand reads;
 - shared Lean controls cover all six immediate/per-frame EX dispatch opcodes,
   including 17/24/32-entry table bounds, negative clears, and repeated
-  TH07/TH08 resolver reads;
+  TH07/TH08 resolver reads; the new extension-dispatch solver lane turns those
+  controls into concrete materialized witnesses;
 - TH08 child-context controls cover unchecked four-slot access, allocator
   failure, repeated sub-id reads, i16 call conversion, subTable partial faults,
   and the exact `0x78`-byte post-call state copy;
@@ -797,10 +805,10 @@ Fuzz is still better outside the current formal model:
 
 For the implemented VM-core skeleton, first shared body slice, integer resolver
 slice, integer binary-op slice, TH07/TH08 boss integer-read and boss float-read
-slices, plain CALL/RET stack slice, and TH06 conditional-CALL slice, Lean + SMT
-is already better than fuzzing: it gives exhaustive path-class coverage,
-satisfiable/unsatisfiable controls, concrete counterexample bytes, and shared
-TH06/TH07/TH08 semantics.
+slices, plain CALL/RET stack slice, TH06 conditional-CALL slice, and extension
+callback-table dispatch slice, Lean + SMT is already better than fuzzing: it
+gives exhaustive path-class coverage, satisfiable/unsatisfiable controls,
+concrete counterexample bytes, and shared TH06/TH07/TH08 semantics.
 
 The now-complete opcode-profile surface is a stronger modeling baseline, but it
 does not by itself expand the stronger-than-fuzzing claim. Each additional body
@@ -819,13 +827,19 @@ The next technically useful targets are:
 
 1. compose integer lvalue writes with bounded multi-step execution so raw-cell
    and default-raw self-writes can feed later VM transitions;
-2. add bounded multi-step reachability for nested `CALL`, `RET`, conditional
-   `CALL`, callbacks, and stacked jumps;
-3. generate solver/materializer lanes for trail, cross-enemy boss dispatch,
+2. generate solver/materializer lanes for interrupt, callback-configuration,
+   and animation-control families that are already Lean-modeled;
+3. add bounded multi-step reachability for nested `CALL`, `RET`, conditional
+   `CALL`, callbacks, extension installs, and stacked jumps;
+4. generate solver/materializer lanes for trail, cross-enemy boss dispatch,
    and linked-child construction from the Lean relations;
-4. refine arithmetic to exact machine behavior for signed add/sub/mul overflow
+5. refine arithmetic to exact machine behavior for signed add/sub/mul overflow
    and float divide/fmod edge cases;
-5. lower the boss integer-read OOB/null witnesses into TH07/TH08 retail batches;
-6. lower the top raw-step queue entries into TH06 retail batches;
-7. add TH07/TH08 archive adapters so the same shared witnesses can be validated
+6. lower the boss integer-read OOB/null witnesses into TH07/TH08 retail batches;
+7. lower the top raw-step and extension-dispatch queue entries into retail
+   batches;
+8. add TH07/TH08 archive adapters so the same shared witnesses can be validated
    without TH06-specific mutation code.
+
+See [`docs/symbolic-execution-roadmap.md`](symbolic-execution-roadmap.md) for
+the queue ordering and per-lane acceptance criteria.

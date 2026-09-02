@@ -78,6 +78,13 @@ QUEUE_LANES = [
         "file": "boss_float_queue.json",
         "eval_arg": "--boss-float-queue-json",
     },
+    {
+        "name": "extension",
+        "title": "Extension callback-table dispatch",
+        "script": "scripts/symex_extension_candidate_queue.py",
+        "file": "extension_queue.json",
+        "eval_arg": "--extension-queue-json",
+    },
 ]
 
 PRIORITY_RANK = {
@@ -170,6 +177,12 @@ def compact_candidate(lane: dict[str, str], candidate: dict[str, Any]) -> dict[s
             "size": fixture.get("size"),
             "opcode": fixture.get("opcode") or fixture.get("decodedOpcode"),
             "operandMask": fixture.get("operandMask") or fixture.get("decodedOperandMask"),
+            "guardIndex": fixture.get("guardIndex"),
+            "tableIndex": fixture.get("tableIndex"),
+            "calledNow": fixture.get("calledNow"),
+            "callbackInstalled": fixture.get("callbackInstalled"),
+            "callbackCleared": fixture.get("callbackCleared"),
+            "perFrameInstructionStored": fixture.get("perFrameInstructionStored"),
         },
         "witness": {
             key: witness.get(key)
@@ -190,6 +203,10 @@ def compact_candidate(lane: dict[str, str], candidate: dict[str, Any]) -> dict[s
                 "callStackDepth",
                 "subId",
                 "subTableSize",
+                "indexRaw0",
+                "indexHost0",
+                "indexRaw1",
+                "indexHost1",
                 "bufferSize",
                 "difficultyPass",
             )
@@ -352,6 +369,12 @@ def expectation_ledger() -> list[dict[str, str]]:
             "precondition": "CALL/RET-family opcode executes under the title stack/sub lookup policy",
             "oracle": "lane risk class reports stack OOB write/read, child-context OOB read, or subTable OOB read with matchesPath=true",
             "consequence": "subroutine control flow can escape the modeled stack/table bounds",
+        },
+        {
+            "property": "extension dispatch only indexes valid EX callback-table entries",
+            "precondition": "extension call/install opcode executes under the title raw-i32 or int-rvalue policy",
+            "oracle": "lane risk class reports extension callback-table OOB with matchesPath=true, including TH07/TH08 repeated install reads",
+            "consequence": "EX callback dispatch can cross the source fixed table boundary or clear callbacks through a negative install index",
         },
     ]
 
